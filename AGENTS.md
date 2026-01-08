@@ -91,3 +91,25 @@ make help          # Ver todos os comandos
 - `*_test.go` junto ao código → testes unitários
 - `tests/e2e/` → testes de integração com TestContainers
 - `tests/load/` → testes de carga com k6
+
+## Documentação
+
+### ADRs (Architecture Decision Records)
+
+Decisões arquiteturais documentadas em `docs/adr/`:
+
+| Arquivo | Descrição |
+| ------- | --------- |
+| `clean-architecture.md` | Pilares da Clean Architecture e estrutura de camadas |
+| `config-strategy.md` | Estratégia de configuração com Viper + .env |
+| `error-handling.md` | Sistema de tratamento de erros em camadas |
+| `ulid.md` | Por que usamos ULID ao invés de UUID |
+
+### Guias
+
+Documentação explicativa em `docs/guides/`:
+
+| Arquivo | Descrição |
+| ------- | --------- |
+| `architecture.md` | Visão geral da arquitetura com diagramas |
+| `kubernetes.md` | Guia de deploy e operação no Kubernetes |
