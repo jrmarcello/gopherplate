@@ -1,0 +1,347 @@
+basePath: /
+definitions:
+  create_person.InputDTO:
+    properties:
+      document:
+        description: CPF (será validado no UseCase)
+        type: string
+      email:
+        description: Email (será validado no UseCase)
+        type: string
+      name:
+        description: Nome do cliente
+        type: string
+    type: object
+  create_person.OutputDTO:
+    properties:
+      created_at:
+        description: Timestamp no formato RFC3339
+        type: string
+      id:
+        description: ID gerado (ULID)
+        type: string
+    type: object
+  delete_person.OutputDTO:
+    properties:
+      deleted_at:
+        type: string
+      id:
+        type: string
+      message:
+        type: string
+    type: object
+  get_person.AddressDTO:
+    properties:
+      city:
+        type: string
+      complement:
+        type: string
+      neighborhood:
+        type: string
+      number:
+        type: string
+      state:
+        type: string
+      street:
+        type: string
+      zip_code:
+        type: string
+    type: object
+  get_person.OutputDTO:
+    properties:
+      active:
+        type: boolean
+      address:
+        $ref: '#/definitions/get_person.AddressDTO'
+      created_at:
+        type: string
+      document:
+        description: CPF mascarado para segurança
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  list_people.PersonDTO:
+    properties:
+      active:
+        type: boolean
+      city:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      state:
+        type: string
+    type: object
+  list_people.OutputDTO:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/list_people.PersonDTO'
+        type: array
+      pagination:
+        $ref: '#/definitions/list_people.PaginationDTO'
+    type: object
+  list_people.PaginationDTO:
+    properties:
+      has_next:
+        type: boolean
+      has_prev:
+        type: boolean
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  middleware.ErrorResponse:
+    properties:
+      code:
+        description: 'Código do erro (ex: "INVALID_CPF")'
+        type: string
+      details:
+        additionalProperties: {}
+        description: Detalhes extras
+        type: object
+      error:
+        description: Mensagem de erro
+        type: string
+      trace_id:
+        description: ID de rastreamento
+        type: string
+    type: object
+  update_person.AddressDTO:
+    properties:
+      city:
+        type: string
+      complement:
+        type: string
+      neighborhood:
+        type: string
+      number:
+        type: string
+      state:
+        type: string
+      street:
+        type: string
+      zip_code:
+        type: string
+    type: object
+  update_person.InputDTO:
+    properties:
+      address:
+        allOf:
+        - $ref: '#/definitions/update_person.AddressDTO'
+        description: Endereço (opcional)
+      email:
+        description: Email (opcional)
+        type: string
+      id:
+        description: ULID do cliente (obrigatório)
+        type: string
+      name:
+        description: Nome (opcional)
+        type: string
+    type: object
+  update_person.OutputDTO:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Microservice for person management with Clean Architecture.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  version: "1.0"
+paths:
+  /people:
+    get:
+      deprecated: true
+      description: |
+        [DEPRECATED] This endpoint has been disabled and returns 410 Gone.
+        Use GET /people/{id} to retrieve individual person records.
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by name
+        in: query
+        name: name
+        type: string
+      - description: Filter by email
+        in: query
+        name: email
+        type: string
+      - description: Filter by active status
+        in: query
+        name: active
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "410":
+          description: Gone - Endpoint has been deprecated
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: "[DEPRECATED] List people"
+      tags:
+      - people
+    post:
+      consumes:
+      - application/json
+      description: Create a new person with the input payload
+      parameters:
+      - description: Person info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/create_person.InputDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/create_person.OutputDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Create a new person
+      tags:
+      - people
+  /people/{id}:
+    delete:
+      description: Soft delete a person by ID
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/delete_person.OutputDTO'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Delete a person
+      tags:
+      - people
+    get:
+      description: Get person details by unique ID
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/get_person.OutputDTO'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Get a person by ID
+      tags:
+      - people
+    put:
+      consumes:
+      - application/json
+      description: Update person details by ID
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/update_person.InputDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/update_person.OutputDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/middleware.ErrorResponse'
+      summary: Update a person
+      tags:
+      - people
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"
