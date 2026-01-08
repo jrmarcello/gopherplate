@@ -1,0 +1,108 @@
+# golangci-lint configuration
+# Docs: https://golangci-lint.run/usage/configuration/
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+output:
+  formats:
+    - format: colored-line-number
+  sort-results: true
+
+linters:
+  disable-all: true
+  enable:
+    # Default linters
+    - errcheck # Checks for unchecked errors
+    - gosimple # Simplify code
+    - govet # Reports suspicious constructs
+    - ineffassign # Detects unused variable assignments
+    - staticcheck # Static analysis
+    - unused # Checks for unused constants, variables, functions and types
+
+    # Security
+    - gosec # Security problems
+
+    # Bugs
+    - bodyclose # Checks HTTP response body is closed
+    - durationcheck # Checks for two durations multiplied together
+    - copyloopvar # Replaces deprecated exportloopref (Go 1.22+)
+    - nilerr # Finds code returning nil error
+    - sqlclosecheck # Checks that sql.Rows and sql.Stmt are closed
+
+    # Style & Best Practices
+    - gocritic # Highly extensible linter
+    - gofmt # Checks code is formatted
+    - goimports # Checks import statements
+    - misspell # Finds commonly misspelled English words
+    - unconvert # Unnecessary type conversions
+    - unparam # Unused function parameters
+    - prealloc # Finds slice declarations that could be preallocated
+
+    # Error handling
+    - errorlint # Finds issues with error wrapping
+    # - wrapcheck    # Disabled: too strict, requires wrapping all external errors
+
+linters-settings:
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment # Too strict for most cases
+
+  gosec:
+    excludes:
+      - G104 # Unhandled errors (errcheck handles this)
+    config:
+      global:
+        audit: true
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+    disabled-checks:
+      - whyNoLint
+      - hugeParam # Can be too strict
+
+  errorlint:
+    errorf: true
+    asserts: true
+    comparison: true
+
+  wrapcheck:
+    ignoreSigs:
+      - .Errorf(
+      - errors.New(
+      - errors.Unwrap(
+      - errors.Join(
+      - .Wrap(
+      - .Wrapf(
+      - .WithMessage(
+      - .WithMessagef(
+      - .WithStack(
+    ignorePackageGlobs:
+      - github.com/tksventures/people-service-registry/internal/*
+
+  misspell:
+    locale: US
+
+issues:
+  exclude-rules:
+    # Exclude test files from some linters
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
+        - wrapcheck
+        - gocritic
+
+    # Exclude main.go from wrapcheck
+    - path: cmd/api/main\.go
+      linters:
+        - wrapcheck
+
+  max-issues-per-linter: 50
+  max-same-issues: 3

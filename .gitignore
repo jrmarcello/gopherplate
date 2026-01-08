@@ -1,0 +1,39 @@
+# Binários
+/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Saída de testes
+tests/coverage/
+coverage.out
+coverage.html
+
+# Dependências
+/vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos de ambiente
+.env
+.env.local
+*.local
+
+# Logs
+*.log
+
+# Temporários
+/tmp/
+*.tmp
+
+roadmap.md
