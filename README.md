@@ -155,7 +155,7 @@ Veja [api.http](api.http) para mais exemplos.
 ## 🧪 Testes
 
 | Tipo | Comando | Descrição |
-|---|---|---|
+| --- | --- | --- |
 | Unit | `make test-unit` | Domínio, UseCases |
 | E2E | `make test-e2e` | API + Postgres + Redis (TestContainers) |
 | Coverage | `make test-coverage` | Gera relatório HTML |
