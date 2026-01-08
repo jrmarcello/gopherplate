@@ -46,7 +46,6 @@ func Load() (*Config, error) {
 	setDefaults(v)
 
 	// 2. Load from file (optional)
-	// 2. Load from file (optional)
 	v.SetConfigFile(".env") // explicit file path
 	v.SetConfigType("env")  // proper format
 	_ = v.ReadInConfig()    // ignore error if config file not found
