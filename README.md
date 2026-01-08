@@ -1,7 +1,7 @@
 # MS Boilerplate Go
 
 [![Go Version](https://img.shields.io/badge/Go-1.24-00ADD8?style=flat&logo=go)](https://go.dev/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 [![Tests](https://img.shields.io/badge/Tests-Passing-success)](tests/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](docker/Dockerfile)
 
@@ -74,7 +74,6 @@ ms-boilerplate-go/
 │   ├── base/                         # Manifests base (Kustomize)
 │   └── overlays/
 │       ├── dev-local/                # Kind (local)
-│       └── homologacao/              # AWS EKS staging
 ├── docker/                           # Dockerfile, docker-compose
 ├── docs/                             # Swagger, documentação
 ├── internal/
@@ -156,7 +155,7 @@ Veja [api.http](api.http) para mais exemplos.
 ## 🧪 Testes
 
 | Tipo | Comando | Descrição |
-|------|---------|-----------|
+|---|---|---|
 | Unit | `make test-unit` | Domínio, UseCases |
 | E2E | `make test-e2e` | API + Postgres + Redis (TestContainers) |
 | Coverage | `make test-coverage` | Gera relatório HTML |

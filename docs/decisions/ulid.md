@@ -18,7 +18,7 @@ Utilizar **ULID (Universally Unique Lexicographically Sortable Identifier)** par
 ## Comparação
 
 | Característica | UUID v4 | UUID v7 | ULID |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Ordenável | ❌ Não | ✅ Sim (por tempo) | ✅ Sim (por tempo) |
 | Colisão | Extremamente Rara | Extremamente Rara | Extremamente Rara |
 | Tamanho (String) | 36 chars | 36 chars | 26 chars |
