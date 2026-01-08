@@ -9,31 +9,22 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
-        },
-        "license": {
-            "name": "MIT",
-            "url": "https://opensource.org/licenses/MIT"
-        },
+        "contact": {},
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/people": {
+        "/entities": {
             "get": {
-                "description": "Get a paginated list of people",
+                "description": "Get a paginated list of entities",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "people"
+                    "entities"
                 ],
-                "summary": "List people",
+                "summary": "List entities",
                 "parameters": [
                     {
                         "type": "integer",
@@ -70,19 +61,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/list_people.OutputDTO"
+                            "$ref": "#/definitions/dto.ListOutput"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/middleware.ErrorResponse"
+                            "$ref": "#/definitions/handler.ErrorResponse"
                         }
                     }
                 }
             },
             "post": {
-                "description": "Create a new person with the input payload",
+                "description": "Create a new entity with the input payload",
                 "consumes": [
                     "application/json"
                 ],
@@ -90,17 +81,17 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "people"
+                    "entities"
                 ],
-                "summary": "Create a new person",
+                "summary": "Create a new entity",
                 "parameters": [
                     {
-                        "description": "Person info",
+                        "description": "Entity info",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/create_person.InputDTO"
+                            "$ref": "#/definitions/dto.CreateInput"
                         }
                     }
                 ],
@@ -108,38 +99,38 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/create_person.OutputDTO"
+                            "$ref": "#/definitions/dto.CreateOutput"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/middleware.ErrorResponse"
+                            "$ref": "#/definitions/handler.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/middleware.ErrorResponse"
+                            "$ref": "#/definitions/handler.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/people/{id}": {
+        "/entities/{id}": {
             "get": {
-                "description": "Get person details by unique ID",
+                "description": "Get entity details by unique ID",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "people"
+                    "entities"
                 ],
-                "summary": "Get a person by ID",
+                "summary": "Get an entity by ID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Person ID",
+                        "description": "Entity ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -149,25 +140,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/get_person.OutputDTO"
+                            "$ref": "#/definitions/dto.GetOutput"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/middleware.ErrorResponse"
+                            "$ref": "#/definitions/handler.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/middleware.ErrorResponse"
+                            "$ref": "#/definitions/handler.ErrorResponse"
                         }
                     }
                 }
             },
             "put": {
-                "description": "Update person details by ID",
+                "description": "Update entity details by ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -175,13 +166,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "people"
+                    "entities"
                 ],
-                "summary": "Update a person",
+                "summary": "Update an entity",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Person ID",
+                        "description": "Entity ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -192,7 +183,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/update_person.InputDTO"
+                            "$ref": "#/definitions/dto.UpdateInput"
                         }
                     }
                 ],
@@ -200,42 +191,42 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/update_person.OutputDTO"
+                            "$ref": "#/definitions/dto.UpdateOutput"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/middleware.ErrorResponse"
+                            "$ref": "#/definitions/handler.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/middleware.ErrorResponse"
+                            "$ref": "#/definitions/handler.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/middleware.ErrorResponse"
+                            "$ref": "#/definitions/handler.ErrorResponse"
                         }
                     }
                 }
             },
             "delete": {
-                "description": "Soft delete a person by ID",
+                "description": "Soft delete an entity by ID",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "people"
+                    "entities"
                 ],
-                "summary": "Delete a person",
+                "summary": "Delete an entity",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Person ID",
+                        "description": "Entity ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -245,19 +236,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/delete_person.OutputDTO"
+                            "$ref": "#/definitions/dto.DeleteOutput"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/middleware.ErrorResponse"
+                            "$ref": "#/definitions/handler.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/middleware.ErrorResponse"
+                            "$ref": "#/definitions/handler.ErrorResponse"
                         }
                     }
                 }
@@ -265,24 +256,20 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "create_person.InputDTO": {
+        "dto.CreateInput": {
             "type": "object",
             "properties": {
-                "document": {
-                    "description": "CPF (será validado no UseCase)",
-                    "type": "string"
-                },
                 "email": {
                     "description": "Email (será validado no UseCase)",
                     "type": "string"
                 },
                 "name": {
-                    "description": "Nome do cliente",
+                    "description": "Nome da entity",
                     "type": "string"
                 }
             }
         },
-        "create_person.OutputDTO": {
+        "dto.CreateOutput": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -295,60 +282,25 @@ const docTemplate = `{
                 }
             }
         },
-        "delete_person.OutputDTO": {
+        "dto.DeleteOutput": {
             "type": "object",
             "properties": {
                 "deleted_at": {
+                    "description": "Timestamp da deleção",
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
-                },
-                "message": {
-                    "type": "string"
                 }
             }
         },
-        "get_person.AddressDTO": {
-            "type": "object",
-            "properties": {
-                "city": {
-                    "type": "string"
-                },
-                "complement": {
-                    "type": "string"
-                },
-                "neighborhood": {
-                    "type": "string"
-                },
-                "number": {
-                    "type": "string"
-                },
-                "state": {
-                    "type": "string"
-                },
-                "street": {
-                    "type": "string"
-                },
-                "zip_code": {
-                    "type": "string"
-                }
-            }
-        },
-        "get_person.OutputDTO": {
+        "dto.GetOutput": {
             "type": "object",
             "properties": {
                 "active": {
                     "type": "boolean"
                 },
-                "address": {
-                    "$ref": "#/definitions/get_person.AddressDTO"
-                },
                 "created_at": {
-                    "type": "string"
-                },
-                "document": {
-                    "description": "CPF mascarado para segurança",
                     "type": "string"
                 },
                 "email": {
@@ -365,55 +317,23 @@ const docTemplate = `{
                 }
             }
         },
-        "list_people.PersonDTO": {
-            "type": "object",
-            "properties": {
-                "active": {
-                    "type": "boolean"
-                },
-                "city": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "state": {
-                    "type": "string"
-                }
-            }
-        },
-        "list_people.OutputDTO": {
+        "dto.ListOutput": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/list_people.PersonDTO"
+                        "$ref": "#/definitions/dto.GetOutput"
                     }
                 },
                 "pagination": {
-                    "$ref": "#/definitions/list_people.PaginationDTO"
+                    "$ref": "#/definitions/dto.PaginationOutput"
                 }
             }
         },
-        "list_people.PaginationDTO": {
+        "dto.PaginationOutput": {
             "type": "object",
             "properties": {
-                "has_next": {
-                    "type": "boolean"
-                },
-                "has_prev": {
-                    "type": "boolean"
-                },
                 "limit": {
                     "type": "integer"
                 },
@@ -428,71 +348,11 @@ const docTemplate = `{
                 }
             }
         },
-        "middleware.ErrorResponse": {
+        "dto.UpdateInput": {
             "type": "object",
             "properties": {
-                "code": {
-                    "description": "Código do erro (ex: \"INVALID_CPF\")",
-                    "type": "string"
-                },
-                "details": {
-                    "description": "Detalhes extras",
-                    "type": "object",
-                    "additionalProperties": {}
-                },
-                "error": {
-                    "description": "Mensagem de erro",
-                    "type": "string"
-                },
-                "trace_id": {
-                    "description": "ID de rastreamento",
-                    "type": "string"
-                }
-            }
-        },
-        "update_person.AddressDTO": {
-            "type": "object",
-            "properties": {
-                "city": {
-                    "type": "string"
-                },
-                "complement": {
-                    "type": "string"
-                },
-                "neighborhood": {
-                    "type": "string"
-                },
-                "number": {
-                    "type": "string"
-                },
-                "state": {
-                    "type": "string"
-                },
-                "street": {
-                    "type": "string"
-                },
-                "zip_code": {
-                    "type": "string"
-                }
-            }
-        },
-        "update_person.InputDTO": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "description": "Endereço (opcional)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/update_person.AddressDTO"
-                        }
-                    ]
-                },
                 "email": {
                     "description": "Email (opcional)",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "ULID do cliente (obrigatório)",
                     "type": "string"
                 },
                 "name": {
@@ -501,9 +361,12 @@ const docTemplate = `{
                 }
             }
         },
-        "update_person.OutputDTO": {
+        "dto.UpdateOutput": {
             "type": "object",
             "properties": {
+                "active": {
+                    "type": "boolean"
+                },
                 "email": {
                     "type": "string"
                 },
@@ -517,27 +380,36 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "handler.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "error": {
+                    "type": "string"
+                },
+                "trace_id": {
+                    "type": "string"
+                }
+            }
         }
-    },
-    "securityDefinitions": {
-        "BasicAuth": {
-            "type": "basic"
-        }
-    },
-    "externalDocs": {
-        "description": "OpenAPI",
-        "url": "https://swagger.io/resources/open-api/"
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
-	Host:             "localhost:8080",
-	BasePath:         "/",
+	Version:          "",
+	Host:             "",
+	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "",
-	Description:      "Microservice for person management with Clean Architecture.",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

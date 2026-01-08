@@ -1,17 +1,17 @@
-# People Service Registry
+# MS Boilerplate Go
 
 [![Go Version](https://img.shields.io/badge/Go-1.24-00ADD8?style=flat&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-Passing-success)](tests/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](docker/Dockerfile)
 
-Microserviço de cadastro de pessoas com arquitetura Clean, cache Redis e deploy Kubernetes.
+Boilerplate genérico para microserviços Go com arquitetura Clean, cache Redis e deploy Kubernetes.
 
 ## 🚀 Quick Start
 
 ```bash
 # Clone e setup
-git clone <repo> && cd people-service-registry
+git clone <repo> && cd ms-boilerplate-go
 make setup
 
 # Desenvolvimento local (Docker)
@@ -21,7 +21,7 @@ make dev
 # Desenvolvimento local (Kubernetes/Kind)
 make kind-up
 make kind-deploy
-curl http://people.localhost/health
+curl http://entities.localhost/health
 ```
 
 ## 📋 Pré-requisitos
@@ -67,7 +67,7 @@ make migrate-status    # Status das migrations
 ## 📁 Estrutura
 
 ```text
-people-service-registry/
+ms-boilerplate-go/
 ├── cmd/api/                          # Entrypoint (main.go, server.go)
 ├── config/                           # Configuração (env vars)
 ├── deploy/                           # Kubernetes manifests
@@ -78,15 +78,14 @@ people-service-registry/
 ├── docker/                           # Dockerfile, docker-compose
 ├── docs/                             # Swagger, documentação
 ├── internal/
-│   ├── domain/person/                # Entidades, Value Objects, Erros
-│   │   └── vo/                       # ID, CPF, Email, Phone, Address
+│   ├── domain/entity/                # Entidades, Value Objects, Erros
 │   ├── infrastructure/
 │   │   ├── cache/                    # Redis client
 │   │   ├── db/postgres/              # Conexão, migrations, repository
 │   │   ├── telemetry/                # OpenTelemetry
 │   │   └── web/                      # HTTP Handlers, Middlewares, Router
 │   ├── pkg/apperror/                 # Erros de aplicação
-│   └── usecases/person/              # Casos de uso (Create, Get, Update, Delete)
+│   └── usecases/entity/              # Casos de uso (Create, Get, List, Update, Delete)
 └── tests/
     ├── e2e/                          # Testes e2e (TestContainers)
     └── load/                         # Testes de carga (k6)
@@ -104,12 +103,12 @@ POSTGRES_USER=user
 POSTGRES_PASSWORD=password
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
-POSTGRES_DB=people
+POSTGRES_DB=entities
 REDIS_URL=redis://localhost:6379
 REDIS_TTL=5m
 REDIS_ENABLED=true
-OTEL_SERVICE_NAME=people-service-registry
-OTEL_COLLECTOR_URL=localhost:4317
+OTEL_SERVICE_NAME=entity-service
+OTEL_COLLECTOR_URL=
 ```
 
 ### Kubernetes (ConfigMap)
@@ -128,25 +127,26 @@ GET /health
 ### Readiness (verifica DB)
 GET /ready
 
-### Criar Pessoa
-POST /people
+### Criar Entity
+POST /entities
 Content-Type: application/json
 
 {
-  "name": "João Silva",
-  "document": "52998224725",
-  "phone": "11999999999",
-  "email": "joao@example.com"
+  "name": "Nome da Entity",
+  "email": "entity@example.com"
 }
 
-### Buscar por ID (com cache)
-GET /people/:id
+### Listar Entities (paginado)
+GET /entities?page=1&limit=20
 
-### Atualizar Pessoa
-PUT /people/:id
+### Buscar por ID
+GET /entities/:id
 
-### Deletar Pessoa (soft delete)
-DELETE /people/:id
+### Atualizar Entity
+PUT /entities/:id
+
+### Deletar Entity (soft delete)
+DELETE /entities/:id
 ```
 
 📚 Swagger: `http://localhost:8080/swagger/index.html`
@@ -157,10 +157,9 @@ Veja [api.http](api.http) para mais exemplos.
 
 | Tipo | Comando | Descrição |
 |------|---------|-----------|
-| Unit | `make test-unit` | Domínio, VOs, UseCases |
+| Unit | `make test-unit` | Domínio, UseCases |
 | E2E | `make test-e2e` | API + Postgres + Redis (TestContainers) |
 | Coverage | `make test-coverage` | Gera relatório HTML |
-| Load | `make load-smoke` | Teste de carga básico (k6) |
 
 ## 🐳 Deploy
 
@@ -180,7 +179,7 @@ make kind-up
 make kind-deploy
 
 # Acessar
-curl http://people.localhost/health
+curl http://entities.localhost/health
 ```
 
 ### Kubernetes (EKS - produção)

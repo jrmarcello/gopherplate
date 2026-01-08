@@ -47,8 +47,8 @@ func NewEntityHandler(
 // @Produce      json
 // @Param        request body dto.CreateInput true "Entity info"
 // @Success      201  {object}  dto.CreateOutput
-// @Failure      400  {object}  middleware.ErrorResponse
-// @Failure      500  {object}  middleware.ErrorResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
 // @Router       /entities [post]
 func (h *EntityHandler) Create(c *gin.Context) {
 	ctx, span := otel.Tracer("http-handler").Start(c.Request.Context(), "EntityHandler.Create")
@@ -92,8 +92,8 @@ func (h *EntityHandler) Create(c *gin.Context) {
 // @Produce      json
 // @Param        id   path      string  true  "Entity ID"
 // @Success      200  {object}  dto.GetOutput
-// @Failure      404  {object}  middleware.ErrorResponse
-// @Failure      500  {object}  middleware.ErrorResponse
+// @Failure      404  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
 // @Router       /entities/{id} [get]
 func (h *EntityHandler) GetByID(c *gin.Context) {
 	ctx, span := otel.Tracer("http-handler").Start(c.Request.Context(), "EntityHandler.GetByID")
@@ -122,7 +122,7 @@ func (h *EntityHandler) GetByID(c *gin.Context) {
 // @Param        email   query     string  false  "Filter by email"
 // @Param        active  query     bool    false  "Filter by active status"
 // @Success      200     {object}  dto.ListOutput
-// @Failure      500     {object}  middleware.ErrorResponse
+// @Failure      500     {object}  ErrorResponse
 // @Router       /entities [get]
 func (h *EntityHandler) List(c *gin.Context) {
 	ctx, span := otel.Tracer("http-handler").Start(c.Request.Context(), "EntityHandler.List")
@@ -158,9 +158,9 @@ func (h *EntityHandler) List(c *gin.Context) {
 // @Param        id       path      string          true  "Entity ID"
 // @Param        request  body      dto.UpdateInput true  "Update info"
 // @Success      200      {object}  dto.UpdateOutput
-// @Failure      400      {object}  middleware.ErrorResponse
-// @Failure      404      {object}  middleware.ErrorResponse
-// @Failure      500      {object}  middleware.ErrorResponse
+// @Failure      400      {object}  ErrorResponse
+// @Failure      404      {object}  ErrorResponse
+// @Failure      500      {object}  ErrorResponse
 // @Router       /entities/{id} [put]
 func (h *EntityHandler) Update(c *gin.Context) {
 	ctx, span := otel.Tracer("http-handler").Start(c.Request.Context(), "EntityHandler.Update")
@@ -201,8 +201,8 @@ func (h *EntityHandler) Update(c *gin.Context) {
 // @Produce      json
 // @Param        id   path      string  true  "Entity ID"
 // @Success      200  {object}  dto.DeleteOutput
-// @Failure      404  {object}  middleware.ErrorResponse
-// @Failure      500  {object}  middleware.ErrorResponse
+// @Failure      404  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
 // @Router       /entities/{id} [delete]
 func (h *EntityHandler) Delete(c *gin.Context) {
 	ctx, span := otel.Tracer("http-handler").Start(c.Request.Context(), "EntityHandler.Delete")

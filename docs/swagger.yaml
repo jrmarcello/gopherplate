@@ -1,18 +1,14 @@
-basePath: /
 definitions:
-  create_person.InputDTO:
+  dto.CreateInput:
     properties:
-      document:
-        description: CPF (será validado no UseCase)
-        type: string
       email:
         description: Email (será validado no UseCase)
         type: string
       name:
-        description: Nome do cliente
+        description: Nome da entity
         type: string
     type: object
-  create_person.OutputDTO:
+  dto.CreateOutput:
     properties:
       created_at:
         description: Timestamp no formato RFC3339
@@ -21,42 +17,19 @@ definitions:
         description: ID gerado (ULID)
         type: string
     type: object
-  delete_person.OutputDTO:
+  dto.DeleteOutput:
     properties:
       deleted_at:
+        description: Timestamp da deleção
         type: string
       id:
         type: string
-      message:
-        type: string
     type: object
-  get_person.AddressDTO:
-    properties:
-      city:
-        type: string
-      complement:
-        type: string
-      neighborhood:
-        type: string
-      number:
-        type: string
-      state:
-        type: string
-      street:
-        type: string
-      zip_code:
-        type: string
-    type: object
-  get_person.OutputDTO:
+  dto.GetOutput:
     properties:
       active:
         type: boolean
-      address:
-        $ref: '#/definitions/get_person.AddressDTO'
       created_at:
-        type: string
-      document:
-        description: CPF mascarado para segurança
         type: string
       email:
         type: string
@@ -67,38 +40,17 @@ definitions:
       updated_at:
         type: string
     type: object
-  list_people.PersonDTO:
-    properties:
-      active:
-        type: boolean
-      city:
-        type: string
-      created_at:
-        type: string
-      email:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-      state:
-        type: string
-    type: object
-  list_people.OutputDTO:
+  dto.ListOutput:
     properties:
       data:
         items:
-          $ref: '#/definitions/list_people.PersonDTO'
+          $ref: '#/definitions/dto.GetOutput'
         type: array
       pagination:
-        $ref: '#/definitions/list_people.PaginationDTO'
+        $ref: '#/definitions/dto.PaginationOutput'
     type: object
-  list_people.PaginationDTO:
+  dto.PaginationOutput:
     properties:
-      has_next:
-        type: boolean
-      has_prev:
-        type: boolean
       limit:
         type: integer
       page:
@@ -108,57 +60,19 @@ definitions:
       total_pages:
         type: integer
     type: object
-  middleware.ErrorResponse:
+  dto.UpdateInput:
     properties:
-      code:
-        description: 'Código do erro (ex: "INVALID_CPF")'
-        type: string
-      details:
-        additionalProperties: {}
-        description: Detalhes extras
-        type: object
-      error:
-        description: Mensagem de erro
-        type: string
-      trace_id:
-        description: ID de rastreamento
-        type: string
-    type: object
-  update_person.AddressDTO:
-    properties:
-      city:
-        type: string
-      complement:
-        type: string
-      neighborhood:
-        type: string
-      number:
-        type: string
-      state:
-        type: string
-      street:
-        type: string
-      zip_code:
-        type: string
-    type: object
-  update_person.InputDTO:
-    properties:
-      address:
-        allOf:
-        - $ref: '#/definitions/update_person.AddressDTO'
-        description: Endereço (opcional)
       email:
         description: Email (opcional)
-        type: string
-      id:
-        description: ULID do cliente (obrigatório)
         type: string
       name:
         description: Nome (opcional)
         type: string
     type: object
-  update_person.OutputDTO:
+  dto.UpdateOutput:
     properties:
+      active:
+        type: boolean
       email:
         type: string
       id:
@@ -168,28 +82,24 @@ definitions:
       updated_at:
         type: string
     type: object
-externalDocs:
-  description: OpenAPI
-  url: https://swagger.io/resources/open-api/
-host: localhost:8080
+  handler.ErrorResponse:
+    properties:
+      code:
+        type: string
+      details:
+        additionalProperties: {}
+        type: object
+      error:
+        type: string
+      trace_id:
+        type: string
+    type: object
 info:
-  contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
-  description: Microservice for person management with Clean Architecture.
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
-  termsOfService: http://swagger.io/terms/
-  version: "1.0"
+  contact: {}
 paths:
-  /people:
+  /entities:
     get:
-      deprecated: true
-      description: |
-        [DEPRECATED] This endpoint has been disabled and returns 410 Gone.
-        Use GET /people/{id} to retrieve individual person records.
+      description: Get a paginated list of entities
       parameters:
       - description: Page number
         in: query
@@ -214,47 +124,51 @@ paths:
       produces:
       - application/json
       responses:
-        "410":
-          description: Gone - Endpoint has been deprecated
+        "200":
+          description: OK
           schema:
-            $ref: '#/definitions/middleware.ErrorResponse'
-      summary: "[DEPRECATED] List people"
+            $ref: '#/definitions/dto.ListOutput'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: List entities
       tags:
-      - people
+      - entities
     post:
       consumes:
       - application/json
-      description: Create a new person with the input payload
+      description: Create a new entity with the input payload
       parameters:
-      - description: Person info
+      - description: Entity info
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/create_person.InputDTO'
+          $ref: '#/definitions/dto.CreateInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/create_person.OutputDTO'
+            $ref: '#/definitions/dto.CreateOutput'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/middleware.ErrorResponse'
+            $ref: '#/definitions/handler.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/middleware.ErrorResponse'
-      summary: Create a new person
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Create a new entity
       tags:
-      - people
-  /people/{id}:
+      - entities
+  /entities/{id}:
     delete:
-      description: Soft delete a person by ID
+      description: Soft delete an entity by ID
       parameters:
-      - description: Person ID
+      - description: Entity ID
         in: path
         name: id
         required: true
@@ -265,22 +179,22 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/delete_person.OutputDTO'
+            $ref: '#/definitions/dto.DeleteOutput'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/middleware.ErrorResponse'
+            $ref: '#/definitions/handler.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/middleware.ErrorResponse'
-      summary: Delete a person
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Delete an entity
       tags:
-      - people
+      - entities
     get:
-      description: Get person details by unique ID
+      description: Get entity details by unique ID
       parameters:
-      - description: Person ID
+      - description: Entity ID
         in: path
         name: id
         required: true
@@ -291,24 +205,24 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/get_person.OutputDTO'
+            $ref: '#/definitions/dto.GetOutput'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/middleware.ErrorResponse'
+            $ref: '#/definitions/handler.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/middleware.ErrorResponse'
-      summary: Get a person by ID
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Get an entity by ID
       tags:
-      - people
+      - entities
     put:
       consumes:
       - application/json
-      description: Update person details by ID
+      description: Update entity details by ID
       parameters:
-      - description: Person ID
+      - description: Entity ID
         in: path
         name: id
         required: true
@@ -318,30 +232,27 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/update_person.InputDTO'
+          $ref: '#/definitions/dto.UpdateInput'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/update_person.OutputDTO'
+            $ref: '#/definitions/dto.UpdateOutput'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/middleware.ErrorResponse'
+            $ref: '#/definitions/handler.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/middleware.ErrorResponse'
+            $ref: '#/definitions/handler.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/middleware.ErrorResponse'
-      summary: Update a person
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Update an entity
       tags:
-      - people
-securityDefinitions:
-  BasicAuth:
-    type: basic
+      - entities
 swagger: "2.0"
