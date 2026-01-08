@@ -1,12 +1,27 @@
-# Variáveis
+# ============================================
+# CONFIGURAÇÃO DO PROJETO
+# ============================================
+# Customize estas variáveis para seu projeto
+
+APP_NAME := ms-boilerplate-go
+IMAGE_NAME := $(APP_NAME)-api
+DB_NAME := entities
+
+# ============================================
+# VARIÁVEIS INTERNAS
+# ============================================
+
 GOBIN := $(shell go env GOBIN)
 ifeq ($(GOBIN),)
 	GOBIN := $(shell go env GOPATH)/bin
 endif
 
 # Fallback defaults (match config.go defaults for local dev)
-DB_DSN ?= postgres://user:password@localhost:5432/entities?sslmode=disable
+DB_DSN ?= postgres://user:password@localhost:5432/$(DB_NAME)?sslmode=disable
 MIGRATIONS_DIR := internal/infrastructure/db/postgres/migration
+
+# Docker env file (optional)
+ENV_FILE := $(shell test -f .env && echo "--env-file .env" || echo "")
 
 # Declara todos os targets que não são arquivos
 .PHONY: help setup tools dev run build clean lint lint-full security \
@@ -14,8 +29,9 @@ MIGRATIONS_DIR := internal/infrastructure/db/postgres/migration
         load-smoke load-test load-stress load-spike load-clean \
         docker-up docker-down docker-build \
         observability-up observability-down observability-logs \
-        kind-up kind-down kind-deploy kind-logs \
-        migrate-up migrate-down migrate-status migrate-reset migrate-redo migrate-create
+        kind-up kind-down kind-deploy kind-logs kind-migrate \
+        migrate-up migrate-down migrate-status migrate-reset migrate-redo migrate-create \
+        swagger
 
 # Target padrão
 .DEFAULT_GOAL := help
@@ -25,13 +41,13 @@ MIGRATIONS_DIR := internal/infrastructure/db/postgres/migration
 # ============================================
 
 help: ## Exibe esta mensagem de ajuda
-	@echo "Entity Service Registry - Comandos disponíveis:"
+	@echo "$(APP_NAME) - Comandos disponíveis:"
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 
 # ============================================
-# SETUP (ÚNICO COMANDO NECESSÁRIO)
+# SETUP
 # ============================================
 
 setup: tools ## 🚀 Setup completo: tools + hooks + docker + migrations
@@ -63,16 +79,17 @@ tools: ## 📦 Instala ferramentas de desenvolvimento
 	@go install github.com/pressly/goose/v3/cmd/goose@latest
 	@go install github.com/evilmartians/lefthook@latest
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	@go install github.com/swaggo/swag/cmd/swag@latest
 	@echo "✅ Tools installed in $(GOBIN)"
 
 # ============================================
 # DESENVOLVIMENTO
 # ============================================
 
-dev: ## 🔥 Inicia servidor com hot reload (air) using code defaults
+dev: ## 🔥 Inicia servidor com hot reload (air)
 	@$(GOBIN)/air || air
 
-run: ## ▶️  Inicia servidor sem hot reload using code defaults
+run: ## ▶️  Inicia servidor sem hot reload
 	go run cmd/api/main.go
 
 lint: ## 🔍 Roda linters básicos (vet + gofmt)
@@ -82,8 +99,12 @@ lint: ## 🔍 Roda linters básicos (vet + gofmt)
 lint-full: ## 🔍 Roda golangci-lint com todas as verificações
 	@golangci-lint run ./...
 
-security: ## 🔒 Roda análise de segurança (gosec via golangci-lint)
+security: ## 🔒 Roda análise de segurança (gosec)
 	@golangci-lint run --enable-only gosec ./...
+
+swagger: ## 📚 Regenera documentação Swagger
+	@swag init -g cmd/api/main.go -o docs
+	@echo "✅ Swagger docs generated in docs/"
 
 # ============================================
 # TESTES
@@ -121,26 +142,26 @@ clean: ## 🧹 Remove arquivos gerados
 # DOCKER
 # ============================================
 
-docker-up: ## 🐳 Sobe containers Docker
-	docker compose --env-file .env -f docker/docker-compose.yml up -d
+docker-up: ## 🐳 Sobe containers Docker (Postgres + Redis)
+	docker compose $(ENV_FILE) -f docker/docker-compose.yml up -d
 
 docker-down: ## 🐳 Para containers Docker
-	docker compose --env-file .env -f docker/docker-compose.yml down
+	docker compose $(ENV_FILE) -f docker/docker-compose.yml down
 
-docker-build: ## 🐳 Cria a imagem de produção otimizada
-	docker build -f docker/Dockerfile -t entities-service-registry-api .
+docker-build: ## 🐳 Cria a imagem de produção
+	docker build -f docker/Dockerfile -t $(IMAGE_NAME) .
 
 # ============================================
-# OBSERVABILIDADE (ELK + OpenTelemetry)
+# OBSERVABILIDADE (OpenTelemetry)
 # ============================================
 
-observability-up: ## 📈 Sobe ELK Stack (Elasticsearch + Kibana + OTel Collector)
+observability-up: ## 📈 Sobe stack de observabilidade
 	docker compose -f docker/observability/docker-compose.yml up -d
 	@echo "🔍 Aguarde ~30s para Elasticsearch iniciar..."
 	@echo "📊 Kibana: http://localhost:5601"
 	@echo "🔌 OTel Collector: localhost:4317 (gRPC)"
 
-observability-down: ## 📈 Para ELK Stack
+observability-down: ## 📈 Para stack de observabilidade
 	docker compose -f docker/observability/docker-compose.yml down
 
 observability-logs: ## 📈 Mostra logs do OTel Collector
@@ -150,12 +171,12 @@ observability-logs: ## 📈 Mostra logs do OTel Collector
 # KIND (Kubernetes Local)
 # ============================================
 
-KIND_CLUSTER := entities-dev
-KIND_NAMESPACE := entities-service-registry-dev
+KIND_CLUSTER := $(APP_NAME)-dev
+KIND_NAMESPACE := $(APP_NAME)-dev
 KIND_CONFIGMAP := deploy/overlays/dev-local/configmap.yaml
 KIND_DB_PORT := 5433
 
-kind-up: ## ☸️ Cria cluster kind com NGINX Ingress
+kind-up: ## ☸️ Cria cluster Kind com NGINX Ingress
 	@if ! kind get clusters | grep -q $(KIND_CLUSTER); then \
 		echo "📦 Criando cluster kind..."; \
 		kind create cluster --name $(KIND_CLUSTER) --config deploy/overlays/dev-local/kind-config.yaml; \
@@ -169,32 +190,32 @@ kind-up: ## ☸️ Cria cluster kind com NGINX Ingress
 	@echo "🐘 Deploying PostgreSQL..."
 	@kubectl apply -n $(KIND_NAMESPACE) -f deploy/overlays/dev-local/kind-postgres.yaml
 
-kind-down: ## ☸️ Remove cluster kind
+kind-down: ## ☸️ Remove cluster Kind
 	kind delete cluster --name $(KIND_CLUSTER)
 
-kind-deploy: docker-build ## ☸️ Build, deploy e migrate no kind
+kind-deploy: docker-build ## ☸️ Build, deploy e migrate no Kind
 	@echo "📤 Loading image into kind..."
-	@docker tag entities-service-registry-api:latest entities-service-registry:dev
-	@kind load docker-image entities-service-registry:dev --name $(KIND_CLUSTER)
+	@docker tag $(IMAGE_NAME):latest $(APP_NAME):dev
+	@kind load docker-image $(APP_NAME):dev --name $(KIND_CLUSTER)
 	@echo "☸️ Applying manifests..."
 	@kubectl apply -k deploy/overlays/dev-local/
 	@echo "⏳ Waiting for pods..."
 	@kubectl wait --namespace $(KIND_NAMESPACE) --for=condition=ready pod --selector=app=postgres --timeout=60s || true
 	@$(MAKE) kind-migrate
-	@kubectl wait --namespace $(KIND_NAMESPACE) --for=condition=ready pod --selector=app=entities-service-registry --timeout=120s || true
+	@kubectl wait --namespace $(KIND_NAMESPACE) --for=condition=ready pod --selector=app=$(APP_NAME) --timeout=120s || true
 	@echo ""
 	@echo "✅ Deploy completo!"
-	@echo "📍 http://entities.localhost/health"
+	@echo "📍 http://$(DB_NAME).localhost/health"
 
-kind-migrate: ## ☸️ Roda migrations no PostgreSQL do kind
+kind-migrate: ## ☸️ Roda migrations no PostgreSQL do Kind
 	@echo "📊 Rodando migrations via port-forward..."
 	@kubectl port-forward -n $(KIND_NAMESPACE) svc/postgres-service $(KIND_DB_PORT):5432 &
 	@sleep 3
 	@goose -dir $(MIGRATIONS_DIR) postgres "$$(grep 'DB_DSN:' $(KIND_CONFIGMAP) | sed 's/.*DB_DSN: *\"//;s/\".*//;s/postgres-service:5432/localhost:$(KIND_DB_PORT)/')" up || true
 	@pkill -f "port-forward.*$(KIND_DB_PORT)" || true
 
-kind-logs: ## ☸️ Mostra logs do serviço no kind
-	kubectl logs -n $(KIND_NAMESPACE) -l app=entities-service-registry -f
+kind-logs: ## ☸️ Mostra logs do serviço no Kind
+	kubectl logs -n $(KIND_NAMESPACE) -l app=$(APP_NAME) -f
 
 # ============================================
 # MIGRAÇÕES
@@ -216,7 +237,7 @@ migrate-reset: ## 📊 Reverte todas as migrações (CUIDADO!)
 	@$(GOBIN)/goose -dir $(MIGRATIONS_DIR) postgres "$(DB_DSN)" reset || \
 		goose -dir $(MIGRATIONS_DIR) postgres "$(DB_DSN)" reset
 
-migrate-redo: ## 📊 Reverte e reapl última migração
+migrate-redo: ## 📊 Reverte e reaplica última migração
 	@$(GOBIN)/goose -dir $(MIGRATIONS_DIR) postgres "$(DB_DSN)" redo || \
 		goose -dir $(MIGRATIONS_DIR) postgres "$(DB_DSN)" redo
 
@@ -229,19 +250,19 @@ migrate-create: ## 📊 Cria nova migração (ex: make migrate-create NAME=add_u
 # ============================================
 # Requer k6: brew install k6
 
-load-smoke: ## 🔥 Smoke test (100 users, 30s) - validação básica
+load-smoke: ## 🔥 Smoke test - validação básica
 	k6 run --env SCENARIO=smoke tests/load/scenarios.js
 
-load-test: ## 🔥 Load test (100→1000 users, 8min) - carga progressiva
+load-test: ## 🔥 Load test - carga progressiva
 	k6 run --env SCENARIO=load tests/load/scenarios.js
 
-load-stress: ## 🔥 Stress test (até 1000 users) - encontrar limites
+load-stress: ## 🔥 Stress test - encontrar limites
 	k6 run --env SCENARIO=stress tests/load/scenarios.js
 
-load-spike: ## 🔥 Spike test - pico súbito de usuários
+load-spike: ## 🔥 Spike test - pico súbito
 	k6 run --env SCENARIO=spike tests/load/scenarios.js
 
-load-clean: ## 🔥 Limpa dados de testes de carga do banco
+load-clean: ## 🔥 Limpa dados de testes de carga
 	@echo "🧹 Limpando dados de load test..."
-	@docker exec $$(docker ps --format '{{.Names}}' | grep -E 'db|postgres' | head -1) psql -U user -d entities -c "DELETE FROM entities WHERE name LIKE 'Load Test%';"
+	@docker exec $$(docker ps --format '{{.Names}}' | grep -E 'db|postgres' | head -1) psql -U user -d $(DB_NAME) -c "DELETE FROM entities WHERE name LIKE 'Load Test%';"
 	@echo "✅ Dados de load test removidos"
