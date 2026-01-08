@@ -17,13 +17,13 @@ Utilizar **ULID (Universally Unique Lexicographically Sortable Identifier)** par
 
 ## Comparação
 
-| Característica | UUID v4 | ULID |
-|---|---|---|
-| Ordenável | ❌ Não | ✅ Sim (por tempo) |
-| Colisão | Extremamente Rara | Extremamente Rara |
-| Tamanho (String) | 36 chars | 26 chars |
-| Indexação DB | Ruim (fragmentação) | Ótima (sequencial) |
-| URL Safe | ❌ Não (hifens) | ✅ Sim |
+| Característica | UUID v4 | UUID v7 | ULID |
+|---|---|---|---|
+| Ordenável | ❌ Não | ✅ Sim (por tempo) | ✅ Sim (por tempo) |
+| Colisão | Extremamente Rara | Extremamente Rara | Extremamente Rara |
+| Tamanho (String) | 36 chars | 36 chars | 26 chars |
+| Indexação DB | Ruim (fragmentação) | Ótima (sequencial) | Ótima (sequencial) |
+| URL Safe | ❌ Não (hifens) | ❌ Não (hifens) | ✅ Sim |
 
 ## Implementação
 
