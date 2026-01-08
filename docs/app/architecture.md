@@ -1,6 +1,6 @@
-# Arquitetura do Person Service
+# Arquitetura do Entity Service
 
-Documentação técnica da arquitetura do microsserviço de gestão de clientes, seguindo **Clean Architecture** e **DDD**.
+Documentação técnica da arquitetura do microsserviço de gestão de entities, seguindo **Clean Architecture** e **DDD**.
 
 ---
 
@@ -9,11 +9,11 @@ Documentação técnica da arquitetura do microsserviço de gestão de clientes,
 - [Diagrama de Casos de Uso](#diagrama-de-casos-de-uso)
 - [Diagrama de Componentes](#diagrama-de-componentes-clean-architecture)
 - [Diagramas de Sequência](#diagramas-de-sequência)
-  - [Criar Cliente](#1-criar-cliente)
-  - [Buscar Cliente por ID](#2-buscar-cliente-por-id)
-  - [Listar Clientes](#3-listar-clientes)
-  - [Atualizar Cliente](#4-atualizar-cliente)
-  - [Deletar Cliente](#5-deletar-cliente-soft-delete)
+  - [Criar Entity](#1-criar-entity)
+  - [Buscar Entity por ID](#2-buscar-entity-por-id)
+  - [Listar Entities](#3-listar-entities)
+  - [Atualizar Entity](#4-atualizar-entity)
+  - [Deletar Entity](#5-deletar-entity-soft-delete)
 - [Fluxo de Dados](#fluxo-de-dados-entre-camadas)
 
 ---
@@ -27,12 +27,12 @@ flowchart LR
         Admin["👤 Admin"]
     end
 
-    subgraph Sistema["Person Service"]
-        UC1["Criar Cliente"]
-        UC2["Buscar Cliente"]
-        UC3["Listar Clientes"]
-        UC4["Atualizar Cliente"]
-        UC5["Deletar Cliente"]
+    subgraph Sistema["Entity Service"]
+        UC1["Criar Entity"]
+        UC2["Buscar Entity"]
+        UC3["Listar Entities"]
+        UC4["Atualizar Entity"]
+        UC5["Deletar Entity"]
     end
 
     Client --> UC1
@@ -41,7 +41,6 @@ flowchart LR
     Admin --> UC4
     Admin --> UC5
 
-    UC1 -.->|valida| CPF["Validar CPF"]
     UC1 -.->|valida| Email["Validar Email"]
     UC1 -.->|gera| ID["Gerar ULID"]
 ```
@@ -50,11 +49,11 @@ flowchart LR
 
 | Caso de Uso | Ator | Descrição |
 |---|---|---|
-| **Criar Cliente** | API Client | Cadastra novo cliente com validação de CPF/Email |
-| **Buscar Cliente** | API Client | Retorna dados de um cliente por ID |
-| **Listar Clientes** | API Client | Lista clientes com paginação e filtros |
-| **Atualizar Cliente** | Admin | Atualiza dados de um cliente existente |
-| **Deletar Cliente** | Admin | Realiza soft delete (active=false) |
+| **Criar Entity** | API Client | Cadastra nova entity com validação de email e geração de ULID |
+| **Buscar Entity** | API Client | Retorna dados de uma entity por ID (com cache) |
+| **Listar Entities** | API Client | Lista entities com paginação e filtros (nome, email, active) |
+| **Atualizar Entity** | Admin | Atualiza dados (nome, email) de uma entity existente |
+| **Deletar Entity** | Admin | Realiza soft delete (active=false) |
 
 ---
 
@@ -65,31 +64,33 @@ flowchart TB
     subgraph External["🌐 Camada Externa"]
         HTTP["HTTP Request"]
         DB[("PostgreSQL")]
+        Redis[("Redis Cache")]
         OTEL["OpenTelemetry Collector"]
     end
 
     subgraph Infrastructure["⚙️ Infrastructure Layer"]
         direction TB
-        Handler["Handler\n(person.go)"]
+        Handler["EntityHandler\n(handler/entity.go)"]
         Middlewares["Middlewares\n(Logger, CORS, Idempotency)"]
-        RepoImpl["PersonRepository\n(person_repo.go)"]
-        Telemetry["Telemetry\n(telemetry.go)"]
+        RepoImpl["EntityRepository\n(repository/entity.go)"]
+        CacheImpl["RedisCache\n(cache/redis.go)"]
+        Telemetry["Telemetry\n(otel.go)"]
     end
 
     subgraph Application["📦 Application Layer"]
         direction TB
-        CreateUC["CreatePerson\nUseCase"]
-        GetUC["GetPerson\nUseCase"]
-        ListUC["ListPersons\nUseCase"]
-        UpdateUC["UpdatePerson\nUseCase"]
-        DeleteUC["DeletePerson\nUseCase"]
+        CreateUC["CreateUseCase"]
+        GetUC["GetUseCase"]
+        ListUC["ListUseCase"]
+        UpdateUC["UpdateUseCase"]
+        DeleteUC["DeleteUseCase"]
         DTOs["DTOs\n(Input/Output)"]
     end
 
     subgraph Domain["💎 Domain Layer"]
         direction TB
-        Entity["Person\nEntity"]
-        VOs["Value Objects\n(ID, CPF, Email)"]
+        Entity["Entity\nAggregate"]
+        VOs["Value Objects\n(ID, Email)"]
         RepoInterface["Repository\nInterface"]
         Errors["Domain Errors"]
     end
@@ -105,6 +106,9 @@ flowchart TB
     
     RepoInterface -.->|implementa| RepoImpl
     RepoImpl --> DB
+    RepoImpl --> CacheImpl
+    
+    CacheImpl --> Redis
     
     Handler --> Telemetry
     Telemetry --> OTEL
@@ -129,7 +133,7 @@ O **Domain** não conhece nenhuma outra camada. O **Application** conhece apenas
 
 ## Diagramas de Sequência
 
-### 1. Criar Cliente
+### 1. Criar Entity
 
 ```mermaid
 sequenceDiagram
@@ -143,7 +147,7 @@ sequenceDiagram
     participant R as Repository
     participant DB as PostgreSQL
 
-    Client->>+MW: POST /people<br/>X-Idempotency-Key: abc123<br/>{name, document, email}
+    Client->>+MW: POST /entities<br/>X-Idempotency-Key: abc123<br/>{name, email}
     
     Note over MW: Logger: gera X-Request-ID
     Note over MW: OTEL: inicia span
@@ -154,14 +158,6 @@ sequenceDiagram
     H->>H: Bind JSON → InputDTO
     H->>+UC: Execute(ctx, InputDTO)
 
-    UC->>+VO: NewCPF(document)
-    alt CPF inválido
-        VO-->>UC: ErrInvalidCPF
-        UC-->>H: error
-        H-->>Client: 400 Bad Request
-    end
-    VO-->>-UC: CPF (validado)
-
     UC->>+VO: NewEmail(email)
     alt Email inválido
         VO-->>UC: ErrInvalidEmail
@@ -170,14 +166,14 @@ sequenceDiagram
     end
     VO-->>-UC: Email (validado)
 
-    UC->>+E: NewPerson(name, cpf, email)
+    UC->>+E: NewEntity(name, email)
     Note over E: Gera ULID<br/>Define timestamps<br/>Active = true
-    E-->>-UC: Person Entity
+    E-->>-UC: Entity
 
-    UC->>+R: Create(ctx, person)
+    UC->>+R: Create(ctx, entity)
     R->>R: fromEntity() → DB Model
-    R->>+DB: INSERT INTO people...
-    alt CPF duplicado
+    R->>+DB: INSERT INTO entities...
+    alt Email duplicado
         DB-->>R: unique_violation
         R-->>UC: error
         UC-->>H: error
@@ -197,7 +193,7 @@ sequenceDiagram
 
 ---
 
-### 2. Buscar Cliente por ID
+### 2. Buscar Entity por ID
 
 ```mermaid
 sequenceDiagram
@@ -205,43 +201,43 @@ sequenceDiagram
     actor Client
     participant H as Handler
     participant UC as GetUseCase
-    participant VO as Value Objects
+    participant C as Redis Cache
     participant R as Repository
     participant DB as PostgreSQL
 
-    Client->>+H: GET /people/{id}
+    Client->>+H: GET /entities/{id}
 
     H->>+UC: Execute(ctx, InputDTO{ID})
 
-    UC->>+VO: ParseID(id)
-    alt ID inválido (não é ULID)
-        VO-->>UC: error
-        UC-->>H: error
-        H-->>Client: 400 Bad Request
+    UC->>+C: Get(ctx, "entity:{id}")
+    alt Cache Hit
+        C-->>UC: Entity JSON
+        UC-->>H: OutputDTO (from cache)
+        H-->>Client: 200 OK
+    else Cache Miss
+        C-->>-UC: nil
+        
+        UC->>+R: FindByID(ctx, id)
+        R->>+DB: SELECT * FROM entities WHERE id = $1
+        alt Não encontrado
+            DB-->>R: sql.ErrNoRows
+            R-->>UC: ErrEntityNotFound
+            UC-->>H: error
+            H-->>Client: 404 Not Found
+        end
+        DB-->>-R: entityDB
+        R-->>-UC: Entity
+        
+        UC->>C: Set(ctx, "entity:{id}", Entity JSON)
+        
+        UC-->>-H: OutputDTO
+        H-->>-Client: 200 OK
     end
-    VO-->>-UC: ID (validado)
-
-    UC->>+R: FindByID(ctx, id)
-    R->>+DB: SELECT * FROM people WHERE id = $1
-    alt Não encontrado
-        DB-->>R: sql.ErrNoRows
-        R-->>UC: ErrPersonNotFound
-        UC-->>H: error
-        H-->>Client: 404 Not Found
-    end
-    DB-->>-R: personDB
-    R->>R: toEntity() → Person
-    R-->>-UC: Person Entity
-
-    UC->>UC: Entity → OutputDTO
-    UC-->>-H: OutputDTO
-
-    H-->>-Client: 200 OK<br/>{id, name, document, email, ...}
 ```
 
 ---
 
-### 3. Listar Clientes
+### 3. Listar Entities
 
 ```mermaid
 sequenceDiagram
@@ -252,8 +248,8 @@ sequenceDiagram
     participant R as Repository
     participant DB as PostgreSQL
 
-    Client->>+H: GET /people?page=1&limit=10&name=João
-
+    Client->>+H: GET /entities?page=1&limit=10&name=Test
+    
     H->>H: Bind Query → InputDTO
     H->>+UC: Execute(ctx, InputDTO)
 
@@ -264,24 +260,24 @@ sequenceDiagram
     
     R->>R: Build WHERE clause<br/>com filtros dinâmicos
     
-    R->>+DB: SELECT COUNT(*) FROM people WHERE...
+    R->>+DB: SELECT COUNT(*) FROM entities WHERE...
     DB-->>-R: total = 42
     
-    R->>+DB: SELECT * FROM people<br/>WHERE... ORDER BY created_at DESC<br/>LIMIT 10 OFFSET 0
-    DB-->>-R: []personDB
+    R->>+DB: SELECT * FROM entities<br/>WHERE... ORDER BY created_at DESC<br/>LIMIT 10 OFFSET 0
+    DB-->>-R: []entityDB
     
     R->>R: toEntity() para cada item
-    R-->>-UC: ListResult{people, total, page, limit}
+    R-->>-UC: ListResult{entities, total, page, limit}
 
     UC->>UC: Entities → OutputDTO
-    UC-->>-H: OutputDTO{people, pagination}
+    UC-->>-H: OutputDTO{data, pagination}
 
-    H-->>-Client: 200 OK<br/>{people: [...], pagination: {...}}
+    H-->>-Client: 200 OK
 ```
 
 ---
 
-### 4. Atualizar Cliente
+### 4. Atualizar Entity
 
 ```mermaid
 sequenceDiagram
@@ -291,42 +287,41 @@ sequenceDiagram
     participant UC as UpdateUseCase
     participant VO as Value Objects
     participant R as Repository
+    participant C as Redis Cache
     participant DB as PostgreSQL
 
-    Admin->>+H: PUT /people/{id}<br/>{name, email, address}
+    Admin->>+H: PUT /entities/{id}<br/>{name, email}
 
     H->>H: Bind JSON → InputDTO
-    H->>H: req.ID = c.Param("id")
     H->>+UC: Execute(ctx, InputDTO)
 
     UC->>+R: FindByID(ctx, id)
     alt Não encontrado
-        R-->>UC: ErrPersonNotFound
+        R-->>UC: ErrEntityNotFound
         UC-->>H: error
         H-->>Admin: 404 Not Found
     end
-    R-->>-UC: Person Entity
+    R-->>-UC: Entity
 
     opt Email alterado
         UC->>+VO: NewEmail(newEmail)
         VO-->>-UC: Email (validado)
-        UC->>UC: person.UpdateEmail(email)
+        UC->>UC: entity.UpdateEmail(email)
     end
 
     opt Nome alterado
-        UC->>UC: person.UpdateName(name)
-    end
-
-    opt Endereço alterado
-        UC->>UC: person.SetAddress(address)
+        UC->>UC: entity.UpdateName(name)
     end
 
     Note over UC: UpdatedAt = time.Now()
 
-    UC->>+R: Update(ctx, person)
-    R->>+DB: UPDATE people SET... WHERE id = $1
+    UC->>+R: Update(ctx, entity)
+    R->>+DB: UPDATE entities SET... WHERE id = $1
     DB-->>-R: rowsAffected = 1
     R-->>-UC: nil
+    
+    UC->>C: Delete(ctx, "entity:{id}")
+    Note over C: Invalida cache
 
     UC-->>-H: OutputDTO
 
@@ -335,7 +330,7 @@ sequenceDiagram
 
 ---
 
-### 5. Deletar Cliente (Soft Delete)
+### 5. Deletar Entity (Soft Delete)
 
 ```mermaid
 sequenceDiagram
@@ -344,29 +339,33 @@ sequenceDiagram
     participant H as Handler
     participant UC as DeleteUseCase
     participant R as Repository
+    participant C as Redis Cache
     participant DB as PostgreSQL
 
-    Admin->>+H: DELETE /people/{id}
+    Admin->>+H: DELETE /entities/{id}
 
     H->>+UC: Execute(ctx, InputDTO{ID})
 
     UC->>+R: Delete(ctx, id)
     
-    R->>+DB: UPDATE people<br/>SET active = false, updated_at = now()<br/>WHERE id = $1 AND active = true
+    R->>+DB: UPDATE entities<br/>SET active = false, updated_at = now()<br/>WHERE id = $1 AND active = true
     
     alt Não encontrado ou já deletado
         DB-->>R: rowsAffected = 0
-        R-->>UC: ErrPersonNotFound
+        R-->>UC: ErrEntityNotFound
         UC-->>H: error
         H-->>Admin: 404 Not Found
     end
     
     DB-->>-R: rowsAffected = 1
     R-->>-UC: nil
+    
+    UC->>C: Delete(ctx, "entity:{id}")
+    Note over C: Invalida cache
 
     UC-->>-H: OutputDTO{success: true}
 
-    H-->>-Admin: 200 OK<br/>{deleted: true}
+    H-->>-Admin: 200 OK
 ```
 
 ---
@@ -397,8 +396,8 @@ flowchart LR
     end
 
     JSON -->|"ShouldBindJSON()"| InputDTO
-    InputDTO -->|"vo.NewCPF()"| VOs
-    VOs -->|"NewPerson()"| Entity
+    InputDTO -->|"vo.NewEmail()"| VOs
+    VOs -->|"NewEntity()"| Entity
     Entity -->|"fromEntity()"| DBModel
     DBModel -->|"toEntity()"| Entity
     Entity -->|"→ OutputDTO"| Response
@@ -411,12 +410,12 @@ flowchart LR
 
 | Camada | Tipo de Dado | Exemplo |
 |---|---|---|
-| **HTTP** | JSON string | `{"document": "529.982.247-25"}` |
-| **Handler** | InputDTO (primitivos) | `Document string` |
-| **UseCase** | Value Object (validado) | `vo.CPF{value: "52998224725"}` |
-| **Entity** | Agregado completo | `Person{CPF, Email, ID, ...}` |
-| **Repository** | DB Model (nullable) | `personDB{Document: "52998224725"}` |
-| **Database** | SQL | `document VARCHAR(11)` |
+| **HTTP** | JSON string | `{"name": "Alice", "email": "alice@example.com"}` |
+| **Handler** | InputDTO (primitivos) | `dto.CreateInput{Name: "Alice"}` |
+| **UseCase** | Value Object (validado) | `vo.Email{value: "alice@example.com"}` |
+| **Entity** | Agregado completo | `Entity{ID, Name, Email, Active...}` |
+| **Repository** | DB Model (nullable) | `entityDB{Name: "Alice", Email: "..."}` |
+| **Database** | SQL | `name VARCHAR(255)` |
 
 ---
 
@@ -425,45 +424,42 @@ flowchart LR
 ```
 internal/
 ├── domain/                    # 💎 Camada de Domínio
-│   └── person/
-│       ├── entity.go          # Entidade Person
-│       ├── repository.go      # Interface Repository
+│   └── entity/
+│       ├── entity.go          # Agredate Entity
 │       ├── errors.go          # Erros de domínio
 │       ├── filter.go          # Filtros de listagem
 │       └── vo/                # Value Objects
 │           ├── id.go          # ULID
-│           ├── cpf.go         # CPF (MOD 11)
 │           ├── email.go       # Email (RFC 5322)
-│           └── address.go     # Endereço
+│           └── errors.go      # Erros de VO
 │
-├── usecase/                   # 📦 Camada de Aplicação
-│   ├── create_person/
-│   │   ├── dto.go             # Input/Output DTOs
-│   │   └── usecase.go         # Lógica de orquestração
-│   ├── get_person/
-│   ├── list_people/
-│   ├── update_person/
-│   └── delete_person/
+├── usecases/                  # 📦 Camada de Aplicação
+│   └── entity/
+│       ├── create.go          # Use Case de Criação
+│       ├── get.go             # Use Case de Leitura
+│       ├── list.go            # Use Case de Listagem
+│       ├── update.go          # Use Case de Atualização
+│       ├── delete.go          # Use Case de Remoção
+│       ├── dto/               # Input/Output DTOs
+│       └── interfaces/        # Interfaces (Repository, Cache)
 │
 ├── infrastructure/            # ⚙️ Camada de Infraestrutura
+│   ├── cache/
+│   │   └── redis.go           # Implementação Redis
 │   ├── db/
-│   │   ├── postgres.go        # Conexão com banco
-│   │   └── repository/
-│   │       └── person_repo.go  # Implementação do Repository
+│   │   ├── postgres/          # Implementação Postgres
+│   │   │   ├── repository/
+│   │   │   └── migration/
 │   ├── web/
 │   │   ├── handler/
-│   │   │   └── person.go    # HTTP Handlers
-│   │   └── middleware/
-│   │       ├── logger.go      # Logging estruturado
-│   │       ├── idempotency.go # Idempotência
+│   │   │   └── entity.go      # HTTP Hanlders
+│   │   ├── middleware/        # Middlewares (Logger, Auth, etc)
+│   │   └── router/            # Rotas Gin
 │   └── telemetry/
 │       └── otel.go            # OpenTelemetry setup
 │
-├── server/
-│   └── server.go              # Bootstrap e DI
-│
-└── pkg/
-    └── apperror/              # Erros de aplicação
+├── cmd/api/                   # Entrypoint
+└── config/                    # Configurações
 ```
 
 ---
