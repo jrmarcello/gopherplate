@@ -42,6 +42,13 @@ Um boilerplate para ser usado como base para criar microservices em Go.
 - [x] Revisar arquivos swagger (não estamos em licença MIT)
 - [x] Add nas docs um arquivo explicando o por que de usar ulid e suas vantagens em relação a uuid
 - [x] Abilitar o endpoint de listagem (eu avia desabilitado)
-- [ ]
-
 - [x] Add instrucoes sobre como contribuir e propor melhorias no projeto
+
+- [ ] Remover referencias a people registry, people e person do projeto
+- [ ] refatorar docs sobre o projeto
+
+- [ ] criar uma estrategia de conexao com o banco desacoplada... vamos add uma conexao com banco de dados SQLite e novos repositorio para ele
+- [ ] Revisar estratgegia de cache
+- [ ] Criar estrategia para exemplo de idempotencia
+- [ ] Add exemplo de rate limiting
+- [ ] Add exemplo auth
