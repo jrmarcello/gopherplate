@@ -12,6 +12,9 @@ metadata:
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]' # Ajustar para cada aplicação
     alb.ingress.kubernetes.io/scheme: internal
     alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/group.name: "eks-homologacao"
+    alb.ingress.kubernetes.io/healthcheck-path: "/health"
+    alb.ingress.kubernetes.io/tags: "Environment=homologacao,Service=eks,finops-env=homologacao,finops-service=eks,finops-workload=eks-apps,finops-cost-center=engenharia-de-software"
 
 spec:
   ingressClassName: alb
