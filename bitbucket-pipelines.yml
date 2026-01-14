@@ -1,29 +1,31 @@
-image: golang:1.25.4-trixie
+image: golang:1.25-alpine
 
 pipelines:
-  branches:
-    develop:
+  pull-requests:
+    "**":
       - step:
-          name: Build binary (Go)
+          name: Lint & Test
           caches:
             - go-mod
             - go-pkg
+          services:
+            - docker
           script:
-            - apt-get update && apt-get install -y git
-            - go version
-            - go env GOPATH
-            - cd $BITBUCKET_CLONE_DIR
-            # baixa modules (cacheado)
+            - apk add --no-cache git gcc musl-dev
             - go mod download
-            - go run github.com/swaggo/swag/cmd/swag@latest init -g cmd/api/main.go -o docs --parseDependency --parseInternal
-            # build do binário (baixo paralelismo pra evitar OOM)
-            - GOMAXPROCS=1 CGO_ENABLED=1 GOOS=linux go build -p 1 -ldflags="-s -w" -o main ./cmd/api
-            - ls -lh main
+            - go install github.com/swaggo/swag/cmd/swag@latest
+            - swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal
+            - go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+            - golangci-lint run ./...
+            - go test ./internal/... -v -race -coverprofile=coverage.out
+            - go tool cover -func=coverage.out | tail -1
           artifacts:
-            - main
+            - coverage.out
 
+  branches:
+    develop:
       - step:
-          name: Build and Push Docker Image (ECR)
+          name: Build & Push Docker Image
           deployment: develop
           image: amazon/aws-cli:2.17.0
           services:
@@ -32,66 +34,29 @@ pipelines:
             - export DOCKER_BUILDKIT=1
             - export AWS_DEFAULT_REGION=$AWS_REGION
             - export IMAGE_NAME=go-$ECR_REPOSITORY:$BITBUCKET_BUILD_NUMBER
-
-            # Login no ECR
             - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-
-            # Prepara contexto de build com o binário já compilado
-            - mkdir -p docker-context
-            - ls -lh main
-            - if [ ! -f main ]; then echo 'Arquivo main não encontrado!'; exit 1; fi
-            - cp main config.yaml docker-context/ || true   # se config opcional, evita falha
-            - mkdir -p docker-context/internal/infrastructure
-            - cp -r internal/infrastructure/db docker-context/internal/infrastructure/
-            - cp Dockerfile docker-context/
-
-            # Build e push da imagem
-            - docker build -t $IMAGE_NAME docker-context
+            - docker build --file docker/Dockerfile -t $IMAGE_NAME --build-arg VERSION=$BITBUCKET_BUILD_NUMBER --progress=plain .
             - docker tag $IMAGE_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:go-$BITBUCKET_BUILD_NUMBER
             - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:go-$BITBUCKET_BUILD_NUMBER
 
       - step:
-          name: Atualiza tag da imagem de Homologação
+          name: Update Hom Tag
           image: alpine:3.18
           script:
             - apk add --no-cache git yq
             - git config --global user.name "$BITBUCKET_USERNAME"
             - git config --global user.email "$BITBUCKET_USERNAME_EMAIL"
-            # Clona o próprio repositório
             - git clone --branch develop "https://${BITBUCKET_USERNAME}:${BITBUCKET_APP_PASSWORD}@bitbucket.org/${BITBUCKET_REPO_FULL_NAME}.git" repo
             - cd repo
-
-            # Atualiza a tag da imagem no kustomization.yaml
             - yq -i '.images[0].newTag = "go-'$BITBUCKET_BUILD_NUMBER'"' deploy/overlays/homologacao/kustomization.yaml
-
-            # Commit e push (sem disparar o pipeline novamente)
             - git add deploy/overlays/homologacao/kustomization.yaml
             - git commit -m "Alterando tag da imagem [skip ci]"
             - git push origin develop
-          
+
     main:
       - step:
-          name: Build binary (Go)
-          caches:
-            - go-mod
-            - go-pkg
-          script:
-            - apt-get update && apt-get install -y git
-            - go version
-            - go env GOPATH
-            - cd $BITBUCKET_CLONE_DIR
-            # baixa modules (cacheado)
-            - go mod download
-            - go run github.com/swaggo/swag/cmd/swag@latest init -g cmd/main.go -o docs
-            # build do binário (baixo paralelismo pra evitar OOM)
-            - GOMAXPROCS=1 CGO_ENABLED=1 GOOS=linux go build -p 1 -ldflags="-s -w" -o main ./cmd
-            - ls -lh main
-          artifacts:
-            - main
-
-      - step:
-          name: Build and Push Docker Image (ECR)
-          deployment: main
+          name: Build & Push Docker Image
+          deployment: production
           image: amazon/aws-cli:2.17.0
           services:
             - docker
@@ -99,44 +64,30 @@ pipelines:
             - export DOCKER_BUILDKIT=1
             - export AWS_DEFAULT_REGION=$AWS_REGION
             - export IMAGE_NAME=go-$ECR_REPOSITORY:$BITBUCKET_BUILD_NUMBER
-
-            # Login no ECR
             - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-
-            # Prepara contexto de build com o binário já compilado
-            - mkdir -p docker-context
-            - ls -lh main
-            - if [ ! -f main ]; then echo 'Arquivo main não encontrado!'; exit 1; fi
-            - cp main config.yaml docker-context/ || true   # se config opcional, evita falha
-            - cp Dockerfile docker-context/
-
-            # Build e push da imagem
-            - docker build -t $IMAGE_NAME docker-context
+            - docker build --file docker/Dockerfile -t $IMAGE_NAME --build-arg VERSION=$BITBUCKET_BUILD_NUMBER --progress=plain .
             - docker tag $IMAGE_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:go-$BITBUCKET_BUILD_NUMBER
             - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:go-$BITBUCKET_BUILD_NUMBER
-                  
+
       - step:
-          name: Atualiza tag da imagem no overlay de produção
+          name: Update Prd Tag
           image: alpine:3.18
           script:
             - apk add --no-cache git yq
             - git config --global user.name "$BITBUCKET_USERNAME"
             - git config --global user.email "$BITBUCKET_USERNAME_EMAIL"
-
-            # Clona o próprio repositório
             - git clone --branch main "https://${BITBUCKET_USERNAME}:${BITBUCKET_APP_PASSWORD}@bitbucket.org/${BITBUCKET_REPO_FULL_NAME}.git" repo
             - cd repo
-
-            # Atualiza a tag da imagem no kustomization.yaml
             - yq -i '.images[0].newTag = "go-'$BITBUCKET_BUILD_NUMBER'"' deploy/overlays/producao/kustomization.yaml
-
-            # Commit e push (sem disparar o pipeline novamente)
             - git add deploy/overlays/producao/kustomization.yaml
             - git commit -m "Alterando tag da imagem [skip ci]"
             - git push origin main
-
 
 definitions:
   caches:
     go-mod: ~/.cache/go-build
     go-pkg: /go/pkg/mod
+
+  services:
+    docker:
+      memory: 2048
