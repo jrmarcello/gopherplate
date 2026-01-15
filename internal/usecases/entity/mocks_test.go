@@ -79,3 +79,8 @@ func (m *MockCache) Delete(ctx context.Context, key string) error {
 	args := m.Called(ctx, key)
 	return args.Error(0)
 }
+
+func (m *MockCache) Ping(ctx context.Context) error {
+	args := m.Called(ctx)
+	return args.Error(0)
+}

@@ -1,18 +1,7 @@
 package interfaces
 
-import (
-	"context"
-)
+import sharedinterfaces "bitbucket.org/appmax-space/ms-boilerplate-go/internal/domain/shared/interfaces"
 
-// Cache define o contrato para caching de dados.
-type Cache interface {
-	// Get recupera um valor do cache e deserializa em dest.
-	// Retorna erro se a chave não existir.
-	Get(ctx context.Context, key string, dest interface{}) error
-
-	// Set armazena um valor no cache com TTL configurado.
-	Set(ctx context.Context, key string, value interface{}) error
-
-	// Delete remove uma chave do cache.
-	Delete(ctx context.Context, key string) error
-}
+// Cache é um alias para a interface compartilhada de cache.
+// Mantido para backward compatibility com código existente.
+type Cache = sharedinterfaces.Cache

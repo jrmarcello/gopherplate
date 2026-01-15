@@ -112,3 +112,11 @@ func (r *RedisClient) Close() error {
 	}
 	return r.client.Close()
 }
+
+// Ping checks the Redis connection health.
+func (r *RedisClient) Ping(ctx context.Context) error {
+	if r == nil {
+		return nil // nil client means cache is disabled, not an error
+	}
+	return r.client.Ping(ctx).Err()
+}
