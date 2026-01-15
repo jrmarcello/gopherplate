@@ -1,85 +1,89 @@
 package config
 
 import (
-	"strings"
+	"os"
+	"strconv"
 	"time"
 
-	"github.com/spf13/viper"
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Server ServerConfig `mapstructure:"server"`
-	DB     DBConfig     `mapstructure:"db"`
-	Otel   OtelConfig   `mapstructure:"otel"`
-	Redis  RedisConfig  `mapstructure:"redis"`
+	Server ServerConfig
+	DB     DBConfig
+	Otel   OtelConfig
+	Redis  RedisConfig
 }
 
 type ServerConfig struct {
-	Port string `mapstructure:"port"`
+	Port string
 }
 
 type DBConfig struct {
 	// Formato Postgres: postgres://user:password@host:port/database?sslmode=disable
-	DSN string `mapstructure:"dsn"`
+	DSN string
 }
 
 type OtelConfig struct {
-	ServiceName  string `mapstructure:"service_name"`
-	CollectorURL string `mapstructure:"collector_url"`
+	ServiceName  string
+	CollectorURL string
 }
 
 type RedisConfig struct {
-	URL     string `mapstructure:"url"`
-	TTL     string `mapstructure:"ttl"` // ex: "5m", "1h"
-	Enabled bool   `mapstructure:"enabled"`
+	URL     string
+	TTL     string // ex: "5m", "1h"
+	Enabled bool
 }
 
-// Load configurations using Viper.
-// Priority:
-// 1. Environment Variables
-// 2. Config File (config.yaml)
-// 3. Defaults
+// Load configura a aplicação lendo do ambiente.
+// Prioridade:
+// 1. Variáveis de Ambiente (maior prioridade)
+// 2. Arquivo .env (desenvolvimento local)
+// 3. Defaults (fallback seguro)
 func Load() (*Config, error) {
-	v := viper.New()
+	// Carrega .env se existir (ignora erro se não existir)
+	_ = godotenv.Load()
 
-	// 1. Set Defaults
-	setDefaults(v)
+	return &Config{
+		Server: ServerConfig{
+			Port: getEnv("SERVER_PORT", "8080"),
+		},
+		DB: DBConfig{
+			DSN: getEnv("DB_DSN", "postgres://user:password@localhost:5432/entities?sslmode=disable"),
+		},
+		Otel: OtelConfig{
+			ServiceName:  getEnv("OTEL_SERVICE_NAME", "entity-service"),
+			CollectorURL: getEnv("OTEL_COLLECTOR_URL", ""),
+		},
+		Redis: RedisConfig{
+			URL:     getEnv("REDIS_URL", "redis://localhost:6379"),
+			TTL:     getEnv("REDIS_TTL", "5m"),
+			Enabled: getEnvBool("REDIS_ENABLED", false),
+		},
+	}, nil
+}
 
-	// 2. Load from file (optional)
-	v.SetConfigFile(".env") // explicit file path
-	v.SetConfigType("env")  // proper format
-	_ = v.ReadInConfig()    // ignore error if config file not found
-
-	// 3. Load from Environment Variables
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	v.AutomaticEnv()
-
-	// Unmarshal into struct
-	var cfg Config
-	if err := v.Unmarshal(&cfg); err != nil {
-		return nil, err
+// getEnv retorna o valor da variável de ambiente ou o fallback se não existir.
+func getEnv(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
 	}
-
-	return &cfg, nil
+	return fallback
 }
 
-func setDefaults(v *viper.Viper) {
-	// Server
-	v.SetDefault("server.port", "8080")
-
-	// DB
-	v.SetDefault("db.dsn", "postgres://user:password@localhost:5432/entities?sslmode=disable")
-
-	// Otel
-	v.SetDefault("otel.service_name", "entity-service")
-	v.SetDefault("otel.collector_url", "")
-
-	// Redis
-	v.SetDefault("redis.url", "redis://localhost:6379")
-	v.SetDefault("redis.ttl", "5m")
-	v.SetDefault("redis.enabled", false)
+// getEnvBool retorna o valor booleano da variável de ambiente ou o fallback.
+func getEnvBool(key string, fallback bool) bool {
+	if value := os.Getenv(key); value != "" {
+		parsed, err := strconv.ParseBool(value)
+		if err != nil {
+			return fallback
+		}
+		return parsed
+	}
+	return fallback
 }
 
+// GetRedisTTL retorna o TTL do Redis como time.Duration.
 func (c *Config) GetRedisTTL() time.Duration {
 	d, err := time.ParseDuration(c.Redis.TTL)
 	if err != nil {

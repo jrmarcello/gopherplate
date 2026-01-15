@@ -24,7 +24,7 @@ Um boilerplate para ser usado como base para criar microservices em Go.
 - [x] Deploy Ready com Docker, hot reload e health checks incluídos
 - [x] SQLx otimizado
 - [x] Migrações - Sistema de migrações com Goose
-- [x] Configuração Flexível - Viper com suporte a arquivos e variáveis de ambiente
+- [x] Configuração Flexível - godotenv + `os` com suporte a .env e variáveis de ambiente
 - [x] Logging Inteligente - Sistema avançado com correlação automática de traces
 - [x] Observabilidade Completa - OpenTelemetry integrado (traces, métricas, logs)
 - [x] Gin para performance e praticidade de (Middleware Ecosystem: Idempotency, CORS, Rate Limiting, Cahche, etc...)

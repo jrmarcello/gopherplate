@@ -115,7 +115,7 @@ func NewCreateUseCase() *CreateUseCase {
 
 | Ambiente | Fonte | Arquivo |
 | -------- | ----- | ------- |
-| Local (Go) | Viper + Defaults | `.env` (opcional) |
+| Local (Go) | godotenv + `os` | `.env` (opcional) |
 | Local (Docker) | Docker Compose | `.env` |
 | Kubernetes | ConfigMap | `deploy/overlays/*/configmap.yaml` |
 
@@ -142,7 +142,7 @@ make help          # Ver todos os comandos
 | Arquivo | Sobre |
 | ------- | ----- |
 | `docs/adr/clean-architecture.md` | Estrutura de camadas e DI |
-| `docs/adr/config-strategy.md` | Viper + .env + K8s |
+| `docs/adr/config-strategy.md` | godotenv + .env + K8s |
 | `docs/adr/error-handling.md` | Tratamento de erros em camadas |
 | `docs/adr/ulid.md` | Por que ULID ao invés de UUID |
 

@@ -64,7 +64,7 @@ make dev      # Hot reload
 
 ```text
 ├── cmd/api/              # Entrypoint
-├── config/               # Configuração (Viper)
+├── config/               # Configuração (godotenv)
 ├── deploy/               # Kubernetes manifests (Kustomize)
 │   ├── base/
 │   └── overlays/
@@ -133,7 +133,7 @@ make kind-deploy    # Kubernetes local (Kind)
 | ADR | Sobre |
 | --- | ----- |
 | [clean-architecture.md](docs/adr/clean-architecture.md) | Estrutura de camadas e DI |
-| [config-strategy.md](docs/adr/config-strategy.md) | Viper + .env + Kubernetes |
+| [config-strategy.md](docs/adr/config-strategy.md) | godotenv + .env + Kubernetes |
 | [error-handling.md](docs/adr/error-handling.md) | Erros em camadas |
 | [ulid.md](docs/adr/ulid.md) | Por que ULID ao invés de UUID |
 

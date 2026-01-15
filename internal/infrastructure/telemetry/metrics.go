@@ -66,9 +66,9 @@ func setupMetrics(serviceName string) (*Metrics, error) {
 	}
 
 	m := &Metrics{
-		EntitiesCreated:     entitiesCreated,
-		EntitiesUpdated:     entitiesUpdated,
-		EntitiesDeleted:     entitiesDeleted,
+		EntitiesCreated:   entitiesCreated,
+		EntitiesUpdated:   entitiesUpdated,
+		EntitiesDeleted:   entitiesDeleted,
 		OperationDuration: operationDuration,
 	}
 

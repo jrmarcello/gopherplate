@@ -9,7 +9,7 @@ import (
 )
 
 func TestLoad(t *testing.T) {
-	// Setup env vars for test - Viper AutomaticEnv maps these!
+	// Setup env vars for test - os.Getenv reads these!
 	// Struct structure: Server.Port -> SERVER_PORT
 	os.Setenv("SERVER_PORT", "9090")
 	// DB.DSN -> DB_DSN
