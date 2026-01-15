@@ -24,8 +24,9 @@ RUN go install github.com/swaggo/swag/cmd/swag@latest && \
 # CGO_ENABLED=0: Pure Go build (no C dependencies)
 # -ldflags="-s -w": Strip debug info for smaller binary
 # -trimpath: Remove file system paths from binary
+ARG VERSION=dev
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
-    -ldflags="-s -w -X main.Version=${VERSION:-dev}" \
+    -ldflags="-s -w -X main.Version=${VERSION}" \
     -trimpath \
     -o main ./cmd/api
 
@@ -38,10 +39,10 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 FROM gcr.io/distroless/static-debian12:nonroot
 
 # Labels for container metadata
-LABEL org.opencontainers.image.title="people-service-registry" \
-    org.opencontainers.image.description="People and Company Registry API" \
+LABEL org.opencontainers.image.title="ms-boilerplate-go" \
+    org.opencontainers.image.description="Go Boilerplate API - Clean Architecture" \
     org.opencontainers.image.vendor="Appmax" \
-    org.opencontainers.image.source="https://bitbucket.org/appmax-space/people-service-registry"
+    org.opencontainers.image.source="https://bitbucket.org/appmax-space/ms-boilerplate-go"
 
 WORKDIR /app
 

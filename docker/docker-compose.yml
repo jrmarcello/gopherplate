@@ -1,37 +1,6 @@
-services:
-  # ============================================
-  # API
-  # ============================================
-  ms-boilerplate-go-api:
-    container_name: boilerplate-api
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-    ports:
-      - "${SERVER_PORT:-8080}:8080"
-    environment:
-      - DB_DSN=postgres://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@ms-boilerplate-go-db:5432/${POSTGRES_DB:-dbname}?sslmode=disable
-      - SERVER_PORT=8080
-      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-ms-boilerplate-go}
-      - OTEL_COLLECTOR_URL=${OTEL_COLLECTOR_URL:-otel-collector:4317}
-    depends_on:
-      ms-boilerplate-go-db:
-        condition: service_healthy
-    healthcheck:
-      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:8080/health" ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    restart: unless-stopped
-    networks:
-      - default
-    deploy:
-      resources:
-        limits:
-          cpus: "1"
-          memory: 512M
+name: go-boilerplate
 
+services:
   # ============================================
   # DATABASE
   # ============================================
@@ -43,11 +12,11 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      POSTGRES_DB: ${POSTGRES_DB:-dbname}
+      POSTGRES_DB: ${POSTGRES_DB:-entities}
     volumes:
       - ms-boilerplate-go-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-dbname}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-entities}" ]
       interval: 5s
       timeout: 5s
       retries: 5
