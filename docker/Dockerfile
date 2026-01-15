@@ -1,46 +1,65 @@
-# Build Stage
-FROM golang:1.24-alpine AS builder
+# =============================================================================
+# Stage 1: Builder
+# =============================================================================
+# Using Alpine for smaller base image and faster downloads
+FROM golang:1.25-alpine AS builder
 
-WORKDIR /build
+# Install git for go mod download (some dependencies may need it)
+RUN apk add --no-cache git ca-certificates tzdata
 
-# Download dependencies first (cache layer)
+WORKDIR /app
+
+# Copy go mod files first for better layer caching
 COPY go.mod go.sum ./
-RUN go mod download
+RUN go mod download && go mod verify
 
+# Copy source code
 COPY . .
 
-# Build static binary
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o main ./cmd/api
+# Generate Swagger docs
+RUN go install github.com/swaggo/swag/cmd/swag@latest && \
+    swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal
+
+# Build the application
+# CGO_ENABLED=0: Pure Go build (no C dependencies)
+# -ldflags="-s -w": Strip debug info for smaller binary
+# -trimpath: Remove file system paths from binary
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-s -w -X main.Version=${VERSION:-dev}" \
+    -trimpath \
+    -o main ./cmd/api
 
 # =============================================================================
-# Production Stage - Appmax Standard
+# Stage 2: Production Runtime
 # =============================================================================
-FROM debian:bullseye-slim@sha256:75e0b7a6158b4cc911d4be07d9f6b8a65254eb8c58df14023c3da5c462335593
+# Using distroless for minimal attack surface
+# - No shell, no package manager, no unnecessary binaries
+# - Only contains: ca-certs, timezone data, /tmp directory
+FROM gcr.io/distroless/static-debian12:nonroot
 
-RUN apt-get update && apt-get install -y git build-essential gcc libc6-dev pkg-config libsqlite3-dev tzdata ca-certificates && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Configura o timezone para São Paulo
-ENV TZ=America/Sao_Paulo
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
-# Create unprivileged user
-RUN mkdir -p /home/appuser && \
-    echo "appuser:x:1000:1000::/home/appuser:/usr/sbin/nologin" >> /etc/passwd && \
-    echo "appuser:x:1000:" >> /etc/group
+# Labels for container metadata
+LABEL org.opencontainers.image.title="people-service-registry" \
+    org.opencontainers.image.description="People and Company Registry API" \
+    org.opencontainers.image.vendor="Appmax" \
+    org.opencontainers.image.source="https://bitbucket.org/appmax-space/people-service-registry"
 
 WORKDIR /app
 
 # Copy binary from builder
-COPY --from=builder /build/main .
+COPY --from=builder /app/main .
 
-# Copy migrations
-COPY --from=builder /build/internal/infrastructure/db/postgres/migration ./migrations
+# Copy migrations (needed for goose at startup)
+COPY --from=builder /app/internal/infrastructure/db/postgres/migration ./migrations
 
-RUN chmod +x main && mkdir -p data && chown -R appuser:appuser /app
-
-USER appuser
-
+# Expose API port
 EXPOSE 8080
 
-CMD ["./main"]
+# Health check endpoint
+# Note: distroless doesn't have curl, so we rely on Kubernetes probes
+# HEALTHCHECK is documented but not functional in distroless
+
+# Run as non-root user (UID 65532 is the nonroot user in distroless)
+USER nonroot:nonroot
+
+# Start the application
+ENTRYPOINT ["./main"]
