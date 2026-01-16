@@ -103,7 +103,7 @@ REDIS_ENABLED=true
 SERVICE_KEYS=myservice:sk_myservice_abc123  # opcional, vazio = dev mode
 ```
 
-Ver: [docs/adr/config-strategy.md](docs/adr/config-strategy.md)
+Ver: [docs/adr/003-config-strategy.md](docs/adr/003-config-strategy.md)
 
 ---
 
@@ -125,7 +125,7 @@ curl -X GET http://localhost:8080/entities \
 | `/swagger/*` | Pública |
 | `/entities/*` | Protegida |
 
-Ver: [docs/adr/service-key-auth.md](docs/adr/service-key-auth.md)
+Ver: [docs/adr/005-service-key-auth.md](docs/adr/005-service-key-auth.md)
 
 ---
 

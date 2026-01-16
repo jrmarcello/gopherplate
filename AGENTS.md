@@ -10,10 +10,10 @@ Este projeto segue **Clean Architecture** e princípios **SOLID**. Consulte os A
 
 | Princípio | Descrição | Referência |
 | --------- | --------- | ---------- |
-| **Clean Architecture** | Separação em camadas com dependências apontando para dentro | `docs/adr/clean-architecture.md` |
-| **Dependency Inversion** | Use Cases definem interfaces; Infrastructure implementa | `docs/adr/clean-architecture.md` |
+| **Clean Architecture** | Separação em camadas com dependências apontando para dentro | `docs/adr/001-clean-architecture.md` |
+| **Dependency Inversion** | Use Cases definem interfaces; Infrastructure implementa | `docs/adr/001-clean-architecture.md` |
 | **Single Responsibility** | Cada arquivo/struct tem uma única responsabilidade | - |
-| **Error Handling** | Erros de domínio são puros; tradução ocorre no handler | `docs/adr/error-handling.md` |
+| **Error Handling** | Erros de domínio são puros; tradução ocorre no handler | `docs/adr/004-error-handling.md` |
 
 ### Estrutura de Camadas
 
@@ -147,7 +147,7 @@ func NewCreateUseCase() *CreateUseCase {
 | Local (Docker) | Docker Compose | `.env` |
 | Kubernetes | ConfigMap | `deploy/overlays/*/configmap.yaml` |
 
-Ver: `docs/adr/config-strategy.md`
+Ver: `docs/adr/003-config-strategy.md`
 
 ---
 
