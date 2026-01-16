@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/domain/entity"
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/domain/entity/vo"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/entity"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/entity/vo"
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"

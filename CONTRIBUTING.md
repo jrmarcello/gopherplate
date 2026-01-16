@@ -5,7 +5,7 @@ Obrigado pelo interesse em contribuir com o **MS Boilerplate Go**!
 ## 🚀 Como começar
 
 1. Faça um **Fork** do projeto.
-2. Clone o seu fork: `git clone https://bitbucket.org/SEU_USUARIO/ms-boilerplate-go`.
+2. Clone o seu fork: `git clone https://bitbucket.org/SEU_USUARIO/go-boilerplate`.
 3. Crie uma branch para sus feature ou fix: `git checkout -b feat/minha-feature`.
 
 ## 🛠️ Desenvolvimento

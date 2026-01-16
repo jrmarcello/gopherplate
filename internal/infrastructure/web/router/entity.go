@@ -3,7 +3,7 @@ package router
 import (
 	"github.com/gin-gonic/gin"
 
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/infrastructure/web/handler"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/web/handler"
 )
 
 // RegisterEntityRoutes registra todas as rotas relacionadas a Entity

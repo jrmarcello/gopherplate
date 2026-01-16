@@ -38,8 +38,8 @@ rm -rf .git && git init
 
 ```bash
 # Substitua em todos os arquivos
-find . -type f -name "*.go" -exec sed -i '' 's|bitbucket.org/appmax-space/ms-boilerplate-go|github.com/sua-org/meu-novo-servico|g' {} +
-sed -i '' 's|bitbucket.org/appmax-space/ms-boilerplate-go|github.com/sua-org/meu-novo-servico|g' go.mod
+find . -type f -name "*.go" -exec sed -i '' 's|bitbucket.org/appmax-space/go-boilerplate|github.com/sua-org/meu-novo-servico|g' {} +
+sed -i '' 's|bitbucket.org/appmax-space/go-boilerplate|github.com/sua-org/meu-novo-servico|g' go.mod
 ```
 
 ### 3. Customize o domínio

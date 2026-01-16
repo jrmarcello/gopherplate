@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: go-boilerplate-migrate
+  labels:
+    app: go-boilerplate
+    component: migrate
+  annotations:
+    # ArgoCD PreSync Hook: runs BEFORE the main Sync
+    argocd.argoproj.io/hook: PreSync
+    # Delete previous Job before creating new one
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  # Job will be considered failed after 3 attempts
+  backoffLimit: 3
+  # Automatically clean up completed jobs after 5 minutes
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: go-boilerplate
+        component: migrate
+    spec:
+      restartPolicy: Never
+      serviceAccountName: go-boilerplate-sa
+      containers:
+        - name: migrate
+          image: go-boilerplate:latest
+          command: ["./migrate"]
+          env:
+            - name: DB_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: go-boilerplate-secrets
+                  key: DB_DSN
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi

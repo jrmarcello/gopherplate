@@ -4,7 +4,7 @@ services:
   # ============================================
   # DATABASE
   # ============================================
-  ms-boilerplate-go-db:
+  go-boilerplate-db:
     container_name: boilerplate-db
     image: postgres:16-alpine
     ports:
@@ -14,7 +14,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       POSTGRES_DB: ${POSTGRES_DB:-entities}
     volumes:
-      - ms-boilerplate-go-db-data:/var/lib/postgresql/data
+      - go-boilerplate-db-data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-entities}" ]
       interval: 5s
@@ -30,14 +30,14 @@ services:
   # ============================================
   # REDIS (Cache)
   # ============================================
-  ms-boilerplate-go-redis:
+  go-boilerplate-redis:
     container_name: boilerplate-redis
     image: redis:7-alpine
     ports:
       - "${REDIS_PORT:-6379}:6379"
     command: redis-server --appendonly yes
     volumes:
-      - ms-boilerplate-go-redis-data:/data
+      - go-boilerplate-redis-data:/data
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
@@ -51,11 +51,11 @@ services:
           memory: 128M
 
 volumes:
-  ms-boilerplate-go-db-data:
-    name: ms-boilerplate-go-db-data
-  ms-boilerplate-go-redis-data:
-    name: ms-boilerplate-go-redis-data
+  go-boilerplate-db-data:
+    name: go-boilerplate-db-data
+  go-boilerplate-redis-data:
+    name: go-boilerplate-redis-data
 
 networks:
   default:
-    name: ms-boilerplate-go-network
+    name: go-boilerplate-network

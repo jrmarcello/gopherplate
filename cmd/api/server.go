@@ -12,15 +12,15 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"bitbucket.org/appmax-space/ms-boilerplate-go/config"
-	docs "bitbucket.org/appmax-space/ms-boilerplate-go/docs"
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/infrastructure/cache"
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/infrastructure/db/postgres"
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/infrastructure/db/postgres/repository"
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/infrastructure/telemetry"
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/infrastructure/web/handler"
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/infrastructure/web/router"
-	entityuc "bitbucket.org/appmax-space/ms-boilerplate-go/internal/usecases/entity"
+	"bitbucket.org/appmax-space/go-boilerplate/config"
+	docs "bitbucket.org/appmax-space/go-boilerplate/docs"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/cache"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/db/postgres"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/db/postgres/repository"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/telemetry"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/web/handler"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/web/router"
+	entityuc "bitbucket.org/appmax-space/go-boilerplate/internal/usecases/entity"
 )
 
 // Start inicializa a aplicação seguindo o padrão de composição:

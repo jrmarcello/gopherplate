@@ -12,10 +12,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/infrastructure/db/postgres/repository"
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/infrastructure/web/handler"
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/infrastructure/web/middleware"
-	entityuc "bitbucket.org/appmax-space/ms-boilerplate-go/internal/usecases/entity"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/db/postgres/repository"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/web/handler"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/web/middleware"
+	entityuc "bitbucket.org/appmax-space/go-boilerplate/internal/usecases/entity"
 )
 
 // setupTestRouter configura o router para testes e2e

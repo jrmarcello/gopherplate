@@ -3,7 +3,7 @@
 # ============================================
 # Customize estas variáveis para seu projeto
 
-APP_NAME := ms-boilerplate-go
+APP_NAME := go-boilerplate
 IMAGE_NAME := $(APP_NAME)-api
 DB_NAME := entities
 
@@ -173,35 +173,47 @@ observability-logs: ## 📈 Mostra logs do OTel Collector
 
 KIND_CLUSTER := $(APP_NAME)-dev
 KIND_NAMESPACE := $(APP_NAME)-dev
-KIND_CONFIGMAP := deploy/overlays/dev-local/configmap.yaml
+KIND_CONFIGMAP := deploy/overlays/develop/configmap.yaml
 KIND_DB_PORT := 5433
 
 kind-up: ## ☸️ Cria cluster Kind com NGINX Ingress
 	@if ! kind get clusters | grep -q $(KIND_CLUSTER); then \
 		echo "📦 Criando cluster kind..."; \
-		kind create cluster --name $(KIND_CLUSTER) --config deploy/overlays/dev-local/kind-config.yaml; \
+		kind create cluster --name $(KIND_CLUSTER) --config deploy/overlays/develop/kind-config.yaml; \
 		echo "🌐 Instalando NGINX Ingress..."; \
 		kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml; \
-		kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=90s; \
+		kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=90s || true; \
 	else \
 		echo "✅ Cluster $(KIND_CLUSTER) já existe"; \
 	fi
 	@kubectl create namespace $(KIND_NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
 	@echo "🐘 Deploying PostgreSQL..."
-	@kubectl apply -n $(KIND_NAMESPACE) -f deploy/overlays/dev-local/kind-postgres.yaml
+	@kubectl apply -n $(KIND_NAMESPACE) -f deploy/overlays/develop/kind-postgres.yaml
 
 kind-down: ## ☸️ Remove cluster Kind
 	kind delete cluster --name $(KIND_CLUSTER)
 
-kind-deploy: docker-build ## ☸️ Build, deploy e migrate no Kind
+kind-deploy: docker-build ## ☸️ Build e deploy no Kind (simula ArgoCD PreSync)
 	@echo "📤 Loading image into kind..."
 	@docker tag $(IMAGE_NAME):latest $(APP_NAME):dev
 	@kind load docker-image $(APP_NAME):dev --name $(KIND_CLUSTER)
-	@echo "☸️ Applying manifests..."
-	@kubectl apply -k deploy/overlays/dev-local/
-	@echo "⏳ Waiting for pods..."
-	@kubectl wait --namespace $(KIND_NAMESPACE) --for=condition=ready pod --selector=app=postgres --timeout=60s || true
-	@$(MAKE) kind-migrate
+	@echo ""
+	@echo "⏳ Waiting for PostgreSQL..."
+	@kubectl wait --namespace $(KIND_NAMESPACE) --for=condition=ready pod --selector=app=postgres --timeout=60s
+	@echo ""
+	@echo "🔄 Running migration Job (simulating ArgoCD PreSync)..."
+	@kubectl apply -n $(KIND_NAMESPACE) -f deploy/base/serviceaccount.yaml
+	@kubectl apply -n $(KIND_NAMESPACE) -f deploy/overlays/develop/configmap.yaml
+	@kubectl apply -n $(KIND_NAMESPACE) -f deploy/overlays/develop/secret.yaml
+	@kubectl delete job $(APP_NAME)-migrate -n $(KIND_NAMESPACE) --ignore-not-found
+	@cat deploy/base/migration-job.yaml | sed 's|go-boilerplate:latest|go-boilerplate:dev|g' | kubectl apply -n $(KIND_NAMESPACE) -f -
+	@echo "⏳ Waiting for migration Job to complete..."
+	@kubectl wait --namespace $(KIND_NAMESPACE) --for=condition=complete job/$(APP_NAME)-migrate --timeout=120s
+	@echo "✅ Migrations completed!"
+	@echo ""
+	@echo "☸️ Deploying application..."
+	@kubectl apply -n $(KIND_NAMESPACE) -f deploy/base/deployment.yaml
+	@kubectl apply -n $(KIND_NAMESPACE) -f deploy/base/service.yaml
 	@kubectl wait --namespace $(KIND_NAMESPACE) --for=condition=ready pod --selector=app=$(APP_NAME) --timeout=120s || true
 	@echo ""
 	@echo "✅ Deploy completo!"
@@ -213,6 +225,15 @@ kind-migrate: ## ☸️ Roda migrations no PostgreSQL do Kind
 	@sleep 3
 	@goose -dir $(MIGRATIONS_DIR) postgres "$$(grep 'DB_DSN:' $(KIND_CONFIGMAP) | sed 's/.*DB_DSN: *\"//;s/\".*//;s/postgres-service:5432/localhost:$(KIND_DB_PORT)/')" up || true
 	@pkill -f "port-forward.*$(KIND_DB_PORT)" || true
+
+kind-setup: kind-up kind-deploy ## ☸️ Setup completo: cluster + postgres + migrations + deploy
+	@echo ""
+	@echo "🎉 Kind setup completo!"
+	@echo "📍 http://$(DB_NAME).localhost/health"
+	@echo ""
+	@echo "Comandos úteis:"
+	@echo "  make kind-logs   → Ver logs da aplicação"
+	@echo "  make kind-down   → Remover cluster"
 
 kind-logs: ## ☸️ Mostra logs do serviço no Kind
 	kubectl logs -n $(KIND_NAMESPACE) -l app=$(APP_NAME) -f

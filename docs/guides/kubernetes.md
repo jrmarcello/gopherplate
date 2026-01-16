@@ -1,6 +1,6 @@
 # Kubernetes Deploy - Explicação dos Arquivos
 
-Este documento explica a estrutura de deploy do `ms-boilerplate-go` no EKS.
+Este documento explica a estrutura de deploy do `go-boilerplate` no EKS.
 
 ## Estrutura de Diretórios
 
@@ -90,7 +90,7 @@ make kind-down
 ### homologacao/
 
 Sobrescreve valores para ambiente de homologação AWS:
-- Namespace: `ms-boilerplate-go-homologacao`
+- Namespace: `go-boilerplate-homologacao`
 - Host: `*.max-homolog.internal`
 - ExternalSecret do AWS Secrets Manager
 

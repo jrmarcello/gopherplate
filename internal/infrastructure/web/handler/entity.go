@@ -3,9 +3,9 @@ package handler
 import (
 	"net/http"
 
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/infrastructure/telemetry"
-	entityuc "bitbucket.org/appmax-space/ms-boilerplate-go/internal/usecases/entity"
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/usecases/entity/dto"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/telemetry"
+	entityuc "bitbucket.org/appmax-space/go-boilerplate/internal/usecases/entity"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/entity/dto"
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"

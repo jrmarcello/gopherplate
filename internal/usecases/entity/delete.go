@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"time"
 
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/domain/entity/vo"
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/usecases/entity/dto"
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/usecases/entity/interfaces"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/entity/vo"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/entity/dto"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/entity/interfaces"
 )
 
 // DeleteUseCase implementa o caso de uso de deleção (soft delete) de entity.

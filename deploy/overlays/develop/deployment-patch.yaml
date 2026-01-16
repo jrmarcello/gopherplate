@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ms-boilerplate-go
+  name: go-boilerplate
 spec:
   replicas: 2 # 2 réplicas para melhor distribuição de carga
   template:
@@ -11,7 +11,7 @@ spec:
       topologySpreadConstraints: null
       tolerations: null
       containers:
-        - name: ms-boilerplate-go
+        - name: go-boilerplate
           # Usa imagePullPolicy: Never para imagem local
           imagePullPolicy: Never
           resources:

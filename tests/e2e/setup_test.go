@@ -20,7 +20,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/redis"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/infrastructure/cache"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/cache"
 )
 
 var testDB *sqlx.DB

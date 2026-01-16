@@ -3,7 +3,7 @@ package entity
 import (
 	"time"
 
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/domain/entity/vo"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/entity/vo"
 )
 
 // Entity é a Entidade principal (Aggregate Root) do domínio.

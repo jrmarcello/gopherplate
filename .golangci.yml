@@ -84,7 +84,7 @@ linters-settings:
       - .WithMessagef(
       - .WithStack(
     ignorePackageGlobs:
-      - github.com/tksventures/ms-boilerplate-go/internal/*
+      - github.com/tksventures/go-boilerplate/internal/*
 
   misspell:
     locale: US

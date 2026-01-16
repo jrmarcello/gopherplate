@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/domain/entity"
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/domain/entity/vo"
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/usecases/entity/dto"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/entity"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/entity/vo"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/entity/dto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

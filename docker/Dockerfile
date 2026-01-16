@@ -20,7 +20,7 @@ COPY . .
 RUN go install github.com/swaggo/swag/cmd/swag@latest && \
     swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal
 
-# Build the application
+# Build the API binary
 # CGO_ENABLED=0: Pure Go build (no C dependencies)
 # -ldflags="-s -w": Strip debug info for smaller binary
 # -trimpath: Remove file system paths from binary
@@ -28,7 +28,13 @@ ARG VERSION=dev
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags="-s -w -X main.Version=${VERSION}" \
     -trimpath \
-    -o main ./cmd/api
+    -o api ./cmd/api
+
+# Build the migrate binary
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-s -w" \
+    -trimpath \
+    -o migrate ./cmd/migrate
 
 # =============================================================================
 # Stage 2: Production Runtime
@@ -39,18 +45,19 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 FROM gcr.io/distroless/static-debian12:nonroot
 
 # Labels for container metadata
-LABEL org.opencontainers.image.title="ms-boilerplate-go" \
+LABEL org.opencontainers.image.title="go-boilerplate" \
     org.opencontainers.image.description="Go Boilerplate API - Clean Architecture" \
     org.opencontainers.image.vendor="Appmax" \
-    org.opencontainers.image.source="https://bitbucket.org/appmax-space/ms-boilerplate-go"
+    org.opencontainers.image.source="https://bitbucket.org/appmax-space/go-boilerplate"
 
 WORKDIR /app
 
-# Copy binary from builder
-COPY --from=builder /app/main .
+# Copy binaries from builder (with correct ownership for nonroot user)
+COPY --from=builder --chown=nonroot:nonroot /app/api .
+COPY --from=builder --chown=nonroot:nonroot /app/migrate .
 
-# Copy migrations (needed for goose at startup)
-COPY --from=builder /app/internal/infrastructure/db/postgres/migration ./migrations
+# Copy migrations (needed for migrate binary)
+COPY --from=builder --chown=nonroot:nonroot /app/internal/infrastructure/db/postgres/migration ./migrations
 
 # Expose API port
 EXPOSE 8080
@@ -63,4 +70,4 @@ EXPOSE 8080
 USER nonroot:nonroot
 
 # Start the application
-ENTRYPOINT ["./main"]
+ENTRYPOINT ["./api"]

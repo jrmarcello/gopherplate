@@ -4,21 +4,21 @@ resources:
   - ../../base
   - configmap.yaml
   - secret.yaml
-namespace: ms-boilerplate-go-producao
+namespace: go-boilerplate-producao
 images:
-  - name: 409287786754.dkr.ecr.us-east-1.amazonaws.com/ms-boilerplate-go
-    newName: 241533123901.dkr.ecr.sa-east-1.amazonaws.com/ms-boilerplate-go
+  - name: 409287786754.dkr.ecr.us-east-1.amazonaws.com/go-boilerplate
+    newName: 241533123901.dkr.ecr.sa-east-1.amazonaws.com/go-boilerplate
     newTag: go-1
 patches:
   - path: ingress-host-patch.yaml
     target:
       kind: Ingress
-      name: ms-boilerplate-go
+      name: go-boilerplate
   - path: deployment-patch.yaml
     target:
       kind: Deployment
-      name: ms-boilerplate-go
+      name: go-boilerplate
   - path: hpa-patch.yaml
     target:
       kind: HorizontalPodAutoscaler
-      name: ms-boilerplate-go
+      name: go-boilerplate

@@ -63,7 +63,7 @@ type Cache interface {
 A implementação está em [`internal/infrastructure/cache/redis.go`](file:///internal/infrastructure/cache/redis.go):
 
 | Método | Descrição |
-|--------|-----------|
+| -------- | ----------- |
 | `Get` | Busca e deserializa do cache |
 | `Set` | Serializa e armazena com TTL |
 | `Delete` | Invalida uma chave |
@@ -118,7 +118,7 @@ func (uc *UpdateUseCase) Execute(ctx context.Context, input dto.UpdateInput) (*d
 ### Variáveis de Ambiente
 
 | Variável | Descrição | Default |
-|----------|-----------|---------|
+| -------- | ----------- | ------- |
 | `REDIS_ENABLED` | Habilita/desabilita cache | `false` |
 | `REDIS_URL` | URL de conexão | `redis://localhost:6379` |
 | `REDIS_TTL` | Tempo de expiração | `5m` |

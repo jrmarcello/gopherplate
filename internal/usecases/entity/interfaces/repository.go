@@ -3,8 +3,8 @@ package interfaces
 import (
 	"context"
 
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/domain/entity"
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/domain/entity/vo"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/entity"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/entity/vo"
 )
 
 // Repository define o CONTRATO para persistência de Entity.

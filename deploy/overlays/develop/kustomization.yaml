@@ -7,23 +7,23 @@ resources:
   - secret.yaml
   - kind-redis.yaml
 
-namespace: ms-boilerplate-go-dev
+namespace: go-boilerplate-dev
 
 images:
-  - name: 650155821999.dkr.ecr.sa-east-1.amazonaws.com/ms-boilerplate-go
-    newName: ms-boilerplate-go # Imagem local
+  - name: 650155821999.dkr.ecr.sa-east-1.amazonaws.com/go-boilerplate
+    newName: go-boilerplate # Imagem local
     newTag: dev
 
 patches:
   - path: deployment-patch.yaml
     target:
       kind: Deployment
-      name: ms-boilerplate-go
+      name: go-boilerplate
   - path: ingress-patch.yaml
     target:
       kind: Ingress
-      name: ms-boilerplate-go
+      name: go-boilerplate
   - path: hpa-patch.yaml
     target:
       kind: HorizontalPodAutoscaler
-      name: ms-boilerplate-go
+      name: go-boilerplate

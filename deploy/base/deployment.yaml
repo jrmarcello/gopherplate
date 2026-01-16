@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ms-boilerplate-go
+  name: go-boilerplate
   labels:
-    app: ms-boilerplate-go
+    app: go-boilerplate
 spec:
   replicas: 3
   revisionHistoryLimit: 5
@@ -14,13 +14,13 @@ spec:
       maxUnavailable: 1
   selector:
     matchLabels:
-      app: ms-boilerplate-go
+      app: go-boilerplate
   template:
     metadata:
       labels:
-        app: ms-boilerplate-go
+        app: go-boilerplate
     spec:
-      serviceAccountName: ms-boilerplate-go-sa
+      serviceAccountName: go-boilerplate-sa
       terminationGracePeriodSeconds: 20
       securityContext:
         runAsNonRoot: true
@@ -41,7 +41,7 @@ spec:
                   - key: app
                     operator: In
                     values:
-                      - ms-boilerplate-go
+                      - go-boilerplate
               topologyKey: "kubernetes.io/hostname"
       topologySpreadConstraints:
         - maxSkew: 1
@@ -49,21 +49,21 @@ spec:
           whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
-              app: ms-boilerplate-go
+              app: go-boilerplate
       tolerations:
         - key: "karpenter.sh/provisioner-name"
           operator: "Exists"
           effect: "NoSchedule"
       containers:
-        - name: ms-boilerplate-go
-          image: 650155821999.dkr.ecr.sa-east-1.amazonaws.com/ms-boilerplate-go:latest
+        - name: go-boilerplate
+          image: 650155821999.dkr.ecr.sa-east-1.amazonaws.com/go-boilerplate:latest
           ports:
             - containerPort: 8080
           envFrom:
             - configMapRef:
-                name: ms-boilerplate-go-config
+                name: go-boilerplate-config
             - secretRef:
-                name: ms-boilerplate-go-secrets
+                name: go-boilerplate-secrets
           resources:
             requests:
               cpu: "250m"

@@ -11,8 +11,8 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/infrastructure/web/handler"
-	"bitbucket.org/appmax-space/ms-boilerplate-go/internal/infrastructure/web/middleware"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/web/handler"
+	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/web/middleware"
 )
 
 // Config contém configurações do router
