@@ -39,7 +39,7 @@ deploy/
 Define COMO a aplicação roda no cluster.
 
 | Campo | Propósito |
-|-------|-----------|
+| --- | --- |
 | `replicas` | Instâncias simultâneas |
 | `image` | Imagem Docker (ECR) |
 | `resources` | CPU/memória (requests/limits) |
@@ -90,6 +90,7 @@ make kind-down
 ### homologacao/
 
 Sobrescreve valores para ambiente de homologação AWS:
+
 - Namespace: `go-boilerplate-homologacao`
 - Host: `*.max-homolog.internal`
 - ExternalSecret do AWS Secrets Manager

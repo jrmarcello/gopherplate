@@ -48,7 +48,7 @@ flowchart LR
 ### Descrição dos Casos de Uso
 
 | Caso de Uso | Ator | Descrição |
-|---|---|---|
+| --- | --- | --- |
 | **Criar Entity** | API Client | Cadastra nova entity com validação de email e geração de ULID |
 | **Buscar Entity** | API Client | Retorna dados de uma entity por ID (com cache) |
 | **Listar Entities** | API Client | Lista entities com paginação e filtros (nome, email, active) |
@@ -123,7 +123,7 @@ flowchart TB
 
 > 💡 **As dependências sempre apontam para DENTRO** (em direção ao Domain).
 
-```
+```text
 External → Infrastructure → Application → Domain
 ```
 
@@ -409,7 +409,7 @@ flowchart LR
 ### Transformações de Dados
 
 | Camada | Tipo de Dado | Exemplo |
-|---|---|---|
+| --- | --- | --- |
 | **HTTP** | JSON string | `{"name": "Alice", "email": "alice@example.com"}` |
 | **Handler** | InputDTO (primitivos) | `dto.CreateInput{Name: "Alice"}` |
 | **UseCase** | Value Object (validado) | `vo.Email{value: "alice@example.com"}` |
@@ -421,7 +421,7 @@ flowchart LR
 
 ## Estrutura de Diretórios
 
-```
+```text
 internal/
 ├── domain/                    # 💎 Camada de Domínio
 │   └── entity/
