@@ -14,10 +14,12 @@ Template production-ready para microserviços Go com Clean Architecture, cache R
 | Feature | Tecnologia | Descrição |
 | ------- | ---------- | --------- |
 | **Arquitetura** | Clean Architecture | Separação de camadas, DI, testabilidade |
-| **API** | Gin + Swagger | REST API documentada |
-| **Banco** | PostgreSQL + sqlx | Migrations com Goose |
-| **Cache** | Redis (opcional) | Cache transparente com invalidação |
-| **Observabilidade** | OpenTelemetry | Traces, métricas, logs estruturados |
+| **API** | Gin + Swagger | REST API documentada, respostas padronizadas via `pkg/httputil` |
+| **Banco** | PostgreSQL + sqlx | Migrations com Goose, DB Cluster (Writer/Reader split) |
+| **Cache** | Redis (opcional) | Cache transparente com builder pattern (`.WithCache()`) |
+| **Observabilidade** | OpenTelemetry | Traces, HTTP metrics com Apdex, DB pool metrics |
+| **Erros** | `pkg/apperror` | Erros estruturados com código, mensagem e HTTP status |
+| **Pacotes** | `pkg/` | Pacotes reutilizáveis entre serviços |
 | **Testes** | TestContainers + k6 | E2E com banco real, load testing |
 | **Deploy** | Docker + Kubernetes | Kustomize overlays por ambiente |
 | **DX** | Makefile + Air | Hot reload, git hooks, linters |
@@ -44,11 +46,11 @@ sed -i '' 's|bitbucket.org/appmax-space/go-boilerplate|github.com/sua-org/meu-no
 
 ### 3. Customize o domínio
 
-O template vem com um domínio genérico `entity`. Substitua por seu domínio:
+O template vem com um domínio genérico `entity_example`. Substitua por seu domínio:
 
 ```text
-internal/domain/entity/     → internal/domain/user/
-internal/usecases/entity/   → internal/usecases/user/
+internal/domain/entity_example/     → internal/domain/user/
+internal/usecases/entity_example/   → internal/usecases/user/
 ```
 
 ### 4. Setup e run
@@ -78,6 +80,14 @@ make dev      # Hot reload
 │   ├── domain/           # 🟢 Entidades, VOs, Erros (puro)
 │   ├── usecases/         # 🟡 Casos de uso + interfaces
 │   └── infrastructure/   # 🔴 DB, Cache, HTTP, Telemetry
+├── pkg/                  # 📦 Pacotes reutilizáveis entre serviços
+│   ├── apperror/         # Erros estruturados
+│   ├── httputil/         # Respostas HTTP padronizadas
+│   ├── ctxkeys/          # Chaves tipadas para context
+│   ├── logutil/          # Logging estruturado
+│   ├── telemetry/        # OpenTelemetry setup + metrics
+│   ├── cache/            # Interface de cache + Redis
+│   └── database/         # Conexão PostgreSQL (Writer/Reader)
 └── tests/
     ├── e2e/              # TestContainers
     └── load/             # k6
@@ -99,8 +109,12 @@ Hierarquia (maior prioridade primeiro):
 # .env (exemplo)
 SERVER_PORT=8080
 DB_DSN=postgres://user:password@localhost:5432/mydb?sslmode=disable
+DB_READER_DSN=                                # opcional, Reader replica
 REDIS_ENABLED=true
-SERVICE_KEYS=myservice:sk_myservice_abc123  # opcional, vazio = dev mode
+SWAGGER_ENABLED=true                          # toggle Swagger UI
+SERVICE_KEYS=myservice:sk_myservice_abc123    # opcional, vazio = dev mode
+OTEL_ENABLED=false
+OTEL_COLLECTOR_URL=localhost:4317
 ```
 
 Ver: [docs/adr/003-config-strategy.md](docs/adr/003-config-strategy.md)
@@ -137,10 +151,13 @@ make help           # Lista todos os comandos
 # Desenvolvimento
 make setup          # Setup completo
 make dev            # Hot reload
-make lint           # Linters
+make lint           # go vet + gofmt
+make lint-full      # golangci-lint (igual CI)
+make security       # gosec
 
 # Testes
-make test           # Todos
+make test           # Todos (unit + e2e)
+make test-unit      # Apenas unit tests (internal/ + pkg/)
 make test-e2e       # E2E com TestContainers
 make test-coverage  # Relatório HTML
 
@@ -164,17 +181,20 @@ make kind-logs      # Ver logs no Kind
 | [ADR-004: Error Handling](docs/adr/004-error-handling.md) | Erros em camadas |
 | [ADR-005: Service Key Auth](docs/adr/005-service-key-auth.md) | Autenticação via Service Key |
 | [ADR-006: Migration Strategy](docs/adr/006-migration-strategy.md) | ArgoCD PreSync + binário separado |
+| [ADR-007: Reusable Packages](docs/adr/007-pkg-reusable-packages.md) | Pacotes reutilizáveis em `pkg/` |
+| [ADR-008: API Response Format](docs/adr/008-api-response-format.md) | Formato padronizado de resposta HTTP |
 
 ### Guias
 
 | Guia | Sobre |
 | ---- | ----- |
 | [architecture.md](docs/guides/architecture.md) | Diagramas e visão geral |
+| [cache.md](docs/guides/cache.md) | Cache com Redis e builder pattern |
 | [kubernetes.md](docs/guides/kubernetes.md) | Deploy e operação |
 
 ### Para Agentes de IA
 
-Ver [AGENTS.md](AGENTS.md) para diretrizes de código e arquitetura.
+Ver [AGENTS.md](AGENTS.md) para diretrizes de código e arquitetura, e [CLAUDE.md](CLAUDE.md) para orientação específica do Claude Code.
 
 ---
 
@@ -182,11 +202,14 @@ Ver [AGENTS.md](AGENTS.md) para diretrizes de código e arquitetura.
 
 ### Adicionar novo domínio
 
-1. Crie a entidade em `internal/domain/<nome>/`
-2. Crie os use cases em `internal/usecases/<nome>/`
-3. Crie o handler em `internal/infrastructure/web/handler/`
-4. Registre as rotas no router
-5. Crie a migration em `internal/infrastructure/db/postgres/migration/`
+1. Crie a entidade em `internal/domain/<nome>/` (entidade, VOs, erros)
+2. Crie os use cases em `internal/usecases/<nome>/` (um arquivo por use case)
+3. Defina interfaces em `internal/usecases/<nome>/interfaces/`
+4. Crie o handler em `internal/infrastructure/web/handler/`
+5. Registre as rotas no router
+6. Crie o repositório em `internal/infrastructure/db/postgres/repository/`
+7. Crie a migration em `internal/infrastructure/db/postgres/migration/`
+8. Wire tudo em `cmd/api/server.go:buildDependencies()`
 
 ### Adicionar novo ambiente K8s
 
