@@ -50,7 +50,7 @@ swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal
 - **`internal/infrastructure/`** - All external concerns:
   - `web/handler/` - Gin HTTP handlers, translate domain errors to HTTP responses via `httputil.SendSuccess`/`httputil.SendError`
   - `web/router/` - Route registration, middleware wiring
-  - `web/middleware/` - Logger, metrics, rate limiting, idempotency, service key auth
+  - `web/middleware/` - Logger, metrics, idempotency, service key auth
   - `db/postgres/repository/` - sqlx repository implementations
   - `telemetry/` - Business-specific metrics (entity counters)
 - **`pkg/`** - Reusable packages shared across services:
