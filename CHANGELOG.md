@@ -12,6 +12,7 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 ## [0.5.0] - 2026-03-27
 
 ### Added
+
 - **Observability stack**: ELK 8.13 + OTel Collector 0.114 with metrics pipeline, ECS mapping, and auto-setup
 - **Kibana dashboard**: 20-panel dashboard (SLO, HTTP, latency, cache, DB pool, logs) via `generate_dashboard.py`
 - **Alerting rules**: 6 SLO-based rules (burn rate, p95, p99, 5xx, DB saturation) via `generate_rules.py`
@@ -20,12 +21,14 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 - **Lefthook 3-layer quality gates**: Pre-commit (fmt + vet), commit-msg (conventional commits), pre-push (lint + test)
 
 ### Changed
+
 - Observability network integrated with app network (`go-boilerplate-network`, external)
 - Same Docker Desktop project group for all containers (`name: go-boilerplate`)
 
 ## [0.4.0] - 2026-03-27
 
 ### Added
+
 - **Claude Code DX setup**: `.claude/` with settings, 6 hooks, 3 agents, 3 rules, 11 skills
 - **DevContainer**: Dockerfile (Go 1.25 + Claude Code), firewall (default-deny), zsh + Powerline10k
 - **Sandbox targets**: `make sandbox`, `make sandbox-claude`, `make sandbox-shell`, firewall/ssh checks
@@ -42,6 +45,7 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 - **`make vulncheck`**: govulncheck dependency scanning
 
 ### Changed
+
 - **ULID → UUID v7**: Migrated ID strategy to RFC 9562, native PostgreSQL UUID type
 - **DB config**: Individual vars (DB_HOST, DB_PORT, etc.) replacing single DB_DSN (SRE-approved pattern)
 - **DB cluster**: Repository now uses Writer/Reader split correctly
@@ -61,6 +65,7 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 - **DTO validation**: `binding:"required,max=255"` on name/email fields
 
 ### Removed
+
 - `.agent/` directory (consolidated into `.claude/`)
 - `internal/infrastructure/cache/` (legacy duplicate of `pkg/cache`)
 - `internal/domain/shared/interfaces/` (unused)
@@ -73,20 +78,24 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 ## [0.3.0] - 2026-03-12
 
 ### Added
+
 - **Reusable packages**: `pkg/apperror`, `pkg/httputil`, `pkg/ctxkeys`, `pkg/logutil`, `pkg/telemetry`, `pkg/cache`, `pkg/database`
 - ADR-007 (reusable packages) and ADR-008 (API response format)
 - `.agent/` AI toolkit with 14 agents, 23 skills, 8 workflows
 
 ### Changed
+
 - Standardized API responses via `httputil.SendSuccess`/`httputil.SendError`
 - Extracted shared code from internal to pkg/ for cross-service reuse
 
 ### Fixed
+
 - OpenTelemetry SDK upgraded to v1.40.0 (fixes GO-2026-4394 vulnerability)
 
 ## [0.2.0] - 2026-02-15
 
 ### Added
+
 - **Service key authentication**: `X-Service-Name` + `X-Service-Key` middleware (ADR-005)
 - **ArgoCD PreSync migrations**: `cmd/migrate/` binary for K8s Job (ADR-006)
 - **Cache strategy**: Redis cache-aside pattern with builder `.WithCache()` (guide)
@@ -95,6 +104,7 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 - Rate limiting and idempotency middleware
 
 ### Changed
+
 - Config migrated from Viper to godotenv + os (simpler, fewer deps)
 - Deploy overlay renamed from `dev` to `develop`
 - Docker and CI/CD standardized with people-service-registry patterns
@@ -102,6 +112,7 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 ## [0.1.0] - 2026-01-08
 
 ### Added
+
 - **Initial project structure**: Clean Architecture (domain → usecases → infrastructure)
 - **Entity CRUD**: Create, Get, List, Update, Delete with ULID IDs
 - **Domain layer**: Entity aggregate with ID and Email value objects

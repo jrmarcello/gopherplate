@@ -31,7 +31,7 @@ flowchart LR
 ### O que esta desacoplado
 
 | Camada | Arquivo | Acoplamento |
-|--------|---------|-------------|
+| ------ | ------- | ----------- |
 | Domain | `internal/domain/entity_example/` | Zero -- nao sabe que banco existe |
 | Use Cases | `internal/usecases/entity_example/` | Zero -- depende so da interface `Repository` |
 | Interface | `usecases/.../interfaces/repository.go` | Zero -- contrato puro Go |
@@ -76,7 +76,7 @@ query := `SELECT ... FROM entities WHERE id = ?`
 `ILIKE` e uma extensao PostgreSQL para busca case-insensitive. Alternativas por banco:
 
 | Banco | Equivalente ao ILIKE |
-|-------|---------------------|
+| ----- | -------------------- |
 | PostgreSQL | `ILIKE` |
 | SQLite | `LIKE` (ja e case-insensitive por default para ASCII) |
 | MySQL | `LIKE` (depende do collation da tabela) |
@@ -84,7 +84,7 @@ query := `SELECT ... FROM entities WHERE id = ?`
 ### 4. Tipos na migration (`migration/20240101002_init_entities.sql`)
 
 | Tipo PostgreSQL | SQLite | MySQL |
-|----------------|--------|-------|
+| --------------- | ------ | ----- |
 | `UUID` | `TEXT` | `CHAR(36)` ou `BINARY(16)` |
 | `TIMESTAMP WITH TIME ZONE` | `TEXT` (ISO 8601) | `DATETIME` |
 | `BOOLEAN` | `INTEGER` (0/1) | `TINYINT(1)` |
@@ -99,7 +99,7 @@ query := `SELECT ... FROM entities WHERE id = ?`
 
 Criar a infraestrutura SQLite espelhando a estrutura do PostgreSQL:
 
-```
+```text
 internal/infrastructure/db/
   postgres/                     # ja existe
     repository/
@@ -196,6 +196,7 @@ DROP TABLE IF EXISTS entities;
 ```
 
 Diferencas da versao PostgreSQL:
+
 - `UUID` -> `TEXT` (SQLite nao tem tipo UUID nativo)
 - `BOOLEAN` -> `INTEGER` (0/1)
 - `TIMESTAMP WITH TIME ZONE` -> `TEXT` (formato ISO 8601)
@@ -299,7 +300,7 @@ func (r *EntityRepository) List(ctx context.Context, filter entity.ListFilter) (
 #### Diferencas-chave do PostgreSQL
 
 | Aspecto | PostgreSQL | SQLite |
-|---------|-----------|--------|
+| ------- | ---------- | ------ |
 | Placeholder | `$1, $2` | `?` |
 | Boolean | `true/false` | `1/0` |
 | Case-insensitive search | `ILIKE` | `LIKE` (default) |
@@ -436,7 +437,7 @@ flowchart TB
 ## Quando usar cada banco
 
 | Cenario | Banco Recomendado |
-|---------|-------------------|
+| ------- | ----------------- |
 | Producao (microservico) | PostgreSQL |
 | Testes unitarios/integracao | SQLite `:memory:` |
 | CLI tools, apps desktop | SQLite (arquivo) |
@@ -461,7 +462,7 @@ flowchart TB
 
 ## Referencia Rapida: O que muda e o que nao muda
 
-```
+```text
 Trocar de banco de dados:
 
   NAO MUDA                          MUDA

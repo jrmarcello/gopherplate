@@ -33,6 +33,7 @@ make lint      # golangci-lint + gofmt
 ```
 
 Ferramentas opcionais (o Makefile mostra como instalar se faltarem):
+
 - `k6` para load tests (`make load-smoke`)
 - `kind` + `kubectl` para Kubernetes local (`make kind-setup`)
 
