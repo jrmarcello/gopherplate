@@ -34,7 +34,8 @@ COMPOSE := docker compose -f docker/docker-compose.yml
 ENV_FILE := $(shell test -f .env && echo "--env-file .env" || echo "")
 
 # Declara todos os targets que não são arquivos
-.PHONY: help setup tools dev run run-stop build clean lint security vulncheck swagger \
+.PHONY: help setup tools go-tools-check k6-check kind-check \
+        dev run run-stop build clean lint security vulncheck swagger \
         test test-unit test-e2e test-coverage \
         load-smoke load-test load-stress load-spike load-kind load-clean \
         docker-up docker-down docker-build \
@@ -104,6 +105,13 @@ setup: tools docker-up migrate-up ## Setup completo: tools + hooks + docker + mi
 	@echo "  make test     -> Roda todos os testes"
 	@echo ""
 
+# Prerequisite checks (used as dependencies by targets that need external tools)
+go-tools-check:
+	@command -v $(GOBIN)/air >/dev/null 2>&1 || command -v air >/dev/null 2>&1 || { echo "Dev tools not found. Run: make tools"; exit 1; }
+
+k6-check:
+	@command -v k6 >/dev/null 2>&1 || { echo "k6 not found. Install: brew install k6 (macOS) or https://grafana.com/docs/k6/latest/set-up/install-k6/"; exit 1; }
+
 tools: ## Instala ferramentas de desenvolvimento
 	@echo "Installing dev tools..."
 	@go install github.com/air-verse/air@latest
@@ -118,7 +126,7 @@ tools: ## Instala ferramentas de desenvolvimento
 # DESENVOLVIMENTO
 # ============================================
 
-dev: docker-up migrate-up ## Inicia servidor local com hot reload (air)
+dev: go-tools-check docker-up migrate-up ## Inicia servidor local com hot reload (air)
 	@$(GOBIN)/air || air
 
 run: ## Sobe tudo em Docker (infra + migrations + API)
@@ -140,17 +148,17 @@ clean: ## Remove arquivos gerados
 # QUALIDADE DE CÓDIGO
 # ============================================
 
-lint: ## Roda golangci-lint + gofmt
+lint: go-tools-check ## Roda golangci-lint + gofmt
 	@gofmt -w .
 	@$(GOBIN)/golangci-lint run ./... || golangci-lint run ./...
 
-security: ## Roda analise de seguranca (gosec via golangci-lint)
+security: go-tools-check ## Roda analise de seguranca (gosec via golangci-lint)
 	@$(GOBIN)/golangci-lint run --enable-only gosec ./... || golangci-lint run --enable-only gosec ./...
 
-vulncheck: ## Scan de vulnerabilidades em dependencias (govulncheck)
+vulncheck: go-tools-check ## Scan de vulnerabilidades em dependencias (govulncheck)
 	@$(GOBIN)/govulncheck ./... || govulncheck ./...
 
-swagger: ## Regenera documentacao Swagger
+swagger: go-tools-check ## Regenera documentacao Swagger
 	@$(GOBIN)/swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal || \
 		swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal
 	@echo "Swagger docs generated in docs/"
@@ -323,9 +331,7 @@ migrate-create: ## Cria nova migracao (ex: make migrate-create NAME=add_users)
 # ============================================
 # LOAD TESTING (k6)
 # ============================================
-# Requer k6: brew install k6
-
-load-setup:
+load-setup: k6-check
 	@mkdir -p tests/load/results
 
 LOAD_URL ?= http://localhost:8080
