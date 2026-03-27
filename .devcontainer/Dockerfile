@@ -1,4 +1,4 @@
-FROM golang:1.24-bookworm
+FROM golang:1.25-bookworm
 
 ARG TZ=America/Sao_Paulo
 ENV TZ="$TZ"
