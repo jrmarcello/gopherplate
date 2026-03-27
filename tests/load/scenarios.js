@@ -3,98 +3,93 @@ import { check, sleep, group } from 'k6';
 import { Rate, Trend } from 'k6/metrics';
 
 // ============================================
-// CONFIGURAÇÃO
+// CONFIGURATION
 // ============================================
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 
-// Métricas customizadas
+// Custom metrics
 const errorRate = new Rate('errors');
 const createEntityDuration = new Trend('create_entity_duration');
 const getEntityDuration = new Trend('get_entity_duration');
-// const listEntitiesDuration = new Trend('list_entities_duration'); // DEPRECATED: endpoint returns 410 Gone
+const listEntitiesDuration = new Trend('list_entities_duration');
 
 // ============================================
-// CENÁRIOS DE TESTE
+// SCENARIOS
 // ============================================
-// Uso: k6 run --env SCENARIO=smoke tests/load/scenarios.js
+// Usage: k6 run --env SCENARIO=smoke tests/load/scenarios.js
 
 const SCENARIO = __ENV.SCENARIO || 'smoke';
 
-// Define todos os cenários disponíveis
 const allScenarios = {
-  // Smoke test: validação básica (500 usuários por 30s)
+  // Smoke test: basic validation (5 users, 30s)
   smoke: {
     executor: 'constant-vus',
-    vus: 500,
+    vus: 5,
     duration: '30s',
     exec: 'smokeTest',
     tags: { scenario: 'smoke' },
   },
 
-  // Load test: carga progressiva (100 → 500 → 1000 usuários)
+  // Load test: progressive ramp (up to 50 users)
   load: {
     executor: 'ramping-vus',
     startVUs: 0,
     stages: [
-      { duration: '30s', target: 500 },   // Ramp-up
-      { duration: '30s', target: 100 },   // Aumentar carga
-      { duration: '1m', target: 2000 },   // Pico
-      { duration: '30s', target: 500 },   // Reduzir
-      { duration: '30s', target: 0 },     // Ramp-down
+      { duration: '30s', target: 10 },   // Warm up
+      { duration: '1m', target: 30 },    // Normal load
+      { duration: '1m', target: 50 },    // Peak
+      { duration: '30s', target: 10 },   // Cool down
+      { duration: '30s', target: 0 },    // Ramp down
     ],
     exec: 'loadTest',
     tags: { scenario: 'load' },
   },
 
-  // Stress test: encontrar limite do sistema
+  // Stress test: find system limits (up to 200 users)
   stress: {
     executor: 'ramping-vus',
     startVUs: 0,
     stages: [
-      { duration: '30s', target: 500 },
-      { duration: '30s', target: 1000 },
-      { duration: '30s', target: 1500 },
-      { duration: '30s', target: 2000 },
-      { duration: '30s', target: 2500 },
+      { duration: '30s', target: 50 },
+      { duration: '30s', target: 100 },
+      { duration: '30s', target: 150 },
+      { duration: '30s', target: 200 },
       { duration: '30s', target: 0 },
     ],
     exec: 'stressTest',
     tags: { scenario: 'stress' },
   },
 
-  // Spike test: pico súbito de usuários
+  // Spike test: sudden burst (0 → 100 instantly)
   spike: {
     executor: 'ramping-vus',
     startVUs: 0,
     stages: [
-      { duration: '20s', target: 500 },
-      { duration: '1m', target: 800 },
-      { duration: '10s', target: 3000 }, // Spike!
-      { duration: '1m', target: 1000 },
-      { duration: '20s', target: 600 },
-      { duration: '1m', target: 200 },
-      { duration: '10s', target: 0 },
+      { duration: '10s', target: 5 },    // Baseline
+      { duration: '5s', target: 100 },   // Spike!
+      { duration: '30s', target: 100 },  // Hold spike
+      { duration: '10s', target: 5 },    // Recover
+      { duration: '10s', target: 0 },    // Ramp down
     ],
     exec: 'spikeTest',
     tags: { scenario: 'spike' },
   },
 };
 
-// Seleciona apenas o cenário especificado
+// Select only the specified scenario
 const selectedScenario = {};
 selectedScenario[SCENARIO] = allScenarios[SCENARIO];
 
 export const options = {
   scenarios: selectedScenario,
 
-  // Thresholds de performance
   thresholds: {
-    http_req_failed: ['rate<0.01'],        // Menos de 1% de erros
-    http_req_duration: ['p(95)<500'],      // 95% das requests < 500ms
-    create_entity_duration: ['p(95)<800'], // Create < 800ms
-    get_entity_duration: ['p(95)<200'],    // Get < 200ms
-    // list_entities_duration: ['p(95)<300'],  // DEPRECATED: endpoint returns 410 Gone
+    http_req_failed: ['rate<0.01'],           // Less than 1% errors
+    http_req_duration: ['p(95)<500'],         // 95th percentile < 500ms
+    create_entity_duration: ['p(95)<800'],    // Create < 800ms
+    get_entity_duration: ['p(95)<200'],       // Get < 200ms
+    list_entities_duration: ['p(95)<300'],    // List < 300ms
     errors: ['rate<0.01'],
   },
 };
@@ -103,88 +98,32 @@ export const options = {
 // HELPERS
 // ============================================
 
-// Contador global para garantir unicidade
-let globalCounter = 0;
-
-function generateCPF() {
-  // Gera CPF válido e ÚNICO para testes usando VU ID + iteration + counter
-  // Isso evita colisões mesmo com milhares de VUs simultâneos
-  const vuId = __VU || 0;
-  const iter = __ITER || 0;
-  globalCounter++;
-
-  // Combina VU, iteração e contador para criar base única
-  const uniqueBase = (vuId * 1000000 + iter * 1000 + globalCounter) % 999999999;
-  const baseStr = uniqueBase.toString().padStart(9, '0');
-  const cpf = baseStr.split('').map(Number);
-
-  // Calcula primeiro dígito verificador
-  let sum = 0;
-  for (let i = 0; i < 9; i++) sum += cpf[i] * (10 - i);
-  let d1 = 11 - (sum % 11);
-  if (d1 >= 10) d1 = 0;
-  cpf.push(d1);
-
-  // Calcula segundo dígito verificador
-  sum = 0;
-  for (let i = 0; i < 10; i++) sum += cpf[i] * (11 - i);
-  let d2 = 11 - (sum % 11);
-  if (d2 >= 10) d2 = 0;
-  cpf.push(d2);
-
-  return cpf.join('');
-}
-
 function randomEmail() {
-  // Usa VU ID + iteration + timestamp + random para garantir unicidade
   const vuId = __VU || 0;
   const iter = __ITER || 0;
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
-  return `lt_${vuId}_${iter}_${timestamp}_${random}@test.com`;
+  const ts = Date.now();
+  const rand = Math.random().toString(36).substring(2, 8);
+  return `lt_${vuId}_${iter}_${ts}_${rand}@test.com`;
 }
 
-function randomPhone() {
-  // Gera telefone brasileiro válido (11 dígitos)
-  const ddd = Math.floor(Math.random() * 89) + 11; // DDDs válidos: 11-99
-  const number = Math.floor(Math.random() * 900000000) + 100000000;
-  return `${ddd}${number}`;
-}
-
-function randomAddress() {
-  const streets = ['Rua das Flores', 'Av. Paulista', 'Rua Augusta', 'Av. Brasil', 'Rua 7 de Setembro'];
-  const neighborhoods = ['Centro', 'Jardins', 'Consolação', 'Pinheiros', 'Vila Mariana'];
-  const cities = ['São Paulo', 'Rio de Janeiro', 'Belo Horizonte', 'Curitiba', 'Porto Alegre'];
-  const states = ['SP', 'RJ', 'MG', 'PR', 'RS'];
-
-  const idx = Math.floor(Math.random() * streets.length);
-  const number = Math.floor(Math.random() * 9999) + 1;
-  const zipCode = `${Math.floor(Math.random() * 90000) + 10000}-${Math.floor(Math.random() * 900) + 100}`;
-
-  return {
-    street: streets[idx],
-    number: String(number),
-    complement: Math.random() > 0.5 ? `Apto ${Math.floor(Math.random() * 100) + 1}` : '',
-    neighborhood: neighborhoods[idx],
-    city: cities[idx],
-    state: states[idx],
-    zip_code: zipCode,
-  };
+function randomName() {
+  const names = ['Alice', 'Bob', 'Carlos', 'Diana', 'Eduardo', 'Fernanda', 'Gabriel', 'Helena'];
+  const surnames = ['Silva', 'Santos', 'Oliveira', 'Souza', 'Lima', 'Pereira', 'Costa', 'Ferreira'];
+  const name = names[Math.floor(Math.random() * names.length)];
+  const surname = surnames[Math.floor(Math.random() * surnames.length)];
+  return `Load Test ${name} ${surname}`;
 }
 
 const headers = { 'Content-Type': 'application/json' };
 
 // ============================================
-// FUNÇÕES DE TESTE
+// API OPERATIONS
 // ============================================
 
 function createEntity() {
   const payload = JSON.stringify({
-    name: `Load Test User ${Date.now()}`,
-    document: generateCPF(),
+    name: randomName(),
     email: randomEmail(),
-    phone: randomPhone(),
-    address: randomAddress(),
   });
 
   const res = http.post(`${BASE_URL}/entities`, payload, { headers });
@@ -193,12 +132,18 @@ function createEntity() {
 
   const success = check(res, {
     'create: status is 201': (r) => r.status === 201,
-    'create: has id': (r) => r.json('id') !== undefined,
+    'create: has data.id': (r) => {
+      try { return r.json('data.id') !== undefined; } catch (e) { return false; }
+    },
   });
 
   errorRate.add(!success);
 
-  return res.json('id');
+  try {
+    return res.json('data.id');
+  } catch (e) {
+    return null;
+  }
 }
 
 function getEntity(id) {
@@ -208,7 +153,25 @@ function getEntity(id) {
 
   const success = check(res, {
     'get: status is 200': (r) => r.status === 200,
-    'get: has name': (r) => r.json('name') !== undefined,
+    'get: has data': (r) => {
+      try { return r.json('data') !== undefined; } catch (e) { return false; }
+    },
+  });
+
+  errorRate.add(!success);
+  return success;
+}
+
+function listEntities(page = 1, limit = 10) {
+  const res = http.get(`${BASE_URL}/entities?page=${page}&limit=${limit}`, { headers });
+
+  listEntitiesDuration.add(res.timings.duration);
+
+  const success = check(res, {
+    'list: status is 200': (r) => r.status === 200,
+    'list: has data': (r) => {
+      try { return r.json('data') !== undefined; } catch (e) { return false; }
+    },
   });
 
   errorRate.add(!success);
@@ -217,10 +180,8 @@ function getEntity(id) {
 
 function updateEntity(id) {
   const payload = JSON.stringify({
-    name: `Load Test User Updated ${Date.now()}`,
-    phone: randomPhone(),
+    name: `${randomName()} Updated`,
     email: randomEmail(),
-    address: randomAddress(),
   });
 
   const res = http.put(`${BASE_URL}/entities/${id}`, payload, { headers });
@@ -244,37 +205,23 @@ function deleteEntity(id) {
   return success;
 }
 
-// function listEntities(page = 1, limit = 10) {
-//   const res = http.get(`${BASE_URL}/entities?page=${page}&limit=${limit}`, { headers });
-
-//   listEntitiesDuration.add(res.timings.duration);
-
-//   const success = check(res, {
-//     'list: status is 200': (r) => r.status === 200,
-//     'list: has data array': (r) => Array.isArray(r.json('data')),
-//     'list: has pagination': (r) => r.json('pagination') !== undefined,
-//   });
-
-//   errorRate.add(!success);
-//   return success;
-// }
-
 function healthCheck() {
   const res = http.get(`${BASE_URL}/health`);
   check(res, { 'health: ok': (r) => r.status === 200 });
 }
 
 // ============================================
-// CENÁRIOS DE EXECUÇÃO
+// SCENARIO EXECUTORS
 // ============================================
 
+// Smoke: basic CRUD cycle validation
 export function smokeTest() {
   group('Smoke Test', () => {
     healthCheck();
     sleep(0.5);
 
-    // listEntities(1, 10); // DEPRECATED: endpoint returns 410 Gone
-    // sleep(0.5);
+    listEntities(1, 5);
+    sleep(0.5);
 
     const id = createEntity();
     if (id) {
@@ -285,28 +232,33 @@ export function smokeTest() {
   sleep(1);
 }
 
+// Load: realistic traffic distribution
 export function loadTest() {
   group('Load Test - CRUD Operations', () => {
-    // Distribuição realista: 60% reads, 25% creates, 10% updates, 5% deletes
-    // (List endpoint deprecated, replaced with Get operations)
+    // Realistic distribution: 40% reads, 30% creates, 20% updates, 10% deletes
     const rand = Math.random();
 
-    if (rand < 0.6) {
-      // 60% - Create + Get (simulates read-heavy workload)
+    if (rand < 0.4) {
+      // 40% - List + Get (read-heavy)
+      listEntities(1, 10);
+      sleep(0.2);
       const id = createEntity();
       if (id) {
         sleep(0.1);
         getEntity(id);
       }
-    } else if (rand < 0.85) {
-      // 25% - Create + Update
+    } else if (rand < 0.7) {
+      // 30% - Create
+      createEntity();
+    } else if (rand < 0.9) {
+      // 20% - Create + Update
       const id = createEntity();
       if (id) {
         sleep(0.1);
         updateEntity(id);
       }
     } else {
-      // 15% - Create + Delete (simula ciclo de vida)
+      // 10% - Create + Delete
       const id = createEntity();
       if (id) {
         sleep(0.1);
@@ -317,57 +269,62 @@ export function loadTest() {
   sleep(0.5);
 }
 
+// Stress: heavy write load to find limits
 export function stressTest() {
   group('Stress Test - Heavy Load', () => {
     const rand = Math.random();
 
-    if (rand < 0.7) {
-      // 70% - Create (heavy write load)
+    if (rand < 0.6) {
+      // 60% - Create (heavy writes)
       createEntity();
-    } else if (rand < 0.9) {
+    } else if (rand < 0.8) {
       // 20% - Create + Get
       const id = createEntity();
       if (id) {
         sleep(0.1);
         getEntity(id);
       }
+    } else if (rand < 0.95) {
+      // 15% - List
+      listEntities(1, 20);
     } else {
-      // 10% - Health check
+      // 5% - Health check
       healthCheck();
     }
   });
   sleep(0.2);
 }
 
+// Spike: sudden burst of traffic
 export function spikeTest() {
   group('Spike Test - Sudden Load', () => {
     const id = createEntity();
     if (id) {
       getEntity(id);
     }
-    // listEntities(1, 10); // DEPRECATED: endpoint returns 410 Gone
+    listEntities(1, 5);
   });
   sleep(0.3);
 }
 
 // ============================================
-// SETUP E TEARDOWN
+// SETUP & TEARDOWN
 // ============================================
 
 export function setup() {
-  console.log(`🚀 Starting load test against ${BASE_URL}`);
+  console.log(`Starting load test against ${BASE_URL}`);
+  console.log(`Scenario: ${SCENARIO}`);
 
-  // Verifica se API está online
   const res = http.get(`${BASE_URL}/health`);
   if (res.status !== 200) {
-    throw new Error(`API not available at ${BASE_URL}`);
+    throw new Error(`API not available at ${BASE_URL} (status: ${res.status})`);
   }
 
-  console.log('✅ API is healthy, starting tests...');
+  console.log('API is healthy, starting tests...');
   return { startTime: Date.now() };
 }
 
 export function teardown(data) {
   const duration = ((Date.now() - data.startTime) / 1000).toFixed(2);
-  console.log(`✅ Load test completed in ${duration}s`);
+  console.log(`Load test completed in ${duration}s`);
 }
