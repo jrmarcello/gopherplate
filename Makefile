@@ -205,7 +205,7 @@ docker-build: docker-check ## Cria a imagem de producao
 # OBSERVABILIDADE (ELK + OpenTelemetry)
 # ============================================
 
-observability-up: docker-check ## Sobe stack de observabilidade (Elasticsearch + Kibana + OTel)
+observability-up: docker-up ## Sobe stack de observabilidade (Elasticsearch + Kibana + OTel)
 	docker compose -f docker/observability/docker-compose.yml up -d
 	@echo "Aguarde ~30s para Elasticsearch iniciar..."
 	@echo "Kibana: http://localhost:5601"
