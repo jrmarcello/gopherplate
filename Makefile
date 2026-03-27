@@ -122,7 +122,7 @@ dev: docker-up migrate-up ## Inicia servidor local com hot reload (air)
 	@$(GOBIN)/air || air
 
 run: ## Inicia servidor sem hot reload
-	go run cmd/api/main.go
+	go run ./cmd/api
 
 build: ## Compila binario para bin/
 	@mkdir -p bin
