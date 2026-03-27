@@ -1,12 +1,36 @@
 pre-commit:
-  parallel: true
+  piped: true
   commands:
     fmt:
-      glob: "*.go"
-      run: gofmt -w {staged_files}
-    vet:
-      glob: "*.go"
-      run: go vet ./...
+      priority: 1
+      glob: "**/*.go"
+      exclude: "^docs/"
+      run: goimports -w {staged_files}
+      stage_fixed: true
     lint:
-      glob: "*.go"
-      run: golangci-lint run
+      priority: 2
+      glob: "**/*.go"
+      exclude: "^docs/"
+      run: golangci-lint run --new-from-rev=HEAD
+
+pre-push:
+  parallel: true
+  commands:
+    build:
+      run: go build ./...
+    test:
+      run: go test ./internal/... -count=1
+    vulncheck:
+      run: govulncheck ./...
+
+commit-msg:
+  commands:
+    conventional-commit:
+      run: |
+        msg=$(head -1 {1})
+        if ! echo "$msg" | grep -qE '^(feat|fix|refactor|docs|test|chore|perf|ci|build|style)(\(.+\))?: .+'; then
+          echo "Commit message must follow Conventional Commits:"
+          echo "  type(scope): description"
+          echo "  types: feat fix refactor docs test chore perf ci build style"
+          exit 1
+        fi
