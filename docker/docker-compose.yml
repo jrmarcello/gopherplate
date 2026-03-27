@@ -50,6 +50,67 @@ services:
           cpus: "0.2"
           memory: 128M
 
+  # ============================================
+  # MIGRATIONS (roda e encerra)
+  # ============================================
+  go-boilerplate-migrate:
+    container_name: boilerplate-migrate
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    entrypoint: ["./migrate"]
+    environment:
+      DB_HOST: go-boilerplate-db
+      DB_PORT: "5432"
+      DB_USER: ${POSTGRES_USER:-user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      DB_NAME: ${POSTGRES_DB:-entities}
+      DB_SSLMODE: disable
+    depends_on:
+      go-boilerplate-db:
+        condition: service_healthy
+    restart: "no"
+    profiles:
+      - api
+
+  # ============================================
+  # API
+  # ============================================
+  go-boilerplate-api:
+    container_name: boilerplate-api
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    environment:
+      APP_ENV: development
+      SERVER_PORT: "8080"
+      DB_HOST: go-boilerplate-db
+      DB_PORT: "5432"
+      DB_USER: ${POSTGRES_USER:-user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      DB_NAME: ${POSTGRES_DB:-entities}
+      DB_SSLMODE: disable
+      REDIS_URL: redis://go-boilerplate-redis:6379
+      REDIS_ENABLED: "true"
+      SWAGGER_ENABLED: "true"
+      SERVICE_KEYS: ""
+      OTEL_EXPORTER_OTLP_ENDPOINT: ""
+    depends_on:
+      go-boilerplate-migrate:
+        condition: service_completed_successfully
+      go-boilerplate-redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    profiles:
+      - api
+
 volumes:
   go-boilerplate-db-data:
     name: go-boilerplate-db-data

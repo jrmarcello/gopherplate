@@ -34,7 +34,7 @@ COMPOSE := docker compose -f docker/docker-compose.yml
 ENV_FILE := $(shell test -f .env && echo "--env-file .env" || echo "")
 
 # Declara todos os targets que não são arquivos
-.PHONY: help setup tools dev run build clean lint security vulncheck swagger \
+.PHONY: help setup tools dev run run-stop build clean lint security vulncheck swagger \
         test test-unit test-e2e test-coverage \
         load-smoke load-test load-stress load-spike load-kind load-clean \
         docker-up docker-down docker-build \
@@ -59,7 +59,7 @@ help: ## Exibe esta mensagem de ajuda
 	@grep -Eh '^(setup|tools):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "\033[1;33m  Development\033[0m"
-	@grep -Eh '^(dev|run|build|clean):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -Eh '^(dev|run|run-stop|build|clean):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "\033[1;33m  Code Quality\033[0m"
 	@grep -Eh '^(lint|security|vulncheck|swagger):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -121,8 +121,11 @@ tools: ## Instala ferramentas de desenvolvimento
 dev: docker-up migrate-up ## Inicia servidor local com hot reload (air)
 	@$(GOBIN)/air || air
 
-run: ## Inicia servidor sem hot reload
-	go run ./cmd/api
+run: ## Sobe tudo em Docker (infra + migrations + API)
+	$(COMPOSE) $(ENV_FILE) --profile api up -d --build
+
+run-stop: ## Para todos os containers (infra + API)
+	$(COMPOSE) $(ENV_FILE) --profile api down
 
 build: ## Compila binario para bin/
 	@mkdir -p bin
