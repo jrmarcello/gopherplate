@@ -2,33 +2,10 @@ package apperror
 
 import (
 	"errors"
-	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
-
-func TestAppError_IsDomainError(t *testing.T) {
-	tests := []struct {
-		name     string
-		status   int
-		expected bool
-	}{
-		{"400 is domain error", 400, true},
-		{"404 is domain error", 404, true},
-		{"409 is domain error", 409, true},
-		{"499 is domain error", 499, true},
-		{"500 is NOT domain error", 500, false},
-		{"200 is NOT domain error", 200, false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			appErr := New("TEST", "test", tt.status)
-			assert.Equal(t, tt.expected, appErr.IsDomainError())
-		})
-	}
-}
 
 func TestAppError_WithDetails(t *testing.T) {
 	original := BadRequest(CodeValidationError, "validation failed")
@@ -55,20 +32,18 @@ func TestConstructors(t *testing.T) {
 	tests := []struct {
 		name        string
 		constructor func(string, string) *AppError
-		status      int
 	}{
-		{"BadRequest", BadRequest, http.StatusBadRequest},
-		{"NotFound", NotFound, http.StatusNotFound},
-		{"Conflict", Conflict, http.StatusConflict},
-		{"Internal", Internal, http.StatusInternalServerError},
-		{"Unauthorized", Unauthorized, http.StatusUnauthorized},
-		{"Forbidden", Forbidden, http.StatusForbidden},
+		{"BadRequest", BadRequest},
+		{"NotFound", NotFound},
+		{"Conflict", Conflict},
+		{"Internal", Internal},
+		{"Unauthorized", Unauthorized},
+		{"Forbidden", Forbidden},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			appErr := tt.constructor("CODE", "message")
-			assert.Equal(t, tt.status, appErr.HTTPStatus)
 			assert.Equal(t, "CODE", appErr.Code)
 			assert.Equal(t, "message", appErr.Message)
 		})
@@ -77,7 +52,7 @@ func TestConstructors(t *testing.T) {
 
 func TestWrap(t *testing.T) {
 	cause := errors.New("original error")
-	wrapped := Wrap(cause, CodeInternalError, "wrapped message", http.StatusInternalServerError)
+	wrapped := Wrap(cause, CodeInternalError, "wrapped message")
 
 	assert.Equal(t, cause, wrapped.Err)
 	assert.Equal(t, CodeInternalError, wrapped.Code)
@@ -88,5 +63,5 @@ func TestErrorsAs(t *testing.T) {
 	appErr := NotFound(CodeNotFound, "entity not found")
 	var target *AppError
 	assert.True(t, errors.As(appErr, &target))
-	assert.Equal(t, http.StatusNotFound, target.HTTPStatus)
+	assert.Equal(t, CodeNotFound, target.Code)
 }

@@ -20,17 +20,33 @@ type ErrorResponse struct {
 	} `json:"errors"`
 }
 
+// codeToStatus maps AppError codes to HTTP status codes.
+// This is the single source of truth for error-to-HTTP translation.
+var codeToStatus = map[string]int{
+	apperror.CodeInvalidRequest:  http.StatusBadRequest,
+	apperror.CodeValidationError: http.StatusBadRequest,
+	apperror.CodeNotFound:        http.StatusNotFound,
+	apperror.CodeConflict:        http.StatusConflict,
+	apperror.CodeUnauthorized:    http.StatusUnauthorized,
+	apperror.CodeForbidden:       http.StatusForbidden,
+	apperror.CodeInternalError:   http.StatusInternalServerError,
+}
+
 // HandleError handles errors in a centralized and consistent way.
 // It supports AppError (structured) and falls back to domain error translation.
 func HandleError(c *gin.Context, span trace.Span, err error) {
 	// 1. Try AppError first (structured errors from use cases)
 	var appErr *apperror.AppError
 	if errors.As(err, &appErr) {
+		status, ok := codeToStatus[appErr.Code]
+		if !ok {
+			status = http.StatusInternalServerError
+		}
 		span.SetStatus(codes.Error, appErr.Code)
-		if appErr.HTTPStatus >= 500 {
+		if status >= 500 {
 			span.RecordError(err)
 		}
-		httputil.SendError(c, appErr.HTTPStatus, appErr.Message)
+		httputil.SendError(c, status, appErr.Message)
 		return
 	}
 
