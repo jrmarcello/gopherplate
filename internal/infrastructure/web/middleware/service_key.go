@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/ctxkeys"
 	"bitbucket.org/appmax-space/go-boilerplate/pkg/httputil"
+	"bitbucket.org/appmax-space/go-boilerplate/pkg/logutil"
 )
 
 // ServiceKeyConfig contém a configuração de autenticação por Service Key.
@@ -100,8 +100,10 @@ func ServiceKeyAuth(config ServiceKeyConfig) gin.HandlerFunc {
 			return
 		}
 
-		// Armazena o nome do serviço chamador no contexto para logging/auditoria
-		c.Set(ctxkeys.CallerService, serviceName)
+		// Enrich LogContext with caller service for downstream logging
+		lc, _ := logutil.Extract(c.Request.Context())
+		lc.CallerService = serviceName
+		c.Request = c.Request.WithContext(logutil.Inject(c.Request.Context(), lc))
 
 		c.Next()
 	}

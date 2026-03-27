@@ -56,8 +56,7 @@ swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal
 - **`pkg/`** - Reusable packages shared across services:
   - `apperror/` - Structured application errors (AppError with code, message, HTTP status)
   - `httputil/` - Standardized API response helpers (SendSuccess, SendError)
-  - `ctxkeys/` - Typed context key definitions
-  - `logutil/` - Structured logging with context propagation
+  - `logutil/` - Structured logging with context propagation, fanout handler, PII masking
   - `telemetry/` - OpenTelemetry setup (traces + HTTP metrics + DB pool metrics)
   - `cache/` - Cache interface and Redis implementation
   - `database/` - PostgreSQL connection with Writer/Reader cluster

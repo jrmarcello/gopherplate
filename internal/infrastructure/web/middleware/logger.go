@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/trace"
 
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/ctxkeys"
 	"bitbucket.org/appmax-space/go-boilerplate/pkg/logutil"
 )
 
@@ -33,7 +32,6 @@ func Logger() gin.HandlerFunc {
 		if requestID == "" || len(requestID) > requestIDMaxLen || !validRequestID.MatchString(requestID) {
 			requestID = uuid.New().String()
 		}
-		c.Set(ctxkeys.RequestID, requestID)
 		c.Header(RequestIDHeader, requestID)
 
 		// Extrair Trace ID se disponível

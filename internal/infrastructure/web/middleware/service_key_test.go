@@ -7,6 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+
+	"bitbucket.org/appmax-space/go-boilerplate/pkg/logutil"
 )
 
 func init() {
@@ -89,8 +91,8 @@ func TestServiceKeyAuth_ValidKey(t *testing.T) {
 	r := gin.New()
 	r.Use(ServiceKeyAuth(config))
 	r.GET("/test", func(c *gin.Context) {
-		callerService, _ := c.Get("caller_service")
-		c.JSON(http.StatusOK, gin.H{"caller": callerService})
+		lc, _ := logutil.Extract(c.Request.Context())
+		c.JSON(http.StatusOK, gin.H{"caller": lc.CallerService})
 	})
 
 	w := httptest.NewRecorder()
