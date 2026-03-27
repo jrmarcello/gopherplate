@@ -19,6 +19,7 @@ import (
 	entityuc "bitbucket.org/appmax-space/go-boilerplate/internal/usecases/entity_example"
 	pkgcache "bitbucket.org/appmax-space/go-boilerplate/pkg/cache"
 	"bitbucket.org/appmax-space/go-boilerplate/pkg/database"
+	"bitbucket.org/appmax-space/go-boilerplate/pkg/health"
 	"bitbucket.org/appmax-space/go-boilerplate/pkg/idempotency"
 	pkgtelemetry "bitbucket.org/appmax-space/go-boilerplate/pkg/telemetry"
 	"go.opentelemetry.io/otel"
@@ -140,6 +141,22 @@ func buildDependencies(cluster *database.DBCluster, cfg *config.Config, httpMetr
 		slog.Warn("Redis cache disabled", "error", cacheErr)
 	}
 
+	// Health Checker
+	checker := health.New()
+	checker.Register("database_writer", true, func(ctx context.Context) error {
+		return cluster.Writer().PingContext(ctx)
+	})
+	if cluster.HasSeparateReader() {
+		checker.Register("database_reader", false, func(ctx context.Context) error {
+			return cluster.Reader().PingContext(ctx)
+		})
+	}
+	if redisClient != nil && redisClient.UnderlyingClient() != nil {
+		checker.Register("redis", false, func(ctx context.Context) error {
+			return redisClient.Ping(ctx)
+		})
+	}
+
 	// Singleflight protection (prevents cache stampede on concurrent reads)
 	flightGroup := entityuc.NewFlightGroup()
 
@@ -160,7 +177,7 @@ func buildDependencies(cluster *database.DBCluster, cfg *config.Config, httpMetr
 	entityHandler := handler.NewEntityHandler(createUC, getUC, listUC, updateUC, deleteUC, businessMetrics)
 
 	return router.Dependencies{
-		DB:               cluster.Writer(),
+		HealthChecker:    checker,
 		EntityHandler:    entityHandler,
 		HTTPMetrics:      httpMetrics,
 		IdempotencyStore: idempotencyStore,

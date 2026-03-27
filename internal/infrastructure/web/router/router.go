@@ -4,13 +4,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jmoiron/sqlx"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
 	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/web/handler"
 	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/web/middleware"
+	"bitbucket.org/appmax-space/go-boilerplate/pkg/health"
 	"bitbucket.org/appmax-space/go-boilerplate/pkg/httputil"
 	"bitbucket.org/appmax-space/go-boilerplate/pkg/idempotency"
 	"bitbucket.org/appmax-space/go-boilerplate/pkg/telemetry"
@@ -25,7 +25,7 @@ type Config struct {
 
 // Dependencies agrupa todas as dependências necessárias para o router
 type Dependencies struct {
-	DB               *sqlx.DB
+	HealthChecker    *health.Checker
 	EntityHandler    *handler.EntityHandler
 	HTTPMetrics      *telemetry.HTTPMetrics
 	IdempotencyStore idempotency.Store
@@ -77,6 +77,7 @@ func registerSwaggerRoutes(r *gin.Engine) {
 
 // registerHealthRoutes registra rotas de health check
 func registerHealthRoutes(r *gin.Engine, deps Dependencies) {
+	// Liveness - always ok (K8s restart if process is dead)
 	r.GET("/health", func(c *gin.Context) {
 		httputil.SendSuccess(c, http.StatusOK, gin.H{
 			"status":  "ok",
@@ -84,11 +85,22 @@ func registerHealthRoutes(r *gin.Engine, deps Dependencies) {
 		})
 	})
 
+	// Readiness - checks all dependencies
 	r.GET("/ready", func(c *gin.Context) {
-		if pingErr := deps.DB.Ping(); pingErr != nil {
-			httputil.SendError(c, http.StatusServiceUnavailable, "database connection failed")
-			return
+		healthy, statuses := deps.HealthChecker.RunAll(c.Request.Context())
+
+		result := gin.H{
+			"status": "ready",
 		}
-		httputil.SendSuccess(c, http.StatusOK, gin.H{"status": "ready"})
+		if !healthy {
+			result["status"] = "not ready"
+		}
+		result["checks"] = statuses
+
+		status := http.StatusOK
+		if !healthy {
+			status = http.StatusServiceUnavailable
+		}
+		httputil.SendSuccess(c, status, result)
 	})
 }
