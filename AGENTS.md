@@ -198,8 +198,8 @@ Ver: `docs/adr/003-config-strategy.md`
 ## Comandos Úteis
 
 ```bash
-make lint          # Verificar código
-make lint-full     # Lint completo (golangci-lint)
+make lint          # golangci-lint + gofmt
+make vulncheck     # govulncheck
 make test          # Rodar todos os testes
 make test-unit     # Apenas testes unitários
 make dev           # Hot reload local

@@ -86,7 +86,7 @@ var Module = fx.Module("database",
 #### 2. Modulo de Cache
 
 ```go
-// internal/infrastructure/cache/module.go
+// pkg/cache/module.go (example — would be added alongside redis.go)
 package cache
 
 import (
@@ -208,7 +208,7 @@ import (
 
     "bitbucket.org/appmax-space/go-boilerplate/config"
     dbmodule "bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/db"
-    cachemodule "bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/cache"
+    cachemodule "bitbucket.org/appmax-space/go-boilerplate/pkg/cache"
     webmodule "bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/web"
     ucmodule "bitbucket.org/appmax-space/go-boilerplate/internal/usecases"
 )

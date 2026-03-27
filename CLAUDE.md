@@ -13,8 +13,8 @@ This project serves as a **starter template** — clone it and rename `entity_ex
 ```bash
 make setup          # Full setup: install tools + start Docker + run migrations
 make dev            # Start server with hot reload (air)
-make lint           # Run go vet + gofmt
-make lint-full      # Run golangci-lint (same as CI)
+make lint           # Run golangci-lint + gofmt
+make vulncheck      # Run govulncheck for dependency vulnerabilities
 make test           # Run all tests: go test ./... -v
 make test-unit      # Unit tests only: go test ./internal/... -v
 make test-e2e       # E2E tests (requires Docker): go test ./tests/e2e/... -v -count=1

@@ -177,9 +177,9 @@ make help           # Lista todos os comandos
 # Desenvolvimento
 make setup          # Setup completo
 make dev            # Hot reload
-make lint           # go vet + gofmt
-make lint-full      # golangci-lint (igual CI)
+make lint           # golangci-lint + gofmt
 make security       # gosec
+make vulncheck      # govulncheck
 
 # Testes
 make test           # Todos (unit + e2e)
