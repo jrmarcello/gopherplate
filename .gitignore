@@ -6,10 +6,9 @@
 *.so
 *.dylib
 
-# Saída de testes
+# Saída de testes (tudo em tests/)
 tests/coverage/
-coverage.out
-coverage.html
+tests/load/results/
 
 # Dependências
 /vendor/

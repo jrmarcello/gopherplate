@@ -66,19 +66,20 @@ definitions:
         script:
           - apk add --no-cache git gcc musl-dev bc
           - go mod download
+          - mkdir -p tests/coverage
           - >-
             go test $(go list ./internal/... ./pkg/... ./config/... |
             grep -v -E '(web/handler$|web/router$|telemetry$|db/postgres$)')
-            -v -race -coverprofile=coverage.out
+            -v -race -coverprofile=tests/coverage/coverage.out
           - |
-            COVERAGE=$(go tool cover -func=coverage.out | tail -1 | awk '{print $3}' | tr -d '%')
+            COVERAGE=$(go tool cover -func=tests/coverage/coverage.out | tail -1 | awk '{print $3}' | tr -d '%')
             echo "Total coverage: ${COVERAGE}%"
             if [ $(echo "$COVERAGE < 60" | bc) -eq 1 ]; then
               echo "FAIL: coverage ${COVERAGE}% is below 60% minimum threshold"
               exit 1
             fi
         artifacts:
-          - coverage.out
+          - tests/coverage/coverage.out
         after-script:
           - |
             if [ "$BITBUCKET_EXIT_CODE" -ne 0 ]; then
