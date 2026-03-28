@@ -148,7 +148,7 @@ build: ## Compila binarios para bin/
 	@echo "Binaries: bin/api, bin/migrate"
 
 clean: ## Remove arquivos gerados
-	rm -rf bin/ tests/coverage/ tests/load/results/ tmp/
+	rm -rf bin/ tests/coverage/ tests/load/results/
 	@echo "Cleaned"
 
 changelog: ## Gera sugestão de changelog a partir dos commits
