@@ -150,6 +150,14 @@ clean: ## Remove arquivos gerados
 	rm -rf bin/ tests/coverage/ tests/load/results/ tmp/
 	@echo "Cleaned"
 
+changelog: ## Gera sugestão de changelog a partir dos commits
+	@command -v git-cliff >/dev/null 2>&1 || { echo "git-cliff not found. Install: brew install git-cliff"; exit 1; }
+	@echo "Gerando changelog sugerido (não sobrescreve CHANGELOG.md)..."
+	@git-cliff --output /dev/stdout
+	@echo ""
+	@echo "Para atualizar o CHANGELOG.md, revise a saída acima e edite manualmente."
+	@echo "Ou use: git-cliff --output CHANGELOG.md"
+
 # ============================================
 # QUALIDADE DE CÓDIGO
 # ============================================
