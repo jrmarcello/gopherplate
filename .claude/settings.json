@@ -102,9 +102,6 @@
       "Bash(kubectl rollout *)"
     ],
     "deny": [
-      "Read(.env)",
-      "Read(**/.env)",
-      "Read(**/.env.*)",
       "Read(**/credentials*)",
       "Read(**/*secret*)",
       "Bash(rm -rf /)",
