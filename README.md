@@ -33,7 +33,7 @@ cd my-service && make setup && make dev
 | **UUID v7** | IDs ordenados por tempo, tipo nativo no Postgres | Performance de índice + unicidade global |
 | **OpenTelemetry** | Traces + metrics + logs integrados | Observabilidade completa desde o dia 1 |
 | **Service Key Auth** | Autenticação entre serviços via headers | Segurança entre microsserviços |
-| **Logging estruturado** | Contexto propagado + mascaramento de PII | Logs rastreáveis sem expor dados sensíveis |
+| **Logging estruturado** | Contexto propagado + mascaramento de dados pessoais (email, CPF, telefone) | Logs rastreáveis e em conformidade com LGPD — dados sensíveis nunca aparecem em plaintext no ELK/Kibana |
 | **Health checks** | `/health` + `/ready` com verificação de dependências | Kubernetes liveness/readiness probes prontos |
 
 ### Qualidade automatizada
@@ -130,7 +130,7 @@ Domain não conhece nada das camadas externas.
 │   ├── database/         # PostgreSQL Writer/Reader
 │   ├── httputil/         # Respostas padronizadas
 │   ├── idempotency/      # Idempotência distribuída
-│   ├── logutil/          # Logging + PII masking
+│   ├── logutil/          # Logging + mascaramento de dados pessoais
 │   └── telemetry/        # OpenTelemetry setup
 ├── deploy/               # Kubernetes (Kustomize overlays)
 ├── docker/               # Dockerfile + docker-compose + observabilidade
@@ -303,7 +303,7 @@ Estes pacotes podem ser importados por **qualquer serviço Go** — não só que
 | `pkg/cache` | Interface de cache + Redis + singleflight (proteção contra stampede) |
 | `pkg/database` | Conexão PostgreSQL com Writer/Reader cluster |
 | `pkg/idempotency` | Idempotência distribuída via Redis (lock/unlock, fingerprint SHA-256) |
-| `pkg/logutil` | Logging estruturado com propagação de contexto e mascaramento de PII |
+| `pkg/logutil` | Logging estruturado com propagação de contexto e mascaramento de dados pessoais (LGPD) |
 | `pkg/telemetry` | Setup OTel (traces + HTTP metrics + DB pool metrics) |
 | `pkg/health` | Health checker com verificação de dependências e timeouts |
 
