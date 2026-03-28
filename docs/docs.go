@@ -17,6 +17,14 @@ const docTemplate = `{
     "paths": {
         "/entities": {
             "get": {
+                "security": [
+                    {
+                        "ServiceName": []
+                    },
+                    {
+                        "ServiceKey": []
+                    }
+                ],
                 "description": "Get a paginated list of entities",
                 "produces": [
                     "application/json"
@@ -73,6 +81,14 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ServiceName": []
+                    },
+                    {
+                        "ServiceKey": []
+                    }
+                ],
                 "description": "Create a new entity with the input payload",
                 "consumes": [
                     "application/json"
@@ -119,6 +135,14 @@ const docTemplate = `{
         },
         "/entities/{id}": {
             "get": {
+                "security": [
+                    {
+                        "ServiceName": []
+                    },
+                    {
+                        "ServiceKey": []
+                    }
+                ],
                 "description": "Get entity details by unique ID",
                 "produces": [
                     "application/json"
@@ -158,6 +182,14 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "ServiceName": []
+                    },
+                    {
+                        "ServiceKey": []
+                    }
+                ],
                 "description": "Update entity details by ID",
                 "consumes": [
                     "application/json"
@@ -215,6 +247,14 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "ServiceName": []
+                    },
+                    {
+                        "ServiceKey": []
+                    }
+                ],
                 "description": "Soft delete an entity by ID",
                 "produces": [
                     "application/json"

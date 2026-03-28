@@ -59,6 +59,8 @@ func NewEntityHandler(
 // @Success      201  {object}  dto.CreateOutput
 // @Failure      400  {object}  ErrorResponse
 // @Failure      500  {object}  ErrorResponse
+// @Security     ServiceName
+// @Security     ServiceKey
 // @Router       /entities [post]
 func (h *EntityHandler) Create(c *gin.Context) {
 	ctx, span := otel.Tracer("http-handler").Start(c.Request.Context(), "EntityHandler.Create")
@@ -100,6 +102,8 @@ func (h *EntityHandler) Create(c *gin.Context) {
 // @Success      200  {object}  dto.GetOutput
 // @Failure      404  {object}  ErrorResponse
 // @Failure      500  {object}  ErrorResponse
+// @Security     ServiceName
+// @Security     ServiceKey
 // @Router       /entities/{id} [get]
 func (h *EntityHandler) GetByID(c *gin.Context) {
 	ctx, span := otel.Tracer("http-handler").Start(c.Request.Context(), "EntityHandler.GetByID")
@@ -129,6 +133,8 @@ func (h *EntityHandler) GetByID(c *gin.Context) {
 // @Param        active  query     bool    false  "Filter by active status"
 // @Success      200     {object}  dto.ListOutput
 // @Failure      500     {object}  ErrorResponse
+// @Security     ServiceName
+// @Security     ServiceKey
 // @Router       /entities [get]
 func (h *EntityHandler) List(c *gin.Context) {
 	ctx, span := otel.Tracer("http-handler").Start(c.Request.Context(), "EntityHandler.List")
@@ -168,6 +174,8 @@ func (h *EntityHandler) List(c *gin.Context) {
 // @Failure      400      {object}  ErrorResponse
 // @Failure      404      {object}  ErrorResponse
 // @Failure      500      {object}  ErrorResponse
+// @Security     ServiceName
+// @Security     ServiceKey
 // @Router       /entities/{id} [put]
 func (h *EntityHandler) Update(c *gin.Context) {
 	ctx, span := otel.Tracer("http-handler").Start(c.Request.Context(), "EntityHandler.Update")
@@ -207,6 +215,8 @@ func (h *EntityHandler) Update(c *gin.Context) {
 // @Success      200  {object}  dto.DeleteOutput
 // @Failure      404  {object}  ErrorResponse
 // @Failure      500  {object}  ErrorResponse
+// @Security     ServiceName
+// @Security     ServiceKey
 // @Router       /entities/{id} [delete]
 func (h *EntityHandler) Delete(c *gin.Context) {
 	ctx, span := otel.Tracer("http-handler").Start(c.Request.Context(), "EntityHandler.Delete")

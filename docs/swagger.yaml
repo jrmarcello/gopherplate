@@ -136,6 +136,9 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
+      security:
+      - ServiceName: []
+      - ServiceKey: []
       summary: List entities
       tags:
       - entities
@@ -165,6 +168,9 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
+      security:
+      - ServiceName: []
+      - ServiceKey: []
       summary: Create a new entity
       tags:
       - entities
@@ -192,6 +198,9 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
+      security:
+      - ServiceName: []
+      - ServiceKey: []
       summary: Delete an entity
       tags:
       - entities
@@ -218,6 +227,9 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
+      security:
+      - ServiceName: []
+      - ServiceKey: []
       summary: Get an entity by ID
       tags:
       - entities
@@ -256,6 +268,9 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
+      security:
+      - ServiceName: []
+      - ServiceKey: []
       summary: Update an entity
       tags:
       - entities

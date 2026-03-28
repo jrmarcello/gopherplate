@@ -6,6 +6,14 @@
     "paths": {
         "/entities": {
             "get": {
+                "security": [
+                    {
+                        "ServiceName": []
+                    },
+                    {
+                        "ServiceKey": []
+                    }
+                ],
                 "description": "Get a paginated list of entities",
                 "produces": [
                     "application/json"
@@ -62,6 +70,14 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ServiceName": []
+                    },
+                    {
+                        "ServiceKey": []
+                    }
+                ],
                 "description": "Create a new entity with the input payload",
                 "consumes": [
                     "application/json"
@@ -108,6 +124,14 @@
         },
         "/entities/{id}": {
             "get": {
+                "security": [
+                    {
+                        "ServiceName": []
+                    },
+                    {
+                        "ServiceKey": []
+                    }
+                ],
                 "description": "Get entity details by unique ID",
                 "produces": [
                     "application/json"
@@ -147,6 +171,14 @@
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "ServiceName": []
+                    },
+                    {
+                        "ServiceKey": []
+                    }
+                ],
                 "description": "Update entity details by ID",
                 "consumes": [
                     "application/json"
@@ -204,6 +236,14 @@
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "ServiceName": []
+                    },
+                    {
+                        "ServiceKey": []
+                    }
+                ],
                 "description": "Soft delete an entity by ID",
                 "produces": [
                     "application/json"

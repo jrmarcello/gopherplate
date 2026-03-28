@@ -27,3 +27,4 @@ data:
   REDIS_ENABLED: "true"
   # Auth (fail-closed: sem keys no Secret = 503)
   SERVICE_KEYS_ENABLED: "true"
+  SWAGGER_ENABLED: "true"
