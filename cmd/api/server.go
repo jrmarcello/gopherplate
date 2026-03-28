@@ -129,7 +129,8 @@ func Start(ctx context.Context, cfg *config.Config) error {
 
 func setupLogger() *slog.Logger {
 	stdout := slog.NewJSONHandler(os.Stdout, nil)
-	return slog.New(logutil.NewFanoutHandler(stdout))
+	masked := logutil.NewMaskingHandler(logutil.NewMasker(logutil.DefaultBRConfig()), stdout)
+	return slog.New(logutil.NewFanoutHandler(masked))
 }
 
 func shutdownTelemetry(tp *pkgtelemetry.Provider, logger *slog.Logger) {
