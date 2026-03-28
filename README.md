@@ -335,7 +335,6 @@ Cada decisão técnica tem um documento explicando o **por quê**:
 | [kubernetes.md](docs/guides/kubernetes.md) | Deploy, Kind e operação |
 | [fx-dependency-injection.md](docs/guides/fx-dependency-injection.md) | Uber Fx como alternativa ao DI manual |
 | [multi-database.md](docs/guides/multi-database.md) | Estratégia para serviços com múltiplos bancos |
-| [presentation.md](docs/guides/presentation.md) | Visão geral para apresentações |
 
 ### Para Agentes de IA
 
