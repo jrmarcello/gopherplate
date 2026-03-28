@@ -211,6 +211,7 @@ make setup             # Setup completo (tools + Docker + migrations)
 make dev               # Servidor local com hot reload
 make run               # Tudo em Docker (infra + migrations + API)
 make run-stop          # Para todos os containers
+make changelog         # Gera sugestão de changelog a partir dos commits
 
 # Qualidade
 make lint              # golangci-lint + gofmt

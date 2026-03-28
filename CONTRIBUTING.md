@@ -61,7 +61,7 @@ Ao abrir um PR:
 1. Descreva claramente o que foi feito e por que
 2. Garanta que `make lint` e `make test` passam
 3. Se mudou a API, regenere o Swagger: `make swagger`
-4. Se adicionou features, atualize o `CHANGELOG.md`
+4. Se adicionou features, atualize o `CHANGELOG.md` (use `make changelog` como base)
 
 O pipeline roda automaticamente: lint, vulncheck, unit tests e E2E tests em paralelo.
 

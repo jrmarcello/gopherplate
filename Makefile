@@ -60,7 +60,7 @@ help: ## Exibe esta mensagem de ajuda
 	@grep -Eh '^(setup|tools):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "\033[1;33m  Development\033[0m"
-	@grep -Eh '^(dev|run|run-stop|build|clean):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -Eh '^(dev|run|run-stop|build|clean|changelog):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "\033[1;33m  Code Quality\033[0m"
 	@grep -Eh '^(lint|security|vulncheck|swagger):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
