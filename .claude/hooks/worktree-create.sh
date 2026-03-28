@@ -41,6 +41,20 @@ cd "$WORKTREE_DIR"
 
 # ── Project setup ────────────────────────────────────────────────
 
+# 0. Ensure git identity (inherit from main repo → global → env vars → warn)
+if [ -z "$(git config user.email 2>/dev/null)" ]; then
+  MAIN_EMAIL=$(git -C "${REPO_ROOT}" config user.email 2>/dev/null || echo "${GIT_AUTHOR_EMAIL:-}")
+  MAIN_NAME=$(git -C "${REPO_ROOT}" config user.name 2>/dev/null || echo "${GIT_AUTHOR_NAME:-}")
+  if [ -n "$MAIN_EMAIL" ] && [ -n "$MAIN_NAME" ]; then
+    git config user.email "$MAIN_EMAIL"
+    git config user.name "$MAIN_NAME"
+    echo "Git identity: ${MAIN_NAME} <${MAIN_EMAIL}>" >&2
+  else
+    echo "WARNING: Git identity not configured. Commits will fail." >&2
+    echo "  Run: git config --global user.email 'you@example.com'" >&2
+  fi
+fi
+
 # 1. Go dependencies
 echo "Downloading Go dependencies..." >&2
 go mod download >&2
