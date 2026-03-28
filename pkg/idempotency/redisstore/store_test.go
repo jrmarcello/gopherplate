@@ -1,10 +1,11 @@
-package idempotency
+package redisstore
 
 import (
 	"context"
 	"testing"
 	"time"
 
+	"bitbucket.org/appmax-space/go-boilerplate/pkg/idempotency"
 	"github.com/alicebob/miniredis/v2"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
@@ -47,7 +48,7 @@ func TestNewRedisStore_TTLValues(t *testing.T) {
 
 func TestNewRedisStore_ImplementsStoreInterface(t *testing.T) {
 	store, _ := setupRedisStore(t)
-	var _ Store = store // compile-time check
+	var _ idempotency.Store = store // compile-time check
 	assert.NotNil(t, store)
 }
 
@@ -93,7 +94,7 @@ func TestRedisStore_Lock_StoresProcessingStatus(t *testing.T) {
 	entry, getErr := store.Get(ctx, "idem:key-1")
 	require.NoError(t, getErr)
 	require.NotNil(t, entry)
-	assert.Equal(t, StatusProcessing, entry.Status)
+	assert.Equal(t, idempotency.StatusProcessing, entry.Status)
 	assert.Equal(t, "fp-abc", entry.Fingerprint)
 }
 
@@ -130,7 +131,7 @@ func TestRedisStore_Get_ReturnsEntryAfterLock(t *testing.T) {
 
 	require.NoError(t, getErr)
 	require.NotNil(t, entry)
-	assert.Equal(t, StatusProcessing, entry.Status)
+	assert.Equal(t, idempotency.StatusProcessing, entry.Status)
 	assert.Equal(t, "fp-123", entry.Fingerprint)
 	assert.Equal(t, 0, entry.StatusCode, "StatusCode must be zero for a locked-but-not-completed entry")
 	assert.Nil(t, entry.Body, "Body must be nil for a locked-but-not-completed entry")
@@ -141,7 +142,7 @@ func TestRedisStore_Get_ReturnsCompletedEntry(t *testing.T) {
 	ctx := context.Background()
 
 	_, _ = store.Lock(ctx, "idem:key-1", "fp-123")
-	_ = store.Complete(ctx, "idem:key-1", &Entry{
+	_ = store.Complete(ctx, "idem:key-1", &idempotency.Entry{
 		StatusCode:  201,
 		Body:        []byte(`{"created":true}`),
 		Fingerprint: "fp-123",
@@ -151,7 +152,7 @@ func TestRedisStore_Get_ReturnsCompletedEntry(t *testing.T) {
 
 	require.NoError(t, getErr)
 	require.NotNil(t, entry)
-	assert.Equal(t, StatusCompleted, entry.Status)
+	assert.Equal(t, idempotency.StatusCompleted, entry.Status)
 	assert.Equal(t, 201, entry.StatusCode)
 	assert.Equal(t, []byte(`{"created":true}`), entry.Body)
 	assert.Equal(t, "fp-123", entry.Fingerprint)
@@ -177,7 +178,7 @@ func TestRedisStore_Complete_SetsStatusToCompleted(t *testing.T) {
 
 	_, _ = store.Lock(ctx, "idem:key-1", "fp-abc")
 
-	entry := &Entry{
+	entry := &idempotency.Entry{
 		StatusCode:  200,
 		Body:        []byte(`{"ok":true}`),
 		Fingerprint: "fp-abc",
@@ -185,7 +186,7 @@ func TestRedisStore_Complete_SetsStatusToCompleted(t *testing.T) {
 	completeErr := store.Complete(ctx, "idem:key-1", entry)
 
 	require.NoError(t, completeErr)
-	assert.Equal(t, StatusCompleted, entry.Status, "Complete must mutate the entry Status")
+	assert.Equal(t, idempotency.StatusCompleted, entry.Status, "Complete must mutate the entry Status")
 }
 
 func TestRedisStore_Complete_ExtendsTTL(t *testing.T) {
@@ -198,7 +199,7 @@ func TestRedisStore_Complete_ExtendsTTL(t *testing.T) {
 	ttlBefore := mr.TTL("idem:key-ttl")
 	assert.Equal(t, 30*time.Second, ttlBefore)
 
-	_ = store.Complete(ctx, "idem:key-ttl", &Entry{
+	_ = store.Complete(ctx, "idem:key-ttl", &idempotency.Entry{
 		StatusCode:  200,
 		Body:        []byte(`{}`),
 		Fingerprint: "fp-abc",
@@ -215,7 +216,7 @@ func TestRedisStore_Complete_OverwritesExistingEntry(t *testing.T) {
 
 	_, _ = store.Lock(ctx, "idem:key-1", "fp-abc")
 
-	_ = store.Complete(ctx, "idem:key-1", &Entry{
+	_ = store.Complete(ctx, "idem:key-1", &idempotency.Entry{
 		StatusCode:  201,
 		Body:        []byte(`{"id":"new-entity"}`),
 		Fingerprint: "fp-abc",
@@ -234,7 +235,7 @@ func TestRedisStore_Complete_ErrorOnClosedConnection(t *testing.T) {
 
 	mr.Close()
 
-	completeErr := store.Complete(context.Background(), "key", &Entry{
+	completeErr := store.Complete(context.Background(), "key", &idempotency.Entry{
 		StatusCode:  200,
 		Body:        []byte(`{}`),
 		Fingerprint: "fp",
@@ -291,10 +292,10 @@ func TestRedisStore_FullLifecycle_LockCompleteGet(t *testing.T) {
 	// 2. Verify processing status
 	entry, _ := store.Get(ctx, "idem:lifecycle")
 	require.NotNil(t, entry)
-	assert.Equal(t, StatusProcessing, entry.Status)
+	assert.Equal(t, idempotency.StatusProcessing, entry.Status)
 
 	// 3. Complete
-	completeErr := store.Complete(ctx, "idem:lifecycle", &Entry{
+	completeErr := store.Complete(ctx, "idem:lifecycle", &idempotency.Entry{
 		StatusCode:  201,
 		Body:        []byte(`{"id":"entity-1"}`),
 		Fingerprint: "fp-xyz",
@@ -304,7 +305,7 @@ func TestRedisStore_FullLifecycle_LockCompleteGet(t *testing.T) {
 	// 4. Verify completed status
 	entry, _ = store.Get(ctx, "idem:lifecycle")
 	require.NotNil(t, entry)
-	assert.Equal(t, StatusCompleted, entry.Status)
+	assert.Equal(t, idempotency.StatusCompleted, entry.Status)
 	assert.Equal(t, 201, entry.StatusCode)
 	assert.Equal(t, []byte(`{"id":"entity-1"}`), entry.Body)
 

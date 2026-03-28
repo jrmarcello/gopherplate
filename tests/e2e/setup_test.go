@@ -20,11 +20,11 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/redis"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/cache"
+	"bitbucket.org/appmax-space/go-boilerplate/pkg/cache/redisclient"
 )
 
 var testDB *sqlx.DB
-var testCache *cache.RedisClient
+var testCache *redisclient.RedisClient
 
 // PostgresContainer encapsula o container do Postgres para testes
 type PostgresContainer struct {
@@ -102,7 +102,7 @@ func CreateRedisContainer(ctx context.Context) (testcontainers.Container, string
 }
 
 // GetTestCache retorna o cache Redis de teste
-func GetTestCache() *cache.RedisClient {
+func GetTestCache() *redisclient.RedisClient {
 	return testCache
 }
 
@@ -134,7 +134,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// Criar cliente Redis para testes
-	testCache, err = cache.NewRedisClient(cache.RedisConfig{
+	testCache, err = redisclient.NewRedisClient(redisclient.RedisConfig{
 		URL:     redisConnStr,
 		TTL:     "5m",
 		Enabled: true,

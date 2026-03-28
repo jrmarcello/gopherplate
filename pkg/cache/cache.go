@@ -1,6 +1,12 @@
 package cache
 
-import "context"
+import (
+	"context"
+	"errors"
+)
+
+// ErrCacheMiss indicates that the key was not found in cache.
+var ErrCacheMiss = errors.New("cache miss")
 
 // Cache defines the interface for cache operations.
 // Implementations should be nil-safe (operations on nil client are no-ops).

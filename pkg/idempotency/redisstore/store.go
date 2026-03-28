@@ -1,4 +1,4 @@
-package idempotency
+package redisstore
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"bitbucket.org/appmax-space/go-boilerplate/pkg/idempotency"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -29,8 +30,8 @@ func NewRedisStore(client *redis.Client, ttl, lockTTL time.Duration) *RedisStore
 // Returns true if acquired (first request), false if already existed.
 // The fingerprint is stored in the entry so it can be checked later on replay.
 func (s *RedisStore) Lock(ctx context.Context, key, fingerprint string) (bool, error) {
-	entry := Entry{
-		Status:      StatusProcessing,
+	entry := idempotency.Entry{
+		Status:      idempotency.StatusProcessing,
 		Fingerprint: fingerprint,
 	}
 
@@ -50,7 +51,7 @@ func (s *RedisStore) Lock(ctx context.Context, key, fingerprint string) (bool, e
 
 // Get returns the entry stored for the key.
 // Returns nil, nil if the key does not exist.
-func (s *RedisStore) Get(ctx context.Context, key string) (*Entry, error) {
+func (s *RedisStore) Get(ctx context.Context, key string) (*idempotency.Entry, error) {
 	val, getErr := s.client.Get(ctx, key).Result()
 	if errors.Is(getErr, redis.Nil) {
 		return nil, nil
@@ -59,7 +60,7 @@ func (s *RedisStore) Get(ctx context.Context, key string) (*Entry, error) {
 		return nil, getErr
 	}
 
-	var entry Entry
+	var entry idempotency.Entry
 	if unmarshalErr := json.Unmarshal([]byte(val), &entry); unmarshalErr != nil {
 		return nil, unmarshalErr
 	}
@@ -68,8 +69,8 @@ func (s *RedisStore) Get(ctx context.Context, key string) (*Entry, error) {
 }
 
 // Complete saves the final result with a long TTL.
-func (s *RedisStore) Complete(ctx context.Context, key string, entry *Entry) error {
-	entry.Status = StatusCompleted
+func (s *RedisStore) Complete(ctx context.Context, key string, entry *idempotency.Entry) error {
+	entry.Status = idempotency.StatusCompleted
 
 	data, marshalErr := json.Marshal(entry)
 	if marshalErr != nil {

@@ -17,10 +17,12 @@ import (
 	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/web/handler"
 	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/web/router"
 	entityuc "bitbucket.org/appmax-space/go-boilerplate/internal/usecases/entity_example"
-	pkgcache "bitbucket.org/appmax-space/go-boilerplate/pkg/cache"
+	"bitbucket.org/appmax-space/go-boilerplate/pkg/cache"
+	"bitbucket.org/appmax-space/go-boilerplate/pkg/cache/redisclient"
 	"bitbucket.org/appmax-space/go-boilerplate/pkg/database"
 	"bitbucket.org/appmax-space/go-boilerplate/pkg/health"
 	"bitbucket.org/appmax-space/go-boilerplate/pkg/idempotency"
+	"bitbucket.org/appmax-space/go-boilerplate/pkg/idempotency/redisstore"
 	"bitbucket.org/appmax-space/go-boilerplate/pkg/logutil"
 	pkgtelemetry "bitbucket.org/appmax-space/go-boilerplate/pkg/telemetry"
 	"go.opentelemetry.io/otel"
@@ -129,7 +131,7 @@ func buildDependencies(cluster *database.DBCluster, cfg *config.Config, httpMetr
 	repo := repository.NewEntityRepository(cluster)
 
 	// Cache (optional)
-	redisClient, cacheErr := pkgcache.NewRedisClient(pkgcache.RedisConfig{
+	redisClient, cacheErr := redisclient.NewRedisClient(redisclient.RedisConfig{
 		URL:          cfg.Redis.URL,
 		TTL:          cfg.Redis.TTL,
 		Enabled:      cfg.Redis.Enabled,
@@ -160,7 +162,7 @@ func buildDependencies(cluster *database.DBCluster, cfg *config.Config, httpMetr
 	}
 
 	// Singleflight protection (prevents cache stampede on concurrent reads)
-	flightGroup := pkgcache.NewFlightGroup()
+	flightGroup := cache.NewFlightGroup()
 
 	// Use Cases (with optional cache via builder pattern)
 	createUC := entityuc.NewCreateUseCase(repo)
@@ -172,7 +174,7 @@ func buildDependencies(cluster *database.DBCluster, cfg *config.Config, httpMetr
 	// Idempotency Store (optional — uses Redis if available)
 	var idempotencyStore idempotency.Store
 	if rc := redisClient.UnderlyingClient(); rc != nil {
-		idempotencyStore = idempotency.NewRedisStore(rc, 24*time.Hour, 30*time.Second)
+		idempotencyStore = redisstore.NewRedisStore(rc, 24*time.Hour, 30*time.Second)
 	}
 
 	// Handlers

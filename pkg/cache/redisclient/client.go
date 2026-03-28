@@ -1,4 +1,4 @@
-package cache
+package redisclient
 
 import (
 	"context"
@@ -7,11 +7,9 @@ import (
 	"log/slog"
 	"time"
 
+	"bitbucket.org/appmax-space/go-boilerplate/pkg/cache"
 	"github.com/redis/go-redis/v9"
 )
-
-// ErrCacheMiss indicates that the key was not found in cache.
-var ErrCacheMiss = errors.New("cache miss")
 
 // RedisConfig holds Redis connection configuration.
 type RedisConfig struct {
@@ -88,11 +86,11 @@ func NewRedisClient(cfg RedisConfig) (*RedisClient, error) {
 // Get retrieves a value from the cache.
 func (r *RedisClient) Get(ctx context.Context, key string, dest interface{}) error {
 	if r == nil {
-		return ErrCacheMiss
+		return cache.ErrCacheMiss
 	}
 	val, getErr := r.client.Get(ctx, key).Result()
 	if errors.Is(getErr, redis.Nil) {
-		return ErrCacheMiss
+		return cache.ErrCacheMiss
 	}
 	if getErr != nil {
 		return getErr
@@ -128,7 +126,7 @@ func (r *RedisClient) Close() error {
 	return r.client.Close()
 }
 
-// RedisClient returns the underlying go-redis client for use by other packages
+// UnderlyingClient returns the underlying go-redis client for use by other packages
 // (e.g., pkg/idempotency). Returns nil if the cache is disabled.
 func (r *RedisClient) UnderlyingClient() *redis.Client {
 	if r == nil {
