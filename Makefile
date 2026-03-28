@@ -415,7 +415,7 @@ SANDBOX_RUN_ARGS := -it --rm \
 	-p $(SANDBOX_PORT):8080 \
 	$(SANDBOX_SSH)
 
-SANDBOX_INIT := sudo /usr/local/bin/init-firewall.sh && (sudo chmod 666 /ssh-agent 2>/dev/null || true) && git config --global user.email "$$GIT_AUTHOR_EMAIL" && git config --global user.name "$$GIT_AUTHOR_NAME"
+SANDBOX_INIT := sudo /usr/local/bin/init-firewall.sh && (sudo chmod 666 /ssh-agent 2>/dev/null || true) && ([ -n "$$GIT_AUTHOR_EMAIL" ] && git config --global user.email "$$GIT_AUTHOR_EMAIL" && git config --global user.name "$$GIT_AUTHOR_NAME" || true)
 
 sandbox-build: ## Build sandbox image
 	docker build -t $(SANDBOX_IMAGE) -f .devcontainer/Dockerfile .devcontainer
