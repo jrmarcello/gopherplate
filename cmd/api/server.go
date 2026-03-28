@@ -48,6 +48,7 @@ func Start(ctx context.Context, cfg *config.Config) error {
 	}
 
 	// 2. Telemetry (OpenTelemetry Traces + Metrics)
+	// Graceful degradation: if OTel setup fails, app continues without telemetry.
 	tp, tpErr := pkgtelemetry.Setup(ctx, pkgtelemetry.Config{
 		ServiceName:  cfg.Otel.ServiceName,
 		CollectorURL: cfg.Otel.CollectorURL,
@@ -55,9 +56,11 @@ func Start(ctx context.Context, cfg *config.Config) error {
 		Insecure:     cfg.Otel.Insecure,
 	})
 	if tpErr != nil {
-		return tpErr
+		slog.Warn("Telemetry setup failed, continuing without observability", "error", tpErr)
 	}
-	defer shutdownTelemetry(tp, logger)
+	if tp != nil {
+		defer shutdownTelemetry(tp, logger)
+	}
 
 	// 3. Database (Writer/Reader Cluster)
 	writerCfg := database.Config{
@@ -108,7 +111,11 @@ func Start(ctx context.Context, cfg *config.Config) error {
 	}
 
 	// 6. Dependencies (Dependency Injection)
-	deps := buildDependencies(cluster, cfg, tp.HTTPMetrics(), businessMetrics)
+	var httpMetrics *pkgtelemetry.HTTPMetrics
+	if tp != nil {
+		httpMetrics = tp.HTTPMetrics()
+	}
+	deps := buildDependencies(cluster, cfg, httpMetrics, businessMetrics)
 
 	// Swagger Dynamic Config
 	if cfg.Swagger.Host != "" {
@@ -219,6 +226,7 @@ func newServer(port string, handler http.Handler) *http.Server {
 		ReadTimeout:       30 * time.Second,
 		WriteTimeout:      30 * time.Second,
 		IdleTimeout:       120 * time.Second,
+		MaxHeaderBytes:    1 << 20, // 1MB — protects against oversized headers
 	}
 }
 

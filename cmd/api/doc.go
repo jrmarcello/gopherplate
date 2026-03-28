@@ -3,11 +3,9 @@ package main
 // @title           Entity API
 // @version         1.0
 // @description     Microservice for entity management with Clean Architecture.
-// @termsOfService  http://swagger.io/terms/
 
-// @contact.name   API Support
-// @contact.url    http://www.swagger.io/support
-// @contact.email  support@swagger.io
+// @contact.name   Appmax Engineering
+// @contact.url    https://bitbucket.org/appmax-space/go-boilerplate
 
 // @host      localhost:8080
 // @BasePath  /
@@ -15,9 +13,12 @@ package main
 // @securityDefinitions.apikey ServiceName
 // @in header
 // @name X-Service-Name
+// @description Name of the calling service (e.g. "billing-api")
+
 // @securityDefinitions.apikey ServiceKey
 // @in header
 // @name X-Service-Key
+// @description Secret key for the calling service
 
 // @externalDocs.description  OpenAPI
 // @externalDocs.url          https://swagger.io/resources/open-api/
