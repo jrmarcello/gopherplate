@@ -25,5 +25,5 @@ data:
   REDIS_URL: "redis://redis-service:6379"
   REDIS_TTL: "5m"
   REDIS_ENABLED: "true"
-  # Auth (desabilitado em dev — fail-closed em HML/PRD)
-  SERVICE_KEYS_ENABLED: "false"
+  # Auth (fail-closed: sem keys no Secret = 503)
+  SERVICE_KEYS_ENABLED: "true"
