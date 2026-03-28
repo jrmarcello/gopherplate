@@ -164,179 +164,6 @@ definitions:
 info:
   contact: {}
 paths:
-  /entities:
-    get:
-      description: Get a paginated list of entities
-      parameters:
-      - description: Page number
-        in: query
-        name: page
-        type: integer
-      - description: Items per page
-        in: query
-        name: limit
-        type: integer
-      - description: Filter by name
-        in: query
-        name: name
-        type: string
-      - description: Filter by email
-        in: query
-        name: email
-        type: string
-      - description: Filter by active status
-        in: query
-        name: active
-        type: boolean
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/bitbucket_org_appmax-space_go-boilerplate_internal_usecases_user_dto.ListOutput'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
-      security:
-      - ServiceName: []
-      - ServiceKey: []
-      summary: List entities
-      tags:
-      - users
-    post:
-      consumes:
-      - application/json
-      description: Create a new entity with the input payload
-      parameters:
-      - description: Entity info
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/bitbucket_org_appmax-space_go-boilerplate_internal_usecases_user_dto.CreateInput'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/bitbucket_org_appmax-space_go-boilerplate_internal_usecases_user_dto.CreateOutput'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
-      security:
-      - ServiceName: []
-      - ServiceKey: []
-      summary: Create a new entity
-      tags:
-      - users
-  /entities/{id}:
-    delete:
-      description: Soft delete an entity by ID
-      parameters:
-      - description: Entity ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/bitbucket_org_appmax-space_go-boilerplate_internal_usecases_user_dto.DeleteOutput'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
-      security:
-      - ServiceName: []
-      - ServiceKey: []
-      summary: Delete an entity
-      tags:
-      - users
-    get:
-      description: Get entity details by unique ID
-      parameters:
-      - description: Entity ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/bitbucket_org_appmax-space_go-boilerplate_internal_usecases_user_dto.GetOutput'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
-      security:
-      - ServiceName: []
-      - ServiceKey: []
-      summary: Get an entity by ID
-      tags:
-      - users
-    put:
-      consumes:
-      - application/json
-      description: Update entity details by ID
-      parameters:
-      - description: Entity ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Update info
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/bitbucket_org_appmax-space_go-boilerplate_internal_usecases_user_dto.UpdateInput'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/bitbucket_org_appmax-space_go-boilerplate_internal_usecases_user_dto.UpdateOutput'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
-      security:
-      - ServiceName: []
-      - ServiceKey: []
-      summary: Update an entity
-      tags:
-      - users
   /roles:
     get:
       description: Get a paginated list of roles
@@ -436,4 +263,177 @@ paths:
       summary: Delete a role
       tags:
       - roles
+  /users:
+    get:
+      description: Get a paginated list of entities
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by name
+        in: query
+        name: name
+        type: string
+      - description: Filter by email
+        in: query
+        name: email
+        type: string
+      - description: Filter by active status
+        in: query
+        name: active
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bitbucket_org_appmax-space_go-boilerplate_internal_usecases_user_dto.ListOutput'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
+      security:
+      - ServiceName: []
+      - ServiceKey: []
+      summary: List entities
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Create a new entity with the input payload
+      parameters:
+      - description: Entity info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bitbucket_org_appmax-space_go-boilerplate_internal_usecases_user_dto.CreateInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/bitbucket_org_appmax-space_go-boilerplate_internal_usecases_user_dto.CreateOutput'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
+      security:
+      - ServiceName: []
+      - ServiceKey: []
+      summary: Create a new entity
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      description: Soft delete an entity by ID
+      parameters:
+      - description: Entity ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bitbucket_org_appmax-space_go-boilerplate_internal_usecases_user_dto.DeleteOutput'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
+      security:
+      - ServiceName: []
+      - ServiceKey: []
+      summary: Delete an entity
+      tags:
+      - users
+    get:
+      description: Get entity details by unique ID
+      parameters:
+      - description: Entity ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bitbucket_org_appmax-space_go-boilerplate_internal_usecases_user_dto.GetOutput'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
+      security:
+      - ServiceName: []
+      - ServiceKey: []
+      summary: Get an entity by ID
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Update entity details by ID
+      parameters:
+      - description: Entity ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bitbucket_org_appmax-space_go-boilerplate_internal_usecases_user_dto.UpdateInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bitbucket_org_appmax-space_go-boilerplate_internal_usecases_user_dto.UpdateOutput'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_infrastructure_web_handler.ErrorResponse'
+      security:
+      - ServiceName: []
+      - ServiceKey: []
+      summary: Update an entity
+      tags:
+      - users
 swagger: "2.0"

@@ -61,7 +61,7 @@ func NewUserHandler(
 // @Failure      500  {object}  ErrorResponse
 // @Security     ServiceName
 // @Security     ServiceKey
-// @Router       /entities [post]
+// @Router       /users [post]
 func (h *UserHandler) Create(c *gin.Context) {
 	ctx, span := otel.Tracer("http-handler").Start(c.Request.Context(), "UserHandler.Create")
 	defer span.End()
@@ -104,7 +104,7 @@ func (h *UserHandler) Create(c *gin.Context) {
 // @Failure      500  {object}  ErrorResponse
 // @Security     ServiceName
 // @Security     ServiceKey
-// @Router       /entities/{id} [get]
+// @Router       /users/{id} [get]
 func (h *UserHandler) GetByID(c *gin.Context) {
 	ctx, span := otel.Tracer("http-handler").Start(c.Request.Context(), "UserHandler.GetByID")
 	defer span.End()
@@ -135,7 +135,7 @@ func (h *UserHandler) GetByID(c *gin.Context) {
 // @Failure      500     {object}  ErrorResponse
 // @Security     ServiceName
 // @Security     ServiceKey
-// @Router       /entities [get]
+// @Router       /users [get]
 func (h *UserHandler) List(c *gin.Context) {
 	ctx, span := otel.Tracer("http-handler").Start(c.Request.Context(), "UserHandler.List")
 	defer span.End()
@@ -176,7 +176,7 @@ func (h *UserHandler) List(c *gin.Context) {
 // @Failure      500      {object}  ErrorResponse
 // @Security     ServiceName
 // @Security     ServiceKey
-// @Router       /entities/{id} [put]
+// @Router       /users/{id} [put]
 func (h *UserHandler) Update(c *gin.Context) {
 	ctx, span := otel.Tracer("http-handler").Start(c.Request.Context(), "UserHandler.Update")
 	defer span.End()
@@ -217,7 +217,7 @@ func (h *UserHandler) Update(c *gin.Context) {
 // @Failure      500  {object}  ErrorResponse
 // @Security     ServiceName
 // @Security     ServiceKey
-// @Router       /entities/{id} [delete]
+// @Router       /users/{id} [delete]
 func (h *UserHandler) Delete(c *gin.Context) {
 	ctx, span := otel.Tracer("http-handler").Start(c.Request.Context(), "UserHandler.Delete")
 	defer span.End()
