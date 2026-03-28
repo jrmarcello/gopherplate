@@ -9,6 +9,8 @@ Template production-ready para microsserviços Go. De zero a produção em minut
 
 Clone, renomeie `entity_example` para seu domínio, e comece a desenvolver — a infraestrutura já está pronta: PostgreSQL com Writer/Reader split, Redis cache com singleflight, OpenTelemetry, idempotência, autenticação service-to-service, 223 testes (89% coverage), CI/CD com Slack notifications, Kubernetes com Kustomize, e observabilidade completa com dashboard e alertas.
 
+DX pensado para produtividade: 40+ make targets com prerequisite checks, hot reload, Lefthook com 3 camadas de quality gates (pre-commit, commit-msg, pre-push), e integração nativa com Claude Code — skills, hooks, agents especializados e rules auto-aplicadas que atuam como um code reviewer contínuo enquanto você desenvolve.
+
 ```bash
 git clone https://bitbucket.org/appmax-space/go-boilerplate my-service
 cd my-service && make setup && make dev
