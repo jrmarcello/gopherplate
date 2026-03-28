@@ -18,9 +18,10 @@ import (
 
 // Config contém configurações do router
 type Config struct {
-	ServiceName    string
-	ServiceKeys    string // "service1:key1,service2:key2"
-	SwaggerEnabled bool
+	ServiceName        string
+	ServiceKeysEnabled bool   // fail-closed em HML/PRD se keys vazio
+	ServiceKeys        string // "service1:key1,service2:key2"
+	SwaggerEnabled     bool
 }
 
 // Dependencies agrupa todas as dependências necessárias para o router
@@ -61,7 +62,8 @@ func Setup(deps Dependencies) *gin.Engine {
 
 	// Protected routes (auth required if SERVICE_KEYS is configured)
 	authConfig := middleware.ServiceKeyConfig{
-		Keys: middleware.ParseServiceKeys(deps.Config.ServiceKeys),
+		Enabled: deps.Config.ServiceKeysEnabled,
+		Keys:    middleware.ParseServiceKeys(deps.Config.ServiceKeys),
 	}
 	protected := r.Group("")
 	protected.Use(middleware.ServiceKeyAuth(authConfig))

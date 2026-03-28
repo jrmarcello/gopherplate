@@ -23,3 +23,5 @@ data:
   REDIS_URL: "redis://redis-service:6379"
   REDIS_TTL: "5m"
   REDIS_ENABLED: "true"
+  # Auth (fail-closed: se SERVICE_KEYS não estiver no Secret, retorna 503)
+  SERVICE_KEYS_ENABLED: "true"

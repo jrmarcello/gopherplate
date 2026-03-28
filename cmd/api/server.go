@@ -184,9 +184,10 @@ func buildDependencies(cluster *database.DBCluster, cfg *config.Config, httpMetr
 		HTTPMetrics:      httpMetrics,
 		IdempotencyStore: idempotencyStore,
 		Config: router.Config{
-			ServiceName:    cfg.Otel.ServiceName,
-			ServiceKeys:    cfg.Auth.ServiceKeys,
-			SwaggerEnabled: cfg.Swagger.Enabled,
+			ServiceName:        cfg.Otel.ServiceName,
+			ServiceKeysEnabled: cfg.Auth.Enabled,
+			ServiceKeys:        cfg.Auth.ServiceKeys,
+			SwaggerEnabled:     cfg.Swagger.Enabled,
 		},
 	}
 }

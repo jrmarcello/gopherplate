@@ -13,6 +13,11 @@ import (
 
 // ServiceKeyConfig contém a configuração de autenticação por Service Key.
 type ServiceKeyConfig struct {
+	// Enabled indica se a autenticação está habilitada.
+	// Quando true e Keys está vazio, rejeita todas as requisições com 503 (fail-closed).
+	// Quando false, permite todas as requisições (modo desenvolvimento).
+	Enabled bool
+
 	// Keys é um mapa de service-name → key autorizado.
 	// Formato de entrada (env): "service1:key1,service2:key2"
 	Keys map[string]string
@@ -58,8 +63,11 @@ func DefaultServiceKeyConfig() ServiceKeyConfig {
 }
 
 // ServiceKeyAuth retorna um middleware que valida a autenticação via Service Key.
-// Se nenhuma chave estiver configurada (Keys vazio), o middleware permite todas as requisições.
-// Isso permite usar o serviço sem auth em desenvolvimento.
+//
+// Comportamento baseado no campo Enabled:
+//   - Enabled=false: permite todas as requisições (modo desenvolvimento)
+//   - Enabled=true + Keys vazio: rejeita todas as requisições com 503 (fail-closed)
+//   - Enabled=true + Keys populado: valida normalmente
 func ServiceKeyAuth(config ServiceKeyConfig) gin.HandlerFunc {
 	// Define headers padrão se não configurados
 	if config.ServiceNameHeader == "" {
@@ -70,9 +78,17 @@ func ServiceKeyAuth(config ServiceKeyConfig) gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
-		// Se não há chaves configuradas, permite tudo (dev mode)
-		if len(config.Keys) == 0 {
+		// Se auth não está habilitada, permite tudo (modo desenvolvimento)
+		if !config.Enabled {
 			c.Next()
+			return
+		}
+
+		// Fail-closed: auth habilitada mas sem chaves configuradas.
+		// Impede que um deploy sem SERVICE_KEYS em HML/PRD exponha o serviço.
+		if len(config.Keys) == 0 {
+			httputil.SendError(c, http.StatusServiceUnavailable, "service authentication not configured")
+			c.Abort()
 			return
 		}
 

@@ -331,7 +331,13 @@ curl -X GET http://localhost:8080/entities \
 | `/swagger/*` | Pública |
 | `/entities/*` | Protegida |
 
-**Modo desenvolvimento**: se `SERVICE_KEYS` estiver vazio, todas as requisições são permitidas.
+**Comportamento por ambiente:**
+
+| `SERVICE_KEYS_ENABLED` | `SERVICE_KEYS` | Resultado |
+| ---------------------- | -------------- | --------- |
+| `false` (padrão) | qualquer | Tudo permitido (modo desenvolvimento) |
+| `true` | configurado | Valida normalmente |
+| `true` | **vazio** | **503 Service Unavailable** (fail-closed — protege HML/PRD) |
 
 ---
 

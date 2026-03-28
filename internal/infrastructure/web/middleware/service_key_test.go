@@ -83,6 +83,7 @@ func TestServiceKeyAuth_NoKeysConfigured(t *testing.T) {
 
 func TestServiceKeyAuth_ValidKey(t *testing.T) {
 	config := ServiceKeyConfig{
+		Enabled: true,
 		Keys: map[string]string{
 			"banking-router": "sk_banking_abc123",
 		},
@@ -107,6 +108,7 @@ func TestServiceKeyAuth_ValidKey(t *testing.T) {
 
 func TestServiceKeyAuth_InvalidKey(t *testing.T) {
 	config := ServiceKeyConfig{
+		Enabled: true,
 		Keys: map[string]string{
 			"banking-router": "sk_banking_abc123",
 		},
@@ -130,6 +132,7 @@ func TestServiceKeyAuth_InvalidKey(t *testing.T) {
 
 func TestServiceKeyAuth_MissingHeaders(t *testing.T) {
 	config := ServiceKeyConfig{
+		Enabled: true,
 		Keys: map[string]string{
 			"banking-router": "sk_banking_abc123",
 		},
@@ -152,6 +155,7 @@ func TestServiceKeyAuth_MissingHeaders(t *testing.T) {
 
 func TestServiceKeyAuth_UnknownService(t *testing.T) {
 	config := ServiceKeyConfig{
+		Enabled: true,
 		Keys: map[string]string{
 			"banking-router": "sk_banking_abc123",
 		},

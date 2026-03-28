@@ -19,8 +19,10 @@ type Config struct {
 }
 
 type AuthConfig struct {
+	// Enabled indica se a autenticação está habilitada.
+	// Em HML/PRD deve ser true. Se true e ServiceKeys vazio → fail-closed (503).
+	Enabled bool
 	// ServiceKeys no formato "service1:key1,service2:key2"
-	// Se vazio, auth é desabilitada (dev mode)
 	ServiceKeys string
 }
 
@@ -175,6 +177,7 @@ func Load() (*Config, error) {
 			WriteTimeout: getEnvDuration("REDIS_WRITE_TIMEOUT", 200*time.Millisecond),
 		},
 		Auth: AuthConfig{
+			Enabled:     getEnvBool("SERVICE_KEYS_ENABLED", false),
 			ServiceKeys: getEnv("SERVICE_KEYS", ""),
 		},
 		Swagger: SwaggerConfig{

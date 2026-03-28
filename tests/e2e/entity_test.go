@@ -84,6 +84,7 @@ func setupTestRouterWithAuth() *gin.Engine {
 
 	// Service Key Auth middleware com chaves de teste
 	authConfig := middleware.ServiceKeyConfig{
+		Enabled: true,
 		Keys: map[string]string{
 			"test-service": "sk_test_service_key_12345",
 		},
