@@ -272,6 +272,49 @@ Ver `.env.example` para a lista completa e [ADR-003](docs/adr/003-config-strateg
 
 ---
 
+## Sandbox (DevContainer)
+
+O projeto inclui um **DevContainer** pré-configurado que cria um ambiente de desenvolvimento isolado com todas as ferramentas instaladas. Ideal para:
+
+- **Rodar o Claude Code com permissões irrestritas** sem risco para sua máquina — o container tem um firewall que bloqueia todo tráfego de rede exceto os domínios necessários (GitHub, Go modules, Bitbucket, Anthropic)
+- **Onboarding instantâneo** — qualquer dev abre o projeto no VS Code e tem Go, linters, CLI tools e extensões prontos, sem instalar nada localmente
+- **Ambiente reproduzível** — todos desenvolvem com as mesmas versões de Go, golangci-lint, swag, goose, etc.
+
+### Via VS Code
+
+Abra o projeto no VS Code com a extensão **Dev Containers** instalada. Ele detecta o `.devcontainer/devcontainer.json` automaticamente e oferece "Reopen in Container".
+
+### Via Makefile (sem VS Code)
+
+```bash
+make sandbox          # Abre um shell no container com firewall ativo
+make sandbox-claude   # Abre o Claude Code direto no container
+make sandbox-shell    # Conecta num container já rodando
+make sandbox-stop     # Para o container
+make sandbox-firewall # Testa se o firewall está funcionando
+make sandbox-status   # Mostra status do container e volumes
+```
+
+### O que vem instalado no container
+
+- Go 1.25 + todas as dev tools (air, goose, lefthook, golangci-lint, swag, gopls, goimports)
+- Node.js 20 + Claude Code
+- Docker-in-Docker (para rodar `docker compose` dentro do container)
+- zsh com Powerline10k
+- git-delta para diffs aprimorados
+
+### Firewall (default-deny)
+
+O container roda com `--cap-add=NET_ADMIN` e um script de firewall (`init-firewall.sh`) que:
+
+1. Bloqueia **todo** tráfego de saída por padrão
+2. Permite apenas domínios necessários: Anthropic (Claude), GitHub, Go modules, Bitbucket, Docker Hub, Kibana
+3. Permite tráfego local (host network, Docker network)
+
+Isso garante que o Claude Code com `--dangerously-skip-permissions` não consiga acessar serviços externos não autorizados.
+
+---
+
 ## Autenticação
 
 Rotas protegidas requerem headers `X-Service-Name` e `X-Service-Key`:
