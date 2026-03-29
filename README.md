@@ -377,6 +377,20 @@ Sugestões são bem-vindas via [Issues](https://bitbucket.org/appmax-space/go-bo
 
 ---
 
+## Módulos Complementares
+
+Pacotes standalone do ecossistema, importáveis via `go get`. Diferente do `pkg/` (que vem embutido no template), estes módulos vivem em repositórios próprios e são adicionados sob demanda:
+
+| Módulo | Descrição | Status |
+| ------ | --------- | ------ |
+| [go-outbox](docs/modules/go-outbox-implementation-plan.md) | Transactional Outbox Pattern — eventos assíncronos confiáveis (SQS/SNS/Kafka) com relay, retry, circuit breaker e observabilidade | Planejado |
+| [go-pagination](docs/modules/go-pagination-overview.md) | Cursor-based e offset pagination com filtros e sorting | Ideia |
+| [go-auditlog](docs/modules/go-auditlog-overview.md) | Registro de auditoria estruturado com storage plugável | Ideia |
+
+> Planos de implementação ficam em `docs/modules/`. Para necessidades cobertas por libs maduras da comunidade (resiliência, criptografia, event bus, notificações, sagas), consulte o guia [Bibliotecas Recomendadas](docs/guides/recommended-libraries.md).
+
+---
+
 ## FAQ
 
 **"Qual a filosofia por trás do projeto?"**
