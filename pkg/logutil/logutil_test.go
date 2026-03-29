@@ -1,8 +1,10 @@
 package logutil
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -193,4 +195,74 @@ func TestContextArgsFromCtx_withoutLogContext(t *testing.T) {
 	ctx := context.Background()
 	args := contextArgsFromCtx(ctx)
 	assert.Nil(t, args)
+}
+
+func TestLogInfo(t *testing.T) {
+	t.Run("with empty context", func(t *testing.T) {
+		var buf bytes.Buffer
+		handler := slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug})
+		original := slog.Default()
+		slog.SetDefault(slog.New(handler))
+		defer slog.SetDefault(original)
+
+		ctx := context.Background()
+		LogInfo(ctx, "test info message", "extra_key", "extra_value")
+
+		output := buf.String()
+		assert.Contains(t, output, "test info message")
+		assert.Contains(t, output, "extra_key")
+	})
+
+	t.Run("with enriched context", func(t *testing.T) {
+		var buf bytes.Buffer
+		handler := slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug})
+		original := slog.Default()
+		slog.SetDefault(slog.New(handler))
+		defer slog.SetDefault(original)
+
+		lc := LogContext{
+			RequestID: "req-info-123",
+			Step:      StepHandler,
+		}
+		ctx := Inject(context.Background(), lc)
+		LogInfo(ctx, "enriched info message")
+
+		output := buf.String()
+		assert.Contains(t, output, "enriched info message")
+		assert.Contains(t, output, "req-info-123")
+	})
+}
+
+func TestLogError(t *testing.T) {
+	t.Run("with empty context", func(t *testing.T) {
+		var buf bytes.Buffer
+		handler := slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug})
+		original := slog.Default()
+		slog.SetDefault(slog.New(handler))
+		defer slog.SetDefault(original)
+
+		ctx := context.Background()
+		LogError(ctx, "test error message", "error_key", "error_value")
+
+		output := buf.String()
+		assert.Contains(t, output, "test error message")
+		assert.Contains(t, output, "error_key")
+	})
+}
+
+func TestLogWarn(t *testing.T) {
+	t.Run("with empty context", func(t *testing.T) {
+		var buf bytes.Buffer
+		handler := slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug})
+		original := slog.Default()
+		slog.SetDefault(slog.New(handler))
+		defer slog.SetDefault(original)
+
+		ctx := context.Background()
+		LogWarn(ctx, "test warn message", "warn_key", "warn_value")
+
+		output := buf.String()
+		assert.Contains(t, output, "test warn message")
+		assert.Contains(t, output, "warn_key")
+	})
 }

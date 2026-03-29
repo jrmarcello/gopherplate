@@ -1,7 +1,9 @@
 package database
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
 
@@ -44,6 +46,13 @@ func TestDefaultConfig_Driver(t *testing.T) {
 func newMockDB(t *testing.T) (*sql.DB, sqlmock.Sqlmock) {
 	t.Helper()
 	mockDB, mock, mockErr := sqlmock.New()
+	require.NoError(t, mockErr)
+	return mockDB, mock
+}
+
+func newMockDBWithPing(t *testing.T) (*sql.DB, sqlmock.Sqlmock) {
+	t.Helper()
+	mockDB, mock, mockErr := sqlmock.New(sqlmock.MonitorPingsOption(true))
 	require.NoError(t, mockErr)
 	return mockDB, mock
 }
@@ -173,5 +182,106 @@ func TestNewConnection(t *testing.T) {
 
 		assert.Nil(t, db)
 		assert.Error(t, connErr)
+	})
+}
+
+func TestDBCluster_PingAll(t *testing.T) {
+	t.Run("success writer only", func(t *testing.T) {
+		writerDB, writerMock := newMockDBWithPing(t)
+		defer writerDB.Close()
+		writerMock.ExpectPing()
+
+		cluster := NewDBClusterFromDB(writerDB)
+
+		pingErr := cluster.PingAll(context.Background())
+		assert.NoError(t, pingErr)
+		assert.NoError(t, writerMock.ExpectationsWereMet())
+	})
+
+	t.Run("success with reader", func(t *testing.T) {
+		writerDB, writerMock := newMockDBWithPing(t)
+		defer writerDB.Close()
+		writerMock.ExpectPing()
+
+		readerDB, readerMock := newMockDBWithPing(t)
+		defer readerDB.Close()
+		readerMock.ExpectPing()
+
+		cluster := &DBCluster{writer: writerDB, reader: readerDB}
+
+		pingErr := cluster.PingAll(context.Background())
+		assert.NoError(t, pingErr)
+		assert.NoError(t, writerMock.ExpectationsWereMet())
+		assert.NoError(t, readerMock.ExpectationsWereMet())
+	})
+
+	t.Run("writer ping fails", func(t *testing.T) {
+		writerDB, writerMock := newMockDBWithPing(t)
+		defer writerDB.Close()
+		writerMock.ExpectPing().WillReturnError(fmt.Errorf("writer connection lost"))
+
+		cluster := NewDBClusterFromDB(writerDB)
+
+		pingErr := cluster.PingAll(context.Background())
+		assert.Error(t, pingErr)
+		assert.Contains(t, pingErr.Error(), "writer ping failed")
+	})
+
+	t.Run("reader ping fails", func(t *testing.T) {
+		writerDB, writerMock := newMockDBWithPing(t)
+		defer writerDB.Close()
+		writerMock.ExpectPing()
+
+		readerDB, readerMock := newMockDBWithPing(t)
+		defer readerDB.Close()
+		readerMock.ExpectPing().WillReturnError(fmt.Errorf("reader connection lost"))
+
+		cluster := &DBCluster{writer: writerDB, reader: readerDB}
+
+		pingErr := cluster.PingAll(context.Background())
+		assert.Error(t, pingErr)
+		assert.Contains(t, pingErr.Error(), "reader ping failed")
+	})
+}
+
+func TestDBCluster_Close_Errors(t *testing.T) {
+	t.Run("writer close error", func(t *testing.T) {
+		writerDB, writerMock := newMockDB(t)
+		writerMock.ExpectClose().WillReturnError(fmt.Errorf("writer close failed"))
+
+		cluster := NewDBClusterFromDB(writerDB)
+
+		closeErr := cluster.Close()
+		assert.Error(t, closeErr)
+		assert.Contains(t, closeErr.Error(), "failed to close writer")
+	})
+
+	t.Run("reader close error", func(t *testing.T) {
+		writerDB, writerMock := newMockDB(t)
+		writerMock.ExpectClose()
+
+		readerDB, readerMock := newMockDB(t)
+		readerMock.ExpectClose().WillReturnError(fmt.Errorf("reader close failed"))
+
+		cluster := &DBCluster{writer: writerDB, reader: readerDB}
+
+		closeErr := cluster.Close()
+		assert.Error(t, closeErr)
+		assert.Contains(t, closeErr.Error(), "failed to close reader")
+	})
+
+	t.Run("both close error", func(t *testing.T) {
+		writerDB, writerMock := newMockDB(t)
+		writerMock.ExpectClose().WillReturnError(fmt.Errorf("writer close failed"))
+
+		readerDB, readerMock := newMockDB(t)
+		readerMock.ExpectClose().WillReturnError(fmt.Errorf("reader close failed"))
+
+		cluster := &DBCluster{writer: writerDB, reader: readerDB}
+
+		closeErr := cluster.Close()
+		assert.Error(t, closeErr)
+		assert.Contains(t, closeErr.Error(), "failed to close writer")
+		assert.Contains(t, closeErr.Error(), "failed to close reader")
 	})
 }

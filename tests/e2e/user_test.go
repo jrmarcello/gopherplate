@@ -439,7 +439,7 @@ func TestE2E_ServiceKeyAuth_Errors(t *testing.T) {
 // PAGINATION & FILTERING
 // =============================================================================
 
-func TestE2E_ListEntities_Pagination(t *testing.T) {
+func TestE2E_ListUsers_Pagination(t *testing.T) {
 	require.NoError(t, CleanupUsers())
 	router := setupTestRouter()
 

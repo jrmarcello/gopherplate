@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	roledomain "bitbucket.org/appmax-space/go-boilerplate/internal/domain/role"
 	userdomain "bitbucket.org/appmax-space/go-boilerplate/internal/domain/user"
 	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
 	"bitbucket.org/appmax-space/go-boilerplate/pkg/apperror"
@@ -71,6 +72,10 @@ func translateError(err error) (status int, code, message string) {
 		return http.StatusBadRequest, apperror.CodeInvalidRequest, "invalid ID"
 	case errors.Is(err, userdomain.ErrUserNotFound):
 		return http.StatusNotFound, apperror.CodeNotFound, "user not found"
+	case errors.Is(err, roledomain.ErrRoleNotFound):
+		return http.StatusNotFound, apperror.CodeNotFound, "role not found"
+	case errors.Is(err, roledomain.ErrDuplicateRoleName):
+		return http.StatusConflict, apperror.CodeConflict, "role name already exists"
 	default:
 		return http.StatusInternalServerError, apperror.CodeInternalError, "internal server error"
 	}

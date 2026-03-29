@@ -76,3 +76,21 @@ func TestEmail_Scan_Error(t *testing.T) {
 	err = email.Scan(123)
 	assert.Error(t, err)
 }
+
+func TestParseEmail(t *testing.T) {
+	t.Run("valid email string", func(t *testing.T) {
+		email := ParseEmail("user@example.com")
+		assert.Equal(t, "user@example.com", email.String())
+	})
+
+	t.Run("empty string still creates Email", func(t *testing.T) {
+		email := ParseEmail("")
+		assert.Equal(t, "", email.String())
+	})
+
+	t.Run("String returns the value passed", func(t *testing.T) {
+		raw := "any-value-without-validation"
+		email := ParseEmail(raw)
+		assert.Equal(t, raw, email.String())
+	})
+}

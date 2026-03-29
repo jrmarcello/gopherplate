@@ -7,7 +7,7 @@
 
 **Padronização e Developer Experience como padrão.** Template production-ready para microsserviços Go — de zero a produção em minutos, não semanas.
 
-Clone, use os domínios `user` e `role` como referência, renomeie para seu domínio, e comece a desenvolver. O template já é multi-domínio: `user` demonstra o fluxo completo (cache, singleflight, idempotência), enquanto `role` serve como exemplo de um segundo domínio mais simples com DI independente. A infraestrutura já está pronta: PostgreSQL com Writer/Reader split, Redis cache com singleflight, OpenTelemetry, idempotência, autenticação service-to-service, 223 testes (89% de cobertura), CI/CD com notificações Slack, Kubernetes com Kustomize, e observabilidade completa com dashboard e alertas.
+Clone, use os domínios `user` e `role` como referência, renomeie para seu domínio, e comece a desenvolver. O template já é multi-domínio: `user` demonstra o fluxo completo (cache, singleflight, idempotência), enquanto `role` serve como exemplo de um segundo domínio mais simples com DI independente. A infraestrutura já está pronta: PostgreSQL com Writer/Reader split, Redis cache com singleflight, OpenTelemetry, idempotência, autenticação service-to-service, 291+ testes unitários e 22 E2E (75%+ de cobertura), CI/CD com notificações Slack, Kubernetes com Kustomize, e observabilidade completa com dashboard e alertas.
 
 DX pensado para produtividade: 40+ comandos make com verificação automática de pré-requisitos, hot reload, Lefthook com 3 camadas de verificação de qualidade (pre-commit, commit-msg, pre-push), e integração nativa com Claude Code — skills, hooks, agents especializados e rules auto-aplicadas que atuam como um code reviewer contínuo enquanto você desenvolve.
 
@@ -40,8 +40,8 @@ cd my-service && make setup && make dev
 
 | Feature | O que faz | Quando roda |
 | ------- | --------- | ----------- |
-| **223 testes** | Unit + sqlmock + E2E com TestContainers | `make test` |
-| **89% de cobertura** | Domain, usecases, middleware, pkg — tudo coberto | CI exige 60% mínimo |
+| **291+ testes unitários + 22 E2E** | Unit + sqlmock + E2E com TestContainers | `make test` |
+| **75%+ de cobertura** | Domain, usecases, middleware, pkg — tudo coberto (10 pacotes com 100%) | CI exige 60% mínimo |
 | **golangci-lint** | 50+ linters incluindo gosec | Pre-commit + CI |
 | **govulncheck** | Varredura de vulnerabilidades em dependências | Pre-push + CI |
 | **Lefthook** | 3 camadas: pre-commit (formatação), commit-msg (convenção), pre-push (lint+testes+vuln) | Automático |
@@ -74,9 +74,9 @@ cd my-service && make setup && make dev
 
 | Métrica | Valor |
 | ------- | ----- |
-| Testes passando | **223** |
-| Cobertura (código com lógica) | **89%** |
-| Arquivos Go | **80** |
+| Testes passando | **313** (291 unit + 22 E2E) |
+| Cobertura (código com lógica) | **75%+** (10 pacotes com 100%) |
+| Arquivos Go | **111** |
 | Comandos make | **40+** |
 | ADRs documentados | **8** |
 | Guias | **6** |
@@ -158,7 +158,7 @@ Domain não conhece nada das camadas externas.
 | CI/CD | 1 semana | Já configurado (Bitbucket Pipelines) |
 | Kubernetes | 1-2 semanas | `make kind-setup` (5 min) |
 | Observabilidade | "a gente vê depois" | `make observability-setup` (1 min) |
-| Testes | "a gente escreve depois" | 223 testes de exemplo |
+| Testes | "a gente escreve depois" | 313 testes de exemplo |
 | **Padronização** | **Serviços diferentes** | **Mesmo DX e padrão de qualidade em todos** |
 
 ---

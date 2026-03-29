@@ -56,6 +56,28 @@ func TestCreateUseCase_Execute_DuplicateName(t *testing.T) {
 	mockRepo.AssertNotCalled(t, "Create")
 }
 
+func TestCreateUseCase_Execute_FindByNameError(t *testing.T) {
+	// Arrange
+	mockRepo := new(MockRepository)
+	mockRepo.On("FindByName", mock.Anything, "admin").
+		Return(nil, errors.New("database connection lost"))
+
+	uc := NewCreateUseCase(mockRepo)
+	input := dto.CreateInput{
+		Name:        "admin",
+		Description: "Administrator role",
+	}
+
+	// Act
+	output, executeErr := uc.Execute(context.Background(), input)
+
+	// Assert
+	assert.Error(t, executeErr)
+	assert.Nil(t, output)
+	assert.Contains(t, executeErr.Error(), "database connection lost")
+	mockRepo.AssertNotCalled(t, "Create")
+}
+
 func TestCreateUseCase_Execute_RepositoryError(t *testing.T) {
 	// Arrange
 	mockRepo := new(MockRepository)

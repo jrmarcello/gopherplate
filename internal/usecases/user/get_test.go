@@ -7,6 +7,7 @@ import (
 	"time"
 
 	userdomain "bitbucket.org/appmax-space/go-boilerplate/internal/domain/user"
+	"bitbucket.org/appmax-space/go-boilerplate/pkg/cache"
 
 	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
 	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user/dto"
@@ -207,4 +208,61 @@ func TestGetUseCase_Execute_CacheSetError_StillReturnsData(t *testing.T) {
 
 	mockRepo.AssertExpectations(t)
 	mockCache.AssertExpectations(t)
+}
+
+// ============================================
+// SINGLEFLIGHT TESTS
+// ============================================
+
+func TestGetUseCase_Execute_WithFlight(t *testing.T) {
+	t.Run("success: WithFlight configured, repo called, returns data", func(t *testing.T) {
+		// Arrange
+		mockRepo := new(MockRepository)
+		id := vo.NewID()
+		email, _ := vo.NewEmail("joao@example.com")
+
+		expectedEntity := &userdomain.User{
+			ID:        id,
+			Name:      "João Silva",
+			Email:     email,
+			Active:    true,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+
+		mockRepo.On("FindByID", mock.Anything, id).Return(expectedEntity, nil)
+
+		uc := NewGetUseCase(mockRepo).WithFlight(cache.NewFlightGroup())
+		input := dto.GetInput{ID: id.String()}
+
+		// Act
+		output, executeErr := uc.Execute(context.Background(), input)
+
+		// Assert
+		assert.NoError(t, executeErr)
+		assert.NotNil(t, output)
+		assert.Equal(t, id.String(), output.ID)
+		assert.Equal(t, "João Silva", output.Name)
+		assert.Equal(t, "joao@example.com", output.Email)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("error: WithFlight configured, repo returns error, error propagated", func(t *testing.T) {
+		// Arrange
+		mockRepo := new(MockRepository)
+		mockRepo.On("FindByID", mock.Anything, mock.AnythingOfType("vo.ID")).
+			Return(nil, userdomain.ErrUserNotFound)
+
+		uc := NewGetUseCase(mockRepo).WithFlight(cache.NewFlightGroup())
+		input := dto.GetInput{ID: "018e4a2c-6b4d-7000-9410-abcdef123456"}
+
+		// Act
+		output, executeErr := uc.Execute(context.Background(), input)
+
+		// Assert
+		assert.Error(t, executeErr)
+		assert.Nil(t, output)
+		assert.True(t, errors.Is(executeErr, userdomain.ErrUserNotFound))
+		mockRepo.AssertExpectations(t)
+	})
 }

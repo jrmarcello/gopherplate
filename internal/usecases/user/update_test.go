@@ -125,6 +125,44 @@ func TestUpdateUseCase_Execute_InvalidID(t *testing.T) {
 	mockRepo.AssertNotCalled(t, "FindByID")
 }
 
+func TestUpdateUseCase_Execute_CacheDeleteError_StillSucceeds(t *testing.T) {
+	// Arrange
+	mockRepo := new(MockRepository)
+	mockCache := new(MockCache)
+	id := vo.NewID()
+	email, _ := vo.NewEmail("joao@example.com")
+	cacheKey := "user:" + id.String()
+
+	existingEntity := &userdomain.User{
+		ID:        id,
+		Name:      "João Silva",
+		Email:     email,
+		Active:    true,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	mockRepo.On("FindByID", mock.Anything, id).Return(existingEntity, nil)
+	mockRepo.On("Update", mock.Anything, mock.AnythingOfType("*user.User")).Return(nil)
+	mockCache.On("Delete", mock.Anything, cacheKey).Return(errors.New("redis connection refused"))
+
+	uc := NewUpdateUseCase(mockRepo).WithCache(mockCache)
+	newName := "João Silva Updated"
+	input := dto.UpdateInput{
+		ID:   id.String(),
+		Name: &newName,
+	}
+
+	// Act
+	output, updateErr := uc.Execute(context.Background(), input)
+
+	// Assert — update succeeds even though cache delete failed
+	assert.NoError(t, updateErr)
+	assert.NotNil(t, output)
+	assert.Equal(t, "João Silva Updated", output.Name)
+	mockCache.AssertCalled(t, "Delete", mock.Anything, cacheKey)
+}
+
 func TestUpdateUseCase_Execute_CacheInvalidation(t *testing.T) {
 	// Arrange
 	mockRepo := new(MockRepository)

@@ -65,3 +65,46 @@ func TestErrorsAs(t *testing.T) {
 	assert.True(t, errors.As(appErr, &target))
 	assert.Equal(t, CodeNotFound, target.Code)
 }
+
+func TestAppError_Error_WithoutCause(t *testing.T) {
+	appErr := BadRequest(CodeInvalidRequest, "invalid email")
+
+	assert.Equal(t, "invalid email", appErr.Error())
+}
+
+func TestAppError_Error_WithCause(t *testing.T) {
+	cause := errors.New("db timeout")
+	appErr := Internal(CodeInternalError, "operation failed").WithError(cause)
+
+	assert.Equal(t, "operation failed: db timeout", appErr.Error())
+}
+
+func TestUnwrap(t *testing.T) {
+	t.Run("with cause returns the wrapped error", func(t *testing.T) {
+		cause := errors.New("db connection failed")
+		appErr := Internal(CodeInternalError, "something went wrong").WithError(cause)
+
+		assert.Equal(t, cause, appErr.Unwrap())
+	})
+
+	t.Run("without cause returns nil", func(t *testing.T) {
+		appErr := Internal(CodeInternalError, "something went wrong")
+
+		assert.Nil(t, appErr.Unwrap())
+	})
+
+	t.Run("errors.Is works through the chain", func(t *testing.T) {
+		sentinel := errors.New("sentinel error")
+		appErr := Wrap(sentinel, CodeInternalError, "wrapped")
+
+		assert.True(t, errors.Is(appErr, sentinel))
+	})
+
+	t.Run("errors.Unwrap stdlib compatibility", func(t *testing.T) {
+		cause := errors.New("root cause")
+		appErr := Internal(CodeInternalError, "top level").WithError(cause)
+
+		unwrapped := errors.Unwrap(appErr)
+		assert.Equal(t, cause, unwrapped)
+	})
+}

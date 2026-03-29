@@ -58,8 +58,11 @@ fi
 # ── 3. Go vet (always) ─────────────────────────────────────────────
 VET_OUT=$(go vet ./... 2>&1) || ERRORS="${ERRORS}GO VET ISSUES:\n${VET_OUT}\n\n"
 
-# ── 4. Swagger freshness (if handler/router changed) ───────────────
-if echo "$GO_CHANGES" | grep -qE 'handler/|router/'; then
+# ── 4. Swagger freshness (if handler/router with annotations changed) ─
+SWAGGER_FILES=$(echo "$GO_CHANGES" | grep -E 'handler/|router/' | while read -r f; do
+  [ -f "$f" ] && grep -lE '@(Summary|Router|Param|Success|Failure|Tags)' "$f" 2>/dev/null
+done || true)
+if [ -n "$SWAGGER_FILES" ]; then
   DOCS_CHANGED=$(echo "$CHANGED_FILES" | grep '^docs/' || true)
   if [ -z "$DOCS_CHANGED" ]; then
     ERRORS="${ERRORS}SWAGGER STALE: handler/router files changed but docs/ not regenerated.\nRun: swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal\n\n"

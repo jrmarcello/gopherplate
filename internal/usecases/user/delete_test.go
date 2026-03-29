@@ -68,6 +68,29 @@ func TestDeleteUseCase_Execute_InvalidID(t *testing.T) {
 	mockRepo.AssertNotCalled(t, "Delete")
 }
 
+func TestDeleteUseCase_Execute_CacheDeleteError_StillSucceeds(t *testing.T) {
+	// Arrange
+	mockRepo := new(MockRepository)
+	mockCache := new(MockCache)
+	id := vo.NewID()
+	cacheKey := "user:" + id.String()
+
+	mockRepo.On("Delete", mock.Anything, id).Return(nil)
+	mockCache.On("Delete", mock.Anything, cacheKey).Return(errors.New("redis connection refused"))
+
+	uc := NewDeleteUseCase(mockRepo).WithCache(mockCache)
+	input := dto.DeleteInput{ID: id.String()}
+
+	// Act
+	output, deleteErr := uc.Execute(context.Background(), input)
+
+	// Assert — delete succeeds even though cache delete failed
+	assert.NoError(t, deleteErr)
+	assert.NotNil(t, output)
+	assert.Equal(t, id.String(), output.ID)
+	mockCache.AssertCalled(t, "Delete", mock.Anything, cacheKey)
+}
+
 func TestDeleteUseCase_Execute_CacheInvalidation(t *testing.T) {
 	// Arrange
 	mockRepo := new(MockRepository)
