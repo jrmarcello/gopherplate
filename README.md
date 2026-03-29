@@ -9,7 +9,7 @@
 
 Clone, use os domínios `user` e `role` como referência, renomeie para seu domínio, e comece a desenvolver. O template já é multi-domínio: `user` demonstra o fluxo completo (cache, singleflight, idempotência), enquanto `role` serve como exemplo de um segundo domínio mais simples com DI independente. A infraestrutura já está pronta: PostgreSQL com Writer/Reader split, Redis cache com singleflight, OpenTelemetry, idempotência, autenticação service-to-service, 291+ testes unitários e 22 E2E (75%+ de cobertura), CI/CD com notificações Slack, Kubernetes com Kustomize, e observabilidade completa com dashboard e alertas.
 
-DX pensado para produtividade: 40+ comandos make com verificação automática de pré-requisitos, hot reload, Lefthook com 3 camadas de verificação de qualidade (pre-commit, commit-msg, pre-push), e integração nativa com Claude Code — skills, hooks, agents especializados e rules auto-aplicadas que atuam como um code reviewer contínuo enquanto você desenvolve.
+DX pensado para produtividade: 40+ comandos make com verificação automática de pré-requisitos, hot reload, Lefthook com 3 camadas de verificação de qualidade (pre-commit, commit-msg, pre-push), e integração nativa com Claude Code — 14 skills (incluindo SDD + Ralph Loop para execução autônoma), 7 hooks de qualidade, 3 agentes especializados com memória persistente e 4 rules auto-aplicadas que atuam como um code reviewer contínuo enquanto você desenvolve.
 
 O template é **pouco opinativo e fortemente extensível**: serve como base para vários tipos de projeto, e o desenvolvedor tem liberdade total para adicionar as bibliotecas e frameworks que desejar.
 
@@ -304,6 +304,70 @@ Estes pacotes podem ser importados por **qualquer serviço Go** — não só que
 
 ---
 
+## Ferramentas de DX
+
+### Claude Code Integrado
+
+O template inclui integração nativa com [Claude Code](https://claude.ai/code) — **14 skills**, **7 hooks**, **3 agentes especializados** e **4 rules auto-aplicadas** que funcionam como um code reviewer contínuo enquanto você desenvolve.
+
+#### Skills (slash commands)
+
+| Skill | O que faz |
+| ----- | --------- |
+| `/spec` | Gera especificação estruturada (SDD) com requisitos, design e tasks |
+| `/ralph-loop` | Execução autônoma task-by-task a partir de uma spec |
+| `/spec-review` | Valida implementação contra os requisitos da spec |
+| `/new-endpoint` | Scaffold de endpoint seguindo Clean Architecture |
+| `/fix-issue` | Fluxo completo de bug fix (entender → planejar → implementar → testar) |
+| `/validate` | Pipeline de validação (build, lint, testes, Kind, smoke) |
+| `/full-review-team` | Review paralelo com 3 agentes (arquitetura + segurança + DB) |
+| `/security-review-team` | Auditoria de segurança paralela com 3 especialistas |
+| `/debug-team` | Investigação paralela de bugs com hipóteses concorrentes |
+| `/migrate` | Gerenciamento de migrations Goose |
+| `/load-test` | Testes de carga com k6 |
+
+#### SDD + Ralph Loop — Desenvolvimento Orientado a Especificação
+
+Para features complexas, o template oferece um fluxo spec-driven com execução autônoma:
+
+```text
+/spec "Add audit logging to user write operations"
+  → Gera .specs/user-audit-log.md (requisitos, design, tasks)
+  → Você revisa e aprova
+
+/ralph-loop .specs/user-audit-log.md
+  → Executa task por task autonomamente
+  → Stop hook controla iteração (exit code 2)
+  → Validação completa roda no final
+
+/spec-review .specs/user-audit-log.md
+  → Verifica implementação contra requisitos
+```
+
+A spec é agnóstica de arquitetura — funciona tanto com camadas separadas quanto colapsadas. Ver [guia completo](docs/guides/sdd-ralph-loop.md).
+
+#### Hooks (qualidade automática)
+
+| Hook | Quando roda | O que faz |
+| ---- | ----------- | --------- |
+| `guard-bash.sh` | Antes de comandos bash | Bloqueia `.env` staging, `git add -A`, DROP, `--no-verify` |
+| `lint-go-file.sh` | Após editar arquivo Go | goimports + gopls diagnostics |
+| `validate-migration.sh` | Após editar migration | Garante seções Up + Down |
+| `ralph-loop.sh` | Ao finalizar tarefa | Controla iteração do Ralph Loop |
+| `stop-validate.sh` | Ao finalizar tarefa | Gate de qualidade: build + lint + testes |
+
+#### Agentes Especializados
+
+3 agentes com memória persistente, usados pelos skills de review e debug:
+
+- **code-reviewer** — Compliance de arquitetura, idiomas Go, padrões do template
+- **security-reviewer** — OWASP Top 10, injeção, auth, dados sensíveis
+- **db-analyst** — Schema, performance de queries, migrations, pool
+
+Para mais detalhes sobre a configuração de IA, ver [CLAUDE.md](CLAUDE.md).
+
+---
+
 ## Sandbox (DevContainer)
 
 O projeto inclui um **DevContainer** pré-configurado que cria um ambiente de desenvolvimento isolado com todas as ferramentas instaladas. Ideal para:
@@ -358,6 +422,7 @@ O projeto inclui 8 ADRs (Architecture Decision Records) em `docs/adr/` explicand
 | [kubernetes.md](docs/guides/kubernetes.md) | Deploy, Kind e operação |
 | [fx-dependency-injection.md](docs/guides/fx-dependency-injection.md) | Uber Fx como alternativa ao DI manual |
 | [multi-database.md](docs/guides/multi-database.md) | Estratégia para serviços com múltiplos bancos |
+| [sdd-ralph-loop.md](docs/guides/sdd-ralph-loop.md) | SDD + Ralph Loop — fluxo spec-driven com execução autônoma |
 
 Para agentes de IA, ver [AGENTS.md](AGENTS.md) e [CLAUDE.md](CLAUDE.md).
 
