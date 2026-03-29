@@ -33,7 +33,7 @@ You are a PostgreSQL database specialist reviewing a Go microservice boilerplate
 - `pkg/database` connection pool configuration
 
 ### Template Quality
-- Schema should serve as a good starting point when renaming `entity_example`
+- Schema should serve as a good starting point (see `user` and `role` as example domains)
 - Migration patterns should be exemplary
 
 Check migration patterns and PostgreSQL best practices.

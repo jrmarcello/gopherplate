@@ -10,7 +10,7 @@ import (
 	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user/interfaces"
 )
 
-// ListUseCase implementa o caso de uso de listar entities.
+// ListUseCase implementa o caso de uso de listar users.
 type ListUseCase struct {
 	Repo interfaces.Repository
 }
@@ -20,7 +20,7 @@ func NewListUseCase(repo interfaces.Repository) *ListUseCase {
 	return &ListUseCase{Repo: repo}
 }
 
-// Execute retorna uma lista paginada de entities.
+// Execute retorna uma lista paginada de users.
 func (uc *ListUseCase) Execute(ctx context.Context, input dto.ListInput) (*dto.ListOutput, error) {
 	// Converter input para filtro de domínio
 	filter := userdomain.ListFilter{

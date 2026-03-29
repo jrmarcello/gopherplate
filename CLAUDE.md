@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Go boilerplate/template for microservices, part of the Appmax ecosystem. Uses Clean Architecture with PostgreSQL, Redis cache, and OpenTelemetry observability. Hosted on Bitbucket, deployed to AWS EKS via ArgoCD with Kustomize overlays.
 
-This project serves as a **starter template** — clone it and rename `entity_example` to your domain entity.
+This project serves as a **starter template** with two example domains: `user` (full CRUD with cache, singleflight, idempotency) and `role` (simpler multi-domain DI example). Clone it, use them as reference, and rename to your domain.
 
 ## Common Commands
 
@@ -30,7 +30,7 @@ make help           # See all available make targets
 Run a single test file or function:
 
 ```bash
-go test ./internal/usecases/entity_example/ -run TestCreateUseCase -v
+go test ./internal/usecases/user/ -run TestCreateUseCase -v
 ```
 
 Generate Swagger docs (required before CI lint passes):
@@ -45,32 +45,34 @@ swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal
 
 ### Layer Structure
 
-- **`internal/domain/entity_example/`** - Entities, value objects (ID, Email), domain errors. Zero external dependencies.
-- **`internal/usecases/entity_example/`** - One file per use case (create.go, get.go, update.go, delete.go, list.go). Each use case defines its own interfaces in `interfaces/` subdirectory. DTOs live in `dto/` subdirectory.
+- **`internal/domain/user/`** - User entity, value objects (ID, Email), domain errors. Zero external dependencies.
+- **`internal/domain/role/`** - Role entity (simpler second domain). Zero external dependencies.
+- **`internal/usecases/user/`** - One file per use case (create.go, get.go, update.go, delete.go, list.go). Each use case defines its own interfaces in `interfaces/` subdirectory. DTOs live in `dto/` subdirectory.
+- **`internal/usecases/role/`** - Role use cases (create.go, list.go, delete.go). Simpler multi-domain DI example.
 - **`internal/infrastructure/`** - All external concerns:
-  - `web/handler/` - Gin HTTP handlers, translate domain errors to HTTP responses via `httputil.SendSuccess`/`httputil.SendError`
+  - `web/handler/` - Gin HTTP handlers, translate domain errors to HTTP responses via `httpgin.SendSuccess`/`httpgin.SendError`
   - `web/router/` - Route registration, middleware wiring
   - `web/middleware/` - Logger, metrics, idempotency, service key auth
   - `db/postgres/repository/` - sqlx repository implementations
-  - `telemetry/` - Business-specific metrics (entity counters)
+  - `telemetry/` - Business-specific metrics (user counters)
 - **`pkg/`** - Reusable packages shared across services:
   - `apperror/` - Structured application errors (AppError with code, message, HTTP status)
-  - `httputil/` - Standardized API response helpers (SendSuccess, SendError)
+  - `httputil/` - Standardized API response helpers: core `WriteSuccess`/`WriteError` (stdlib `http.ResponseWriter`) + Gin wrappers in `httputil/httpgin/` (`SendSuccess`, `SendError`)
   - `logutil/` - Structured logging with context propagation, fanout handler, PII masking
   - `telemetry/` - OpenTelemetry setup (traces + HTTP metrics + DB pool metrics)
   - `cache/` - Cache interface and Redis implementation
-  - `database/` - PostgreSQL connection with Writer/Reader cluster
+  - `database/` - Driver-agnostic (`database/sql`) connection with Writer/Reader cluster — supports postgres, mysql, sqlite3, etc.
   - `idempotency/` - Idempotency Store interface and Redis implementation
 - **`config/`** - Configuration loading (godotenv + env vars)
 - **`cmd/api/`** - Application entrypoint and manual DI wiring in `server.go`
 
 ### Key Patterns
 
-- **Manual DI**: All wiring happens in `cmd/api/server.go:buildDependencies()`. No DI framework. Use cases accept interfaces via constructor, optional dependencies (cache) via `.WithCache()` builder method.
+- **Manual DI**: All wiring happens in `cmd/api/server.go:buildDependencies()`. No DI framework. Wires both `user` domain (with cache/singleflight) and `role` domain (simpler, no cache). Use cases accept interfaces via constructor, optional dependencies (cache) via `.WithCache()` builder method.
 - **ID Strategy**: UUID v7 for all entity IDs. See `docs/adr/002-ids.md`.
 - **DB Cluster**: Writer/Reader split via `pkg/database.DBCluster`. Reader is optional, falls back to writer.
-- **API Response Format**: Always use `httputil.SendSuccess(c, status, data)` and `httputil.SendError(c, status, message)`. Responses wrap in `{"data": ...}` or `{"errors": {"message": ...}}`.
-- **Error Handling**: Domain defines pure errors (`entity.ErrNotFound`, etc.). `pkg/apperror.AppError` provides structured errors with HTTP status. Handlers translate errors via `handler.HandleError()`. Never return HTTP concepts from domain layer.
+- **API Response Format**: Gin handlers use `httpgin.SendSuccess(c, status, data)` and `httpgin.SendError(c, status, message)`. Core helpers (`httputil.WriteSuccess`/`httputil.WriteError`) work with stdlib `http.ResponseWriter`. Responses wrap in `{"data": ...}` or `{"errors": {"message": ...}}`.
+- **Error Handling**: Domain defines pure errors (`user.ErrNotFound`, etc.). `pkg/apperror.AppError` provides structured errors with HTTP status. Handlers translate errors via `handler.HandleError()`. Never return HTTP concepts from domain layer.
 - **Service Key Auth**: Optional service-to-service authentication via `X-Service-Name` + `X-Service-Key` headers. See `docs/adr/005-service-key-auth.md`.
 - **Singleflight**: GetUseCase uses `golang.org/x/sync/singleflight` to prevent cache stampede on concurrent reads for the same entity.
 - **Idempotency**: Redis-backed idempotency via `pkg/idempotency.Store`, wired as optional middleware. Uses SHA-256 fingerprint + lock/unlock pattern.
@@ -108,7 +110,7 @@ Context7 is installed as a global MCP plugin. It fetches up-to-date documentatio
 | Gin | `/gin-gonic/gin` |
 | Testify | `/stretchr/testify` |
 
-**Resolve on-demand:** sqlx, Goose, OpenTelemetry Go, go-sqlmock, go-redis, Swag, Lefthook, Air, TestContainers Go
+**Resolve on-demand:** sqlx (wrapper over `database/sql`), Goose, OpenTelemetry Go, go-sqlmock, go-redis, Swag, Lefthook, Air, TestContainers Go. Note: primary DB abstraction is `database/sql` (sqlx is the repository-layer wrapper).
 
 **When NOT to use Context7:** Go stdlib — use built-in knowledge instead.
 

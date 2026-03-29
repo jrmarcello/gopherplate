@@ -13,7 +13,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 )
 
-// UserHandler agrupa todos os handlers relacionados a Entity.
+// UserHandler agrupa todos os handlers relacionados a User.
 // Segue o padrão de injeção de dependência (UseCases injetados via struct).
 //
 // Design choice: this handler depends on concrete use case types for simplicity.
@@ -50,12 +50,12 @@ func NewUserHandler(
 }
 
 // Create godoc
-// @Summary      Create a new entity
-// @Description  Create a new entity with the input payload
+// @Summary      Create a new user
+// @Description  Create a new user with the input payload
 // @Tags         users
 // @Accept       json
 // @Produce      json
-// @Param        request body dto.CreateInput true "Entity info"
+// @Param        request body dto.CreateInput true "User info"
 // @Success      201  {object}  dto.CreateOutput
 // @Failure      400  {object}  ErrorResponse
 // @Failure      500  {object}  ErrorResponse
@@ -74,7 +74,7 @@ func (h *UserHandler) Create(c *gin.Context) {
 	}
 
 	span.SetAttributes(
-		attribute.String("entity.name", req.Name),
+		attribute.String("user.name", req.Name),
 	)
 
 	res, execErr := h.CreateUC.Execute(ctx, req)
@@ -83,7 +83,7 @@ func (h *UserHandler) Create(c *gin.Context) {
 		return
 	}
 
-	span.SetAttributes(attribute.String("entity.id", res.ID))
+	span.SetAttributes(attribute.String("user.id", res.ID))
 
 	// Record metric
 	if h.Metrics != nil {
@@ -94,11 +94,11 @@ func (h *UserHandler) Create(c *gin.Context) {
 }
 
 // GetByID godoc
-// @Summary      Get an entity by ID
-// @Description  Get entity details by unique ID
+// @Summary      Get a user by ID
+// @Description  Get user details by unique ID
 // @Tags         users
 // @Produce      json
-// @Param        id   path      string  true  "Entity ID"
+// @Param        id   path      string  true  "User ID"
 // @Success      200  {object}  dto.GetOutput
 // @Failure      404  {object}  ErrorResponse
 // @Failure      500  {object}  ErrorResponse
@@ -110,7 +110,7 @@ func (h *UserHandler) GetByID(c *gin.Context) {
 	defer span.End()
 
 	id := c.Param("id")
-	span.SetAttributes(attribute.String("entity.id", id))
+	span.SetAttributes(attribute.String("user.id", id))
 
 	res, execErr := h.GetUC.Execute(ctx, dto.GetInput{ID: id})
 	if execErr != nil {
@@ -122,8 +122,8 @@ func (h *UserHandler) GetByID(c *gin.Context) {
 }
 
 // List godoc
-// @Summary      List entities
-// @Description  Get a paginated list of entities
+// @Summary      List users
+// @Description  Get a paginated list of users
 // @Tags         users
 // @Produce      json
 // @Param        page    query     int     false  "Page number"
@@ -163,12 +163,12 @@ func (h *UserHandler) List(c *gin.Context) {
 }
 
 // Update godoc
-// @Summary      Update an entity
-// @Description  Update entity details by ID
+// @Summary      Update a user
+// @Description  Update user details by ID
 // @Tags         users
 // @Accept       json
 // @Produce      json
-// @Param        id       path      string          true  "Entity ID"
+// @Param        id       path      string          true  "User ID"
 // @Param        request  body      dto.UpdateInput true  "Update info"
 // @Success      200      {object}  dto.UpdateOutput
 // @Failure      400      {object}  ErrorResponse
@@ -182,7 +182,7 @@ func (h *UserHandler) Update(c *gin.Context) {
 	defer span.End()
 
 	id := c.Param("id")
-	span.SetAttributes(attribute.String("entity.id", id))
+	span.SetAttributes(attribute.String("user.id", id))
 
 	var req dto.UpdateInput
 	if bindErr := c.ShouldBindJSON(&req); bindErr != nil {
@@ -207,11 +207,11 @@ func (h *UserHandler) Update(c *gin.Context) {
 }
 
 // Delete godoc
-// @Summary      Delete an entity
-// @Description  Soft delete an entity by ID
+// @Summary      Delete a user
+// @Description  Soft delete a user by ID
 // @Tags         users
 // @Produce      json
-// @Param        id   path      string  true  "Entity ID"
+// @Param        id   path      string  true  "User ID"
 // @Success      200  {object}  dto.DeleteOutput
 // @Failure      404  {object}  ErrorResponse
 // @Failure      500  {object}  ErrorResponse
@@ -223,7 +223,7 @@ func (h *UserHandler) Delete(c *gin.Context) {
 	defer span.End()
 
 	id := c.Param("id")
-	span.SetAttributes(attribute.String("entity.id", id))
+	span.SetAttributes(attribute.String("user.id", id))
 
 	res, execErr := h.DeleteUC.Execute(ctx, dto.DeleteInput{ID: id})
 	if execErr != nil {

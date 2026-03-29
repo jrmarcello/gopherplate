@@ -10,7 +10,7 @@ import "golang.org/x/sync/singleflight"
 // Usage:
 //
 //	fg := cache.NewFlightGroup()
-//	val, err, _ := fg.Do("entity:123", func() (any, error) {
+//	val, err, _ := fg.Do("user:123", func() (any, error) {
 //	    return repo.FindByID(ctx, id)
 //	})
 type FlightGroup struct {

@@ -1,6 +1,6 @@
 - op: replace
   path: /spec/rules/0/host
-  value: entities.localhost
+  value: users.localhost
 - op: replace
   path: /spec/ingressClassName
   value: nginx

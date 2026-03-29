@@ -1,10 +1,10 @@
 package dto
 
 // =============================================================================
-// Update Entity DTOs
+// Update User DTOs
 // =============================================================================
 
-// UpdateInput representa os dados de entrada para atualizar uma entity.
+// UpdateInput representa os dados de entrada para atualizar um user.
 type UpdateInput struct {
 	ID    string  `json:"-"`                                                 // ID vem da URL
 	Name  *string `json:"name,omitempty" binding:"omitempty,max=255"`        // Nome (opcional)

@@ -7,7 +7,7 @@ import "errors"
 // =============================================================================
 //
 // Estes erros são usados pelos Value Objects (Email).
-// Ficam no pacote `vo` para evitar dependência circular com `entity`.
+// Ficam no pacote `vo` para evitar dependência circular com `user`.
 
 var (
 	// ErrInvalidEmail indica que o email informado não é válido.

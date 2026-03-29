@@ -35,7 +35,7 @@ pkg/                  # Pacotes reutilizáveis entre serviços
 ### Código
 
 - Usar **Value Objects** para validação (`vo.ID`, `vo.Email`)
-- Retornar **erros de domínio** específicos (`entity.ErrNotFound`)
+- Retornar **erros de domínio** específicos (`user.ErrNotFound`)
 - Definir **interfaces** na camada de Use Cases (`interfaces/`)
 - Injetar dependências via **construtor** (DI manual)
 - Nomear variáveis de erro de forma única (evitar shadowing)
@@ -106,7 +106,7 @@ pkg/                  # Pacotes reutilizáveis entre serviços
 
 ```go
 // Correto — erro de domínio puro
-var ErrNotFound = errors.New("entity not found")
+var ErrNotFound = errors.New("user not found")
 
 // Errado — acoplado a HTTP
 var ErrNotFound = NewHTTPError(404, "not found")

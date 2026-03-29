@@ -85,7 +85,7 @@ func Load() (*Config, error) {
             Port:     getEnv("DB_PORT", "5432"),
             User:     getEnv("DB_USER", "user"),
             Password: getEnv("DB_PASSWORD", "password"),
-            Name:     getEnv("DB_NAME", "entities"),
+            Name:     getEnv("DB_NAME", "users"),
             SSLMode:  getEnv("DB_SSLMODE", "disable"),
             // Pool
             MaxOpenConns:    getEnvInt("DB_MAX_OPEN_CONNS", 25),
@@ -135,7 +135,7 @@ func getEnv(key, fallback string) string {
 | `DB.Port` | `DB_PORT` | `5432` |
 | `DB.User` | `DB_USER` | `user` |
 | `DB.Password` | `DB_PASSWORD` | `password` |
-| `DB.Name` | `DB_NAME` | `entities` |
+| `DB.Name` | `DB_NAME` | `users` |
 | `DB.SSLMode` | `DB_SSLMODE` | `disable` |
 
 #### Banco de Dados — Pool de Conexões
@@ -182,7 +182,7 @@ Variáveis de replica fazem fallback para os valores do writer quando não defin
 
 | Struct Field | Env Var | Default |
 | ------------ | ------- | ------- |
-| `Otel.ServiceName` | `OTEL_SERVICE_NAME` | `entity-service` |
+| `Otel.ServiceName` | `OTEL_SERVICE_NAME` | `go-boilerplate` |
 | `Otel.CollectorURL` | `OTEL_COLLECTOR_URL` | *(vazio)* |
 | `Otel.Insecure` | `OTEL_INSECURE` | `true` |
 | `Auth.Enabled` | `SERVICE_KEYS_ENABLED` | `false` |
@@ -203,7 +203,7 @@ data:
   SERVER_PORT: "8080"
   DB_HOST: "postgres-service"
   DB_PORT: "5432"
-  DB_NAME: "entities"
+  DB_NAME: "users"
   DB_SSLMODE: "disable"
   DB_MAX_OPEN_CONNS: "25"
   DB_MAX_IDLE_CONNS: "10"

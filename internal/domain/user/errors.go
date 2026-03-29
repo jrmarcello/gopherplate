@@ -2,7 +2,7 @@ package user
 
 import "errors"
 
-// Erros de domínio para Entity.
+// Erros de domínio para User.
 var (
-	ErrUserNotFound = errors.New("entity not found")
+	ErrUserNotFound = errors.New("user not found")
 )

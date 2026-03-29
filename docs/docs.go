@@ -186,14 +186,14 @@ const docTemplate = `{
                         "ServiceKey": []
                     }
                 ],
-                "description": "Get a paginated list of entities",
+                "description": "Get a paginated list of users",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "users"
                 ],
-                "summary": "List entities",
+                "summary": "List users",
                 "parameters": [
                     {
                         "type": "integer",
@@ -250,7 +250,7 @@ const docTemplate = `{
                         "ServiceKey": []
                     }
                 ],
-                "description": "Create a new entity with the input payload",
+                "description": "Create a new user with the input payload",
                 "consumes": [
                     "application/json"
                 ],
@@ -260,10 +260,10 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "Create a new entity",
+                "summary": "Create a new user",
                 "parameters": [
                     {
-                        "description": "Entity info",
+                        "description": "User info",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -304,18 +304,18 @@ const docTemplate = `{
                         "ServiceKey": []
                     }
                 ],
-                "description": "Get entity details by unique ID",
+                "description": "Get user details by unique ID",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "users"
                 ],
-                "summary": "Get an entity by ID",
+                "summary": "Get a user by ID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Entity ID",
+                        "description": "User ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -351,7 +351,7 @@ const docTemplate = `{
                         "ServiceKey": []
                     }
                 ],
-                "description": "Update entity details by ID",
+                "description": "Update user details by ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -361,11 +361,11 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "Update an entity",
+                "summary": "Update a user",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Entity ID",
+                        "description": "User ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -416,18 +416,18 @@ const docTemplate = `{
                         "ServiceKey": []
                     }
                 ],
-                "description": "Soft delete an entity by ID",
+                "description": "Soft delete a user by ID",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "users"
                 ],
-                "summary": "Delete an entity",
+                "summary": "Delete a user",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Entity ID",
+                        "description": "User ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -564,7 +564,7 @@ const docTemplate = `{
                     "maxLength": 255
                 },
                 "name": {
-                    "description": "Nome da entity",
+                    "description": "Nome do user",
                     "type": "string",
                     "maxLength": 255
                 }

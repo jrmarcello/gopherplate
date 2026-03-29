@@ -173,7 +173,7 @@ func Load() (*Config, error) {
 			ReplicaConnMaxIdleTime: getEnvDuration("DB_REPLICA_CONN_MAX_IDLE_TIME", 90*time.Second),
 		},
 		Otel: OtelConfig{
-			ServiceName:  getEnv("OTEL_SERVICE_NAME", "entity-service"),
+			ServiceName:  getEnv("OTEL_SERVICE_NAME", "go-boilerplate"),
 			CollectorURL: getEnv("OTEL_COLLECTOR_URL", ""),
 			Insecure:     getEnvBool("OTEL_INSECURE", true),
 		},

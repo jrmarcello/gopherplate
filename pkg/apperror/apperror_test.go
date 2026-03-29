@@ -60,7 +60,7 @@ func TestWrap(t *testing.T) {
 }
 
 func TestErrorsAs(t *testing.T) {
-	appErr := NotFound(CodeNotFound, "entity not found")
+	appErr := NotFound(CodeNotFound, "user not found")
 	var target *AppError
 	assert.True(t, errors.As(appErr, &target))
 	assert.Equal(t, CodeNotFound, target.Code)

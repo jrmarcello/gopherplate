@@ -10,7 +10,7 @@ import (
 )
 
 // =============================================================================
-// MockRepository - Mock do repositório de Entity para testes unitários
+// MockRepository - Mock do repositório de User para testes unitários
 // =============================================================================
 
 // MockRepository implementa a interface Repository para testes

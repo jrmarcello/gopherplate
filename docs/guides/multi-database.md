@@ -32,8 +32,8 @@ flowchart LR
 
 | Camada | Arquivo | Acoplamento |
 | ------ | ------- | ----------- |
-| Domain | `internal/domain/entity_example/` | Zero -- nao sabe que banco existe |
-| Use Cases | `internal/usecases/entity_example/` | Zero -- depende so da interface `Repository` |
+| Domain | `internal/domain/user/` | Zero -- nao sabe que banco existe |
+| Use Cases | `internal/usecases/user/` | Zero -- depende so da interface `Repository` |
 | Interface | `usecases/.../interfaces/repository.go` | Zero -- contrato puro Go |
 | Repository | `infrastructure/db/postgres/repository/` | PostgreSQL (queries, placeholders) |
 | Connection | `pkg/database/postgres.go` | PostgreSQL (driver `lib/pq`) |
@@ -51,8 +51,8 @@ Antes de implementar um novo driver, e importante entender exatamente onde o Pos
 ```go
 import _ "github.com/lib/pq"  // driver PostgreSQL
 
-func NewConnection(cfg Config) (*sqlx.DB, error) {
-    db, connectErr := sqlx.Connect("postgres", cfg.DSN)  // driver hardcoded
+func NewConnection(cfg Config) (*sql.DB, error) {
+    db, connectErr := sql.Open("postgres", cfg.DSN)  // driver hardcoded
     // ...
 }
 ```
@@ -63,15 +63,15 @@ PostgreSQL usa `$1, $2, $3` (posicional). SQLite e MySQL usam `?` (posicional se
 
 ```go
 // PostgreSQL (atual)
-query := `SELECT ... FROM entities WHERE id = $1`
+query := `SELECT ... FROM users WHERE id = $1`
 
 // SQLite / MySQL
-query := `SELECT ... FROM entities WHERE id = ?`
+query := `SELECT ... FROM users WHERE id = ?`
 ```
 
 > **Nota**: Queries que usam `NamedExecContext` com `:field` nao tem esse problema -- sqlx faz o Rebind automaticamente. Apenas queries com placeholders explicitos precisam de adaptacao.
 
-### 3. Operador ILIKE (`repository/entity_example.go:137`)
+### 3. Operador ILIKE (`repository/user.go:137`)
 
 `ILIKE` e uma extensao PostgreSQL para busca case-insensitive. Alternativas por banco:
 
@@ -81,7 +81,7 @@ query := `SELECT ... FROM entities WHERE id = ?`
 | SQLite | `LIKE` (ja e case-insensitive por default para ASCII) |
 | MySQL | `LIKE` (depende do collation da tabela) |
 
-### 4. Tipos na migration (`migration/20240101002_init_entities.sql`)
+### 4. Tipos na migration (`migration/20240101002_init_schema.sql`)
 
 | Tipo PostgreSQL | SQLite | MySQL |
 | --------------- | ------ | ----- |
@@ -103,14 +103,14 @@ Criar a infraestrutura SQLite espelhando a estrutura do PostgreSQL:
 internal/infrastructure/db/
   postgres/                     # ja existe
     repository/
-      entity_example.go
+      user.go
     migration/
-      20240101002_init_entities.sql
+      20240101002_init_schema.sql
   sqlite/                       # NOVO
     repository/
-      entity_example.go
+      user.go
     migration/
-      001_init_entities.sql
+      001_init_users.sql
 ```
 
 ### Passo 2: Conexao SQLite (`pkg/database/sqlite.go`)
@@ -131,8 +131,8 @@ import (
 
 // NewSQLiteConnection cria uma conexao SQLite.
 // dsn pode ser um path de arquivo ("data.db") ou ":memory:" para testes.
-func NewSQLiteConnection(cfg Config) (*sqlx.DB, error) {
-    db, connectErr := sqlx.Connect("sqlite3", cfg.DSN)
+func NewSQLiteConnection(cfg Config) (*sql.DB, error) {
+    db, connectErr := sql.Open("sqlite3", cfg.DSN)
     if connectErr != nil {
         return nil, fmt.Errorf("failed to connect to sqlite: %w", connectErr)
     }
@@ -164,7 +164,7 @@ func NewSQLiteConnection(cfg Config) (*sqlx.DB, error) {
 
 // NewSQLiteCluster cria um DBCluster para SQLite.
 // SQLite nao tem conceito de reader/writer separados,
-// entao o mesmo *sqlx.DB e usado para ambos.
+// entao o mesmo *sql.DB e usado para ambos.
 func NewSQLiteCluster(cfg Config) (*DBCluster, error) {
     db, connErr := NewSQLiteConnection(cfg)
     if connErr != nil {
@@ -180,7 +180,7 @@ func NewSQLiteCluster(cfg Config) (*DBCluster, error) {
 
 ```sql
 -- +goose Up
-CREATE TABLE entities (
+CREATE TABLE users (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
@@ -189,10 +189,10 @@ CREATE TABLE entities (
     updated_at TEXT NOT NULL
 );
 
-CREATE INDEX idx_entities_active_created ON entities(created_at DESC);
+CREATE INDEX idx_users_active_created ON users(created_at DESC);
 
 -- +goose Down
-DROP TABLE IF EXISTS entities;
+DROP TABLE IF EXISTS users;
 ```
 
 Diferencas da versao PostgreSQL:
@@ -215,15 +215,15 @@ import (
     "strings"
     "time"
 
-    entity "bitbucket.org/appmax-space/go-boilerplate/internal/domain/entity_example"
-    "bitbucket.org/appmax-space/go-boilerplate/internal/domain/entity_example/vo"
+    user "bitbucket.org/appmax-space/go-boilerplate/internal/domain/user"
+    "bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
     "bitbucket.org/appmax-space/go-boilerplate/pkg/database"
     "github.com/jmoiron/sqlx"
 )
 
-// entityDB e o modelo de banco de dados para SQLite.
+// userDB e o modelo de banco de dados para SQLite.
 // Identico ao do PostgreSQL -- o mapping nao muda entre bancos.
-type entityDB struct {
+type userDB struct {
     ID        string    `db:"id"`
     Name      string    `db:"name"`
     Email     string    `db:"email"`
@@ -232,50 +232,50 @@ type entityDB struct {
     UpdatedAt time.Time `db:"updated_at"`
 }
 
-// toEntity e fromDomainEntity sao identicos ao PostgreSQL
+// toUser e fromDomainUser sao identicos ao PostgreSQL
 // (omitidos por brevidade -- copiar de postgres/repository)
 
-type EntityRepository struct {
+type UserRepository struct {
     cluster *database.DBCluster
 }
 
-func NewEntityRepository(cluster *database.DBCluster) *EntityRepository {
-    return &EntityRepository{cluster: cluster}
+func NewUserRepository(cluster *database.DBCluster) *UserRepository {
+    return &UserRepository{cluster: cluster}
 }
 
-func (r *EntityRepository) Create(ctx context.Context, e *entity.Entity) error {
+func (r *UserRepository) Create(ctx context.Context, e *user.User) error {
     // Mesma query -- NamedExec com :field funciona em qualquer banco via sqlx
     query := `
-        INSERT INTO entities (
+        INSERT INTO users (
             id, name, email, active, created_at, updated_at
         ) VALUES (
             :id, :name, :email, :active, :created_at, :updated_at
         )
     `
-    dbModel := fromDomainEntity(e)
+    dbModel := fromDomainUser(e)
     _, execErr := r.cluster.Writer().NamedExecContext(ctx, query, dbModel)
     return execErr
 }
 
-func (r *EntityRepository) FindByID(ctx context.Context, id vo.ID) (*entity.Entity, error) {
+func (r *UserRepository) FindByID(ctx context.Context, id vo.ID) (*user.User, error) {
     // Diferenca: usa ? em vez de $1
     query := `
         SELECT id, name, email, active, created_at, updated_at
-        FROM entities
+        FROM users
         WHERE id = ?
     `
-    var dbModel entityDB
+    var dbModel userDB
     selectErr := r.cluster.Reader().GetContext(ctx, &dbModel, query, id.String())
     if selectErr != nil {
         if errors.Is(selectErr, sql.ErrNoRows) {
-            return nil, entity.ErrEntityNotFound
+            return nil, user.ErrUserNotFound
         }
         return nil, selectErr
     }
-    return dbModel.toEntity()
+    return dbModel.toUser()
 }
 
-func (r *EntityRepository) List(ctx context.Context, filter entity.ListFilter) (*entity.ListResult, error) {
+func (r *UserRepository) List(ctx context.Context, filter user.ListFilter) (*user.ListResult, error) {
     filter.Normalize()
 
     var conditions []string
@@ -315,7 +315,7 @@ Alterar `buildDependencies` para escolher a implementacao baseada em configuraca
 import (
     pgrepository "bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/db/postgres/repository"
     sqliterepository "bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/db/sqlite/repository"
-    "bitbucket.org/appmax-space/go-boilerplate/internal/usecases/entity_example/interfaces"
+    "bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user/interfaces"
 )
 
 func buildDependencies(cluster *database.DBCluster, cfg *config.Config, ...) router.Dependencies {
@@ -323,14 +323,14 @@ func buildDependencies(cluster *database.DBCluster, cfg *config.Config, ...) rou
     var repo interfaces.Repository
     switch cfg.DB.Driver {
     case "sqlite":
-        repo = sqliterepository.NewEntityRepository(cluster)
+        repo = sqliterepository.NewUserRepository(cluster)
     default:
-        repo = pgrepository.NewEntityRepository(cluster)
+        repo = pgrepository.NewUserRepository(cluster)
     }
 
     // Resto do wiring permanece identico
-    createUC := entityuc.NewCreateUseCase(repo)
-    getUC := entityuc.NewGetUseCase(repo).WithCache(redisClient).WithFlight(flightGroup)
+    createUC := useruc.NewCreateUseCase(repo)
+    getUC := useruc.NewGetUseCase(repo).WithCache(redisClient).WithFlight(flightGroup)
     // ...
 }
 ```
@@ -383,7 +383,7 @@ DB_PORT=5432
 ```mermaid
 flowchart TB
     subgraph Domain["Domain (zero deps)"]
-        Entity["entity.Entity"]
+        Entity["user.User"]
         VO["vo.ID, vo.Email"]
     end
 

@@ -10,7 +10,7 @@ import (
 	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user/interfaces"
 )
 
-// UpdateUseCase implementa o caso de uso de atualização de entity.
+// UpdateUseCase implementa o caso de uso de atualização de user.
 type UpdateUseCase struct {
 	Repo  interfaces.Repository
 	Cache interfaces.Cache
@@ -29,10 +29,10 @@ func (uc *UpdateUseCase) WithCache(cache interfaces.Cache) *UpdateUseCase {
 	return uc
 }
 
-// Execute atualiza uma entity existente.
+// Execute atualiza um user existente.
 //
 // Fluxo:
-//  1. Buscar entity existente pelo ID
+//  1. Buscar user existente pelo ID
 //  2. Aplicar atualizações parciais
 //  3. Persistir alterações
 //  4. Invalidar cache
@@ -43,7 +43,7 @@ func (uc *UpdateUseCase) Execute(ctx context.Context, input dto.UpdateInput) (*d
 		return nil, err
 	}
 
-	// 1. Buscar entity existente
+	// 1. Buscar user existente
 	e, err := uc.Repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err

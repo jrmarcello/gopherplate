@@ -1,6 +1,6 @@
 package user
 
-// ListFilter contém os parâmetros para filtrar a listagem de entities.
+// ListFilter contém os parâmetros para filtrar a listagem de users.
 type ListFilter struct {
 	Page       int
 	Limit      int

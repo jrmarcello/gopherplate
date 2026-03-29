@@ -60,7 +60,7 @@ func fromDomainUser(e *userdomain.User) userDB {
 	}
 }
 
-// UserRepository implementa a interface Repository para Entity.
+// UserRepository implementa a interface Repository para User.
 type UserRepository struct {
 	writer *sqlx.DB
 	reader *sqlx.DB

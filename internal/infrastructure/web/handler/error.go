@@ -70,7 +70,7 @@ func translateError(err error) (status int, code, message string) {
 	case errors.Is(err, vo.ErrInvalidID):
 		return http.StatusBadRequest, apperror.CodeInvalidRequest, "invalid ID"
 	case errors.Is(err, userdomain.ErrUserNotFound):
-		return http.StatusNotFound, apperror.CodeNotFound, "entity not found"
+		return http.StatusNotFound, apperror.CodeNotFound, "user not found"
 	default:
 		return http.StatusInternalServerError, apperror.CodeInternalError, "internal server error"
 	}

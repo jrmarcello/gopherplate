@@ -7,7 +7,7 @@
 
 **Padronização e Developer Experience como padrão.** Template production-ready para microsserviços Go — de zero a produção em minutos, não semanas.
 
-Clone, renomeie `entity_example` para seu domínio, e comece a desenvolver. A infraestrutura já está pronta: PostgreSQL com Writer/Reader split, Redis cache com singleflight, OpenTelemetry, idempotência, autenticação service-to-service, 223 testes (89% de cobertura), CI/CD com notificações Slack, Kubernetes com Kustomize, e observabilidade completa com dashboard e alertas.
+Clone, use os domínios `user` e `role` como referência, renomeie para seu domínio, e comece a desenvolver. O template já é multi-domínio: `user` demonstra o fluxo completo (cache, singleflight, idempotência), enquanto `role` serve como exemplo de um segundo domínio mais simples com DI independente. A infraestrutura já está pronta: PostgreSQL com Writer/Reader split, Redis cache com singleflight, OpenTelemetry, idempotência, autenticação service-to-service, 223 testes (89% de cobertura), CI/CD com notificações Slack, Kubernetes com Kustomize, e observabilidade completa com dashboard e alertas.
 
 DX pensado para produtividade: 40+ comandos make com verificação automática de pré-requisitos, hot reload, Lefthook com 3 camadas de verificação de qualidade (pre-commit, commit-msg, pre-push), e integração nativa com Claude Code — skills, hooks, agents especializados e rules auto-aplicadas que atuam como um code reviewer contínuo enquanto você desenvolve.
 
@@ -127,8 +127,8 @@ Domain não conhece nada das camadas externas.
 ├── pkg/                  # Pacotes reutilizáveis entre serviços
 │   ├── apperror/         # Erros estruturados
 │   ├── cache/            # Redis + singleflight
-│   ├── database/         # PostgreSQL Writer/Reader
-│   ├── httputil/         # Respostas padronizadas
+│   ├── database/         # DB Writer/Reader (driver-agnostic)
+│   ├── httputil/         # Respostas padronizadas + wrappers Gin (httpgin/)
 │   ├── idempotency/      # Idempotência distribuída
 │   ├── logutil/          # Logging + mascaramento de dados pessoais
 │   └── telemetry/        # OpenTelemetry setup
@@ -172,7 +172,10 @@ git clone https://bitbucket.org/appmax-space/go-boilerplate my-service
 cd my-service
 rm -rf .git && git init
 
-# Renomear entity_example para seu domínio (find+replace em todo o projeto)
+# O template vem com dois domínios de exemplo:
+# - user: CRUD completo com cache, singleflight e idempotência
+# - role: domínio mais simples, demonstra multi-domain DI
+# Renomeie "user" para seu domínio principal (find+replace em todo o projeto)
 ```
 
 ### 2. Configure
@@ -256,7 +259,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USER=user
 DB_PASSWORD=password
-DB_NAME=entities
+DB_NAME=users
 
 # Redis
 REDIS_ENABLED=true
@@ -321,7 +324,7 @@ Isso garante que o Claude Code com `--dangerously-skip-permissions` não consiga
 Rotas protegidas requerem headers `X-Service-Name` e `X-Service-Key`:
 
 ```bash
-curl -X GET http://localhost:8080/entities \
+curl -X GET http://localhost:8080/users \
   -H "X-Service-Name: myservice" \
   -H "X-Service-Key: sk_myservice_abc123"
 ```
@@ -330,7 +333,8 @@ curl -X GET http://localhost:8080/entities \
 | ---- | -------- |
 | `/health`, `/ready` | Pública |
 | `/swagger/*` | Pública |
-| `/entities/*` | Protegida |
+| `/users/*` | Protegida |
+| `/roles/*` | Protegida |
 
 **Comportamento por ambiente:**
 
@@ -349,9 +353,9 @@ Estes pacotes podem ser importados por **qualquer serviço Go** — não só que
 | Pacote | O que faz |
 | ------ | --------- |
 | `pkg/apperror` | Erros estruturados com código, mensagem e status HTTP |
-| `pkg/httputil` | Respostas JSON padronizadas (`SendSuccess`, `SendError`) |
+| `pkg/httputil` | Respostas JSON padronizadas (`WriteSuccess`, `WriteError`) + wrappers Gin em `httputil/httpgin/` (`SendSuccess`, `SendError`) |
 | `pkg/cache` | Interface de cache + Redis + singleflight (proteção contra stampede) |
-| `pkg/database` | Conexão PostgreSQL com Writer/Reader cluster |
+| `pkg/database` | Conexão de banco driver-agnostic (`database/sql`) com Writer/Reader cluster — suporta postgres, mysql, sqlite3, etc. |
 | `pkg/idempotency` | Idempotência distribuída via Redis (lock/unlock, fingerprint SHA-256) |
 | `pkg/logutil` | Logging estruturado com propagação de contexto e mascaramento de dados pessoais (LGPD) |
 | `pkg/telemetry` | Setup OTel (traces + HTTP metrics + DB pool metrics) |
@@ -465,4 +469,4 @@ Não. As camadas são uma separação lógica de código, não uma separação r
 
 ---
 
-> **TL;DR**: Clone, renomeie, `make setup`, desenvolva features. A infraestrutura já está resolvida — foque no que importa: seu domínio de negócio.
+> **TL;DR**: Clone, use `user` e `role` como referência, renomeie para seu domínio, `make setup`, desenvolva features. A infraestrutura já está resolvida — foque no que importa: seu domínio de negócio.

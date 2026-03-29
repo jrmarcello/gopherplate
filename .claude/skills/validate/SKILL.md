@@ -23,7 +23,7 @@ Post-implementation validation pipeline. Ensures code changes are production-rea
 
 ### Phase 3 — Kind Deploy & Smoke (skip with `quick`)
 1. `make kind-deploy` — build + deploy to local Kind cluster
-2. `curl http://entities.localhost/health` — health check
+2. `curl http://localhost:8080/health` — health check
 3. Basic CRUD smoke tests via `api.http` patterns
 
 ### Phase 4 — Functional Validation (skip with `quick`)

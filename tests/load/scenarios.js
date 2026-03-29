@@ -10,9 +10,9 @@ const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 
 // Custom metrics
 const errorRate = new Rate('errors');
-const createEntityDuration = new Trend('create_entity_duration');
-const getEntityDuration = new Trend('get_entity_duration');
-const listEntitiesDuration = new Trend('list_entities_duration');
+const createUserDuration = new Trend('create_user_duration');
+const getUserDuration = new Trend('get_user_duration');
+const listUsersDuration = new Trend('list_users_duration');
 
 // ============================================
 // SCENARIOS
@@ -87,9 +87,9 @@ export const options = {
   thresholds: {
     http_req_failed: ['rate<0.01'],           // Less than 1% errors
     http_req_duration: ['p(95)<500'],         // 95th percentile < 500ms
-    create_entity_duration: ['p(95)<800'],    // Create < 800ms
-    get_entity_duration: ['p(95)<200'],       // Get < 200ms
-    list_entities_duration: ['p(95)<300'],    // List < 300ms
+    create_user_duration: ['p(95)<800'],    // Create < 800ms
+    get_user_duration: ['p(95)<200'],       // Get < 200ms
+    list_users_duration: ['p(95)<300'],    // List < 300ms
     errors: ['rate<0.01'],
   },
 };
@@ -120,15 +120,15 @@ const headers = { 'Content-Type': 'application/json' };
 // API OPERATIONS
 // ============================================
 
-function createEntity() {
+function createUser() {
   const payload = JSON.stringify({
     name: randomName(),
     email: randomEmail(),
   });
 
-  const res = http.post(`${BASE_URL}/entities`, payload, { headers });
+  const res = http.post(`${BASE_URL}/users`, payload, { headers });
 
-  createEntityDuration.add(res.timings.duration);
+  createUserDuration.add(res.timings.duration);
 
   const success = check(res, {
     'create: status is 201': (r) => r.status === 201,
@@ -146,10 +146,10 @@ function createEntity() {
   }
 }
 
-function getEntity(id) {
-  const res = http.get(`${BASE_URL}/entities/${id}`, { headers });
+function getUser(id) {
+  const res = http.get(`${BASE_URL}/users/${id}`, { headers });
 
-  getEntityDuration.add(res.timings.duration);
+  getUserDuration.add(res.timings.duration);
 
   const success = check(res, {
     'get: status is 200': (r) => r.status === 200,
@@ -162,10 +162,10 @@ function getEntity(id) {
   return success;
 }
 
-function listEntities(page = 1, limit = 10) {
-  const res = http.get(`${BASE_URL}/entities?page=${page}&limit=${limit}`, { headers });
+function listUsers(page = 1, limit = 10) {
+  const res = http.get(`${BASE_URL}/users?page=${page}&limit=${limit}`, { headers });
 
-  listEntitiesDuration.add(res.timings.duration);
+  listUsersDuration.add(res.timings.duration);
 
   const success = check(res, {
     'list: status is 200': (r) => r.status === 200,
@@ -178,13 +178,13 @@ function listEntities(page = 1, limit = 10) {
   return success;
 }
 
-function updateEntity(id) {
+function updateUser(id) {
   const payload = JSON.stringify({
     name: `${randomName()} Updated`,
     email: randomEmail(),
   });
 
-  const res = http.put(`${BASE_URL}/entities/${id}`, payload, { headers });
+  const res = http.put(`${BASE_URL}/users/${id}`, payload, { headers });
 
   const success = check(res, {
     'update: status is 200': (r) => r.status === 200,
@@ -194,8 +194,8 @@ function updateEntity(id) {
   return success;
 }
 
-function deleteEntity(id) {
-  const res = http.del(`${BASE_URL}/entities/${id}`, null, { headers });
+function deleteUser(id) {
+  const res = http.del(`${BASE_URL}/users/${id}`, null, { headers });
 
   const success = check(res, {
     'delete: status is 200': (r) => r.status === 200,
@@ -220,13 +220,13 @@ export function smokeTest() {
     healthCheck();
     sleep(0.5);
 
-    listEntities(1, 5);
+    listUsers(1, 5);
     sleep(0.5);
 
-    const id = createEntity();
+    const id = createUser();
     if (id) {
       sleep(0.3);
-      getEntity(id);
+      getUser(id);
     }
   });
   sleep(1);
@@ -240,29 +240,29 @@ export function loadTest() {
 
     if (rand < 0.4) {
       // 40% - List + Get (read-heavy)
-      listEntities(1, 10);
+      listUsers(1, 10);
       sleep(0.2);
-      const id = createEntity();
+      const id = createUser();
       if (id) {
         sleep(0.1);
-        getEntity(id);
+        getUser(id);
       }
     } else if (rand < 0.7) {
       // 30% - Create
-      createEntity();
+      createUser();
     } else if (rand < 0.9) {
       // 20% - Create + Update
-      const id = createEntity();
+      const id = createUser();
       if (id) {
         sleep(0.1);
-        updateEntity(id);
+        updateUser(id);
       }
     } else {
       // 10% - Create + Delete
-      const id = createEntity();
+      const id = createUser();
       if (id) {
         sleep(0.1);
-        deleteEntity(id);
+        deleteUser(id);
       }
     }
   });
@@ -276,17 +276,17 @@ export function stressTest() {
 
     if (rand < 0.6) {
       // 60% - Create (heavy writes)
-      createEntity();
+      createUser();
     } else if (rand < 0.8) {
       // 20% - Create + Get
-      const id = createEntity();
+      const id = createUser();
       if (id) {
         sleep(0.1);
-        getEntity(id);
+        getUser(id);
       }
     } else if (rand < 0.95) {
       // 15% - List
-      listEntities(1, 20);
+      listUsers(1, 20);
     } else {
       // 5% - Health check
       healthCheck();
@@ -298,11 +298,11 @@ export function stressTest() {
 // Spike: sudden burst of traffic
 export function spikeTest() {
   group('Spike Test - Sudden Load', () => {
-    const id = createEntity();
+    const id = createUser();
     if (id) {
-      getEntity(id);
+      getUser(id);
     }
-    listEntities(1, 5);
+    listUsers(1, 5);
   });
   sleep(0.3);
 }

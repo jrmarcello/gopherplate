@@ -218,14 +218,14 @@ func TestRedisStore_Complete_OverwritesExistingEntry(t *testing.T) {
 
 	_ = store.Complete(ctx, "idem:key-1", &idempotency.Entry{
 		StatusCode:  201,
-		Body:        []byte(`{"id":"new-entity"}`),
+		Body:        []byte(`{"id":"new-user"}`),
 		Fingerprint: "fp-abc",
 	})
 
 	entry, _ := store.Get(ctx, "idem:key-1")
 	require.NotNil(t, entry)
 	assert.Equal(t, 201, entry.StatusCode)
-	assert.Equal(t, []byte(`{"id":"new-entity"}`), entry.Body)
+	assert.Equal(t, []byte(`{"id":"new-user"}`), entry.Body)
 }
 
 func TestRedisStore_Complete_ErrorOnClosedConnection(t *testing.T) {
@@ -297,7 +297,7 @@ func TestRedisStore_FullLifecycle_LockCompleteGet(t *testing.T) {
 	// 3. Complete
 	completeErr := store.Complete(ctx, "idem:lifecycle", &idempotency.Entry{
 		StatusCode:  201,
-		Body:        []byte(`{"id":"entity-1"}`),
+		Body:        []byte(`{"id":"user-1"}`),
 		Fingerprint: "fp-xyz",
 	})
 	require.NoError(t, completeErr)
@@ -307,7 +307,7 @@ func TestRedisStore_FullLifecycle_LockCompleteGet(t *testing.T) {
 	require.NotNil(t, entry)
 	assert.Equal(t, idempotency.StatusCompleted, entry.Status)
 	assert.Equal(t, 201, entry.StatusCode)
-	assert.Equal(t, []byte(`{"id":"entity-1"}`), entry.Body)
+	assert.Equal(t, []byte(`{"id":"user-1"}`), entry.Body)
 
 	// 5. Retry lock must fail
 	acquired, _ = store.Lock(ctx, "idem:lifecycle", "fp-xyz")

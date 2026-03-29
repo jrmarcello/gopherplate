@@ -19,7 +19,7 @@ import (
 // Unit Tests for internal conversions (não precisam de banco)
 // =============================================================================
 
-func TestEntityDB_ToEntity_Success(t *testing.T) {
+func TestUserDB_ToUser_Success(t *testing.T) {
 	// Arrange
 	now := time.Now().Truncate(time.Microsecond)
 	dbModel := userDB{
@@ -43,7 +43,7 @@ func TestEntityDB_ToEntity_Success(t *testing.T) {
 	assert.True(t, u.Active)
 }
 
-func TestEntityDB_ToEntity_InvalidID(t *testing.T) {
+func TestUserDB_ToUser_InvalidID(t *testing.T) {
 	// Arrange
 	dbModel := userDB{
 		ID:    "invalid-id",
@@ -60,7 +60,7 @@ func TestEntityDB_ToEntity_InvalidID(t *testing.T) {
 	assert.Contains(t, err.Error(), "parsing ID")
 }
 
-func TestEntityDB_ToEntity_InvalidEmail(t *testing.T) {
+func TestUserDB_ToUser_InvalidEmail(t *testing.T) {
 	// Arrange
 	dbModel := userDB{
 		ID:    "018e4a2c-6b4d-7000-9410-abcdef123456",
@@ -77,12 +77,12 @@ func TestEntityDB_ToEntity_InvalidEmail(t *testing.T) {
 	assert.Contains(t, err.Error(), "parsing email")
 }
 
-func TestFromDomainEntity(t *testing.T) {
+func TestFromDomainUser(t *testing.T) {
 	// Arrange
 	email, _ := vo.NewEmail("joao@example.com")
 	now := time.Now().Truncate(time.Microsecond)
 
-	domainEntity := &userdomain.User{
+	domainUser := &userdomain.User{
 		ID:        vo.NewID(),
 		Name:      "João Silva",
 		Email:     email,
@@ -92,22 +92,22 @@ func TestFromDomainEntity(t *testing.T) {
 	}
 
 	// Act
-	dbModel := fromDomainUser(domainEntity)
+	dbModel := fromDomainUser(domainUser)
 
 	// Assert
-	assert.Equal(t, domainEntity.ID.String(), dbModel.ID)
-	assert.Equal(t, domainEntity.Name, dbModel.Name)
-	assert.Equal(t, domainEntity.Email.String(), dbModel.Email)
-	assert.Equal(t, domainEntity.Active, dbModel.Active)
-	assert.Equal(t, domainEntity.CreatedAt, dbModel.CreatedAt)
-	assert.Equal(t, domainEntity.UpdatedAt, dbModel.UpdatedAt)
+	assert.Equal(t, domainUser.ID.String(), dbModel.ID)
+	assert.Equal(t, domainUser.Name, dbModel.Name)
+	assert.Equal(t, domainUser.Email.String(), dbModel.Email)
+	assert.Equal(t, domainUser.Active, dbModel.Active)
+	assert.Equal(t, domainUser.CreatedAt, dbModel.CreatedAt)
+	assert.Equal(t, domainUser.UpdatedAt, dbModel.UpdatedAt)
 }
 
-func TestFromDomainEntity_InactiveEntity(t *testing.T) {
+func TestFromDomainUser_InactiveEntity(t *testing.T) {
 	// Arrange
 	email, _ := vo.NewEmail("inactive@example.com")
 
-	domainEntity := &userdomain.User{
+	domainUser := &userdomain.User{
 		ID:        vo.NewID(),
 		Name:      "Inactive User",
 		Email:     email,
@@ -117,14 +117,14 @@ func TestFromDomainEntity_InactiveEntity(t *testing.T) {
 	}
 
 	// Act
-	dbModel := fromDomainUser(domainEntity)
+	dbModel := fromDomainUser(domainUser)
 
 	// Assert
 	assert.False(t, dbModel.Active)
 }
 
-func TestFromDomainEntity_RoundTrip(t *testing.T) {
-	// Teste que podemos converter entity -> dbModel -> entity sem perda de dados
+func TestFromDomainUser_RoundTrip(t *testing.T) {
+	// Teste que podemos converter user -> dbModel -> user sem perda de dados
 	email, _ := vo.NewEmail("roundtrip@example.com")
 	now := time.Now().Truncate(time.Microsecond)
 
@@ -140,7 +140,7 @@ func TestFromDomainEntity_RoundTrip(t *testing.T) {
 	// Convert to DB model
 	dbModel := fromDomainUser(original)
 
-	// Convert back to entity
+	// Convert back to user
 	restored, err := dbModel.toUser()
 
 	// Assert
@@ -158,13 +158,13 @@ func TestFromDomainEntity_RoundTrip(t *testing.T) {
 // Helpers for sqlmock tests
 // =============================================================================
 
-func buildTestEntity() *userdomain.User {
+func buildTestUser() *userdomain.User {
 	email, _ := vo.NewEmail("test@example.com")
 	now := time.Now().Truncate(time.Microsecond)
 
 	return &userdomain.User{
 		ID:        vo.NewID(),
-		Name:      "Test Entity",
+		Name:      "Test User",
 		Email:     email,
 		Active:    true,
 		CreatedAt: now.Add(-24 * time.Hour),
@@ -191,7 +191,7 @@ func TestUserRepository_Create(t *testing.T) {
 			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
-		e := buildTestEntity()
+		e := buildTestUser()
 		createErr := repo.Create(context.Background(), e)
 
 		assert.NoError(t, createErr)
@@ -203,7 +203,7 @@ func TestUserRepository_Create(t *testing.T) {
 			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnError(sql.ErrConnDone)
 
-		e := buildTestEntity()
+		e := buildTestUser()
 		createErr := repo.Create(context.Background(), e)
 
 		assert.Error(t, createErr)
@@ -227,7 +227,7 @@ func TestUserRepository_FindByID(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "name", "email", "active", "created_at", "updated_at"}).
-			AddRow(testID.String(), "Test Entity", "test@example.com", true, now, now)
+			AddRow(testID.String(), "Test User", "test@example.com", true, now, now)
 
 		mock.ExpectQuery("SELECT .+ FROM users WHERE id").
 			WithArgs(testID.String()).
@@ -238,7 +238,7 @@ func TestUserRepository_FindByID(t *testing.T) {
 		assert.NoError(t, findErr)
 		require.NotNil(t, result)
 		assert.Equal(t, testID, result.ID)
-		assert.Equal(t, "Test Entity", result.Name)
+		assert.Equal(t, "Test User", result.Name)
 		assert.Equal(t, "test@example.com", result.Email.String())
 		assert.True(t, result.Active)
 		assert.NoError(t, mock.ExpectationsWereMet())
@@ -286,7 +286,7 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "name", "email", "active", "created_at", "updated_at"}).
-			AddRow(testID.String(), "Test Entity", "test@example.com", true, now, now)
+			AddRow(testID.String(), "Test User", "test@example.com", true, now, now)
 
 		mock.ExpectQuery("SELECT .+ FROM users WHERE email").
 			WithArgs(testEmail.String()).
@@ -297,7 +297,7 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 		assert.NoError(t, findErr)
 		require.NotNil(t, result)
 		assert.Equal(t, testID, result.ID)
-		assert.Equal(t, "Test Entity", result.Name)
+		assert.Equal(t, "Test User", result.Name)
 		assert.Equal(t, "test@example.com", result.Email.String())
 		assert.True(t, result.Active)
 		assert.NoError(t, mock.ExpectationsWereMet())
@@ -350,7 +350,7 @@ func TestUserRepository_List(t *testing.T) {
 			WillReturnRows(countRows)
 
 		dataRows := sqlmock.NewRows([]string{"id", "name", "email", "active", "created_at", "updated_at"}).
-			AddRow(testID.String(), "Test Entity", "test@example.com", true, now, now)
+			AddRow(testID.String(), "Test User", "test@example.com", true, now, now)
 		mock.ExpectQuery("SELECT .+ FROM users").
 			WillReturnRows(dataRows)
 
@@ -366,7 +366,7 @@ func TestUserRepository_List(t *testing.T) {
 		assert.Equal(t, 20, result.Limit)
 		require.Len(t, result.Users, 1)
 		assert.Equal(t, testID, result.Users[0].ID)
-		assert.Equal(t, "Test Entity", result.Users[0].Name)
+		assert.Equal(t, "Test User", result.Users[0].Name)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
@@ -401,7 +401,7 @@ func TestUserRepository_List(t *testing.T) {
 			WillReturnRows(countRows)
 
 		dataRows := sqlmock.NewRows([]string{"id", "name", "email", "active", "created_at", "updated_at"}).
-			AddRow(testID.String(), "Test Entity", "test@example.com", true, now, now)
+			AddRow(testID.String(), "Test User", "test@example.com", true, now, now)
 		mock.ExpectQuery("SELECT .+ FROM users.+WHERE name ILIKE").
 			WillReturnRows(dataRows)
 
@@ -425,7 +425,7 @@ func TestUserRepository_List(t *testing.T) {
 			WillReturnRows(countRows)
 
 		dataRows := sqlmock.NewRows([]string{"id", "name", "email", "active", "created_at", "updated_at"}).
-			AddRow(testID.String(), "Test Entity", "test@example.com", true, now, now)
+			AddRow(testID.String(), "Test User", "test@example.com", true, now, now)
 		mock.ExpectQuery("SELECT .+ FROM users.+WHERE email ILIKE").
 			WillReturnRows(dataRows)
 
@@ -449,7 +449,7 @@ func TestUserRepository_List(t *testing.T) {
 			WillReturnRows(countRows)
 
 		dataRows := sqlmock.NewRows([]string{"id", "name", "email", "active", "created_at", "updated_at"}).
-			AddRow(testID.String(), "Active Entity", "active@example.com", true, now, now)
+			AddRow(testID.String(), "Active User", "active@example.com", true, now, now)
 		mock.ExpectQuery("SELECT .+ FROM users.+WHERE active = true").
 			WillReturnRows(dataRows)
 
@@ -533,7 +533,7 @@ func TestUserRepository_Update(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(0, 1))
 		mock.ExpectCommit()
 
-		e := buildTestEntity()
+		e := buildTestUser()
 		updateErr := repo.Update(context.Background(), e)
 
 		assert.NoError(t, updateErr)
@@ -547,7 +547,7 @@ func TestUserRepository_Update(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(0, 0))
 		mock.ExpectRollback()
 
-		e := buildTestEntity()
+		e := buildTestUser()
 		updateErr := repo.Update(context.Background(), e)
 
 		assert.ErrorIs(t, updateErr, userdomain.ErrUserNotFound)
@@ -561,7 +561,7 @@ func TestUserRepository_Update(t *testing.T) {
 			WillReturnError(sql.ErrConnDone)
 		mock.ExpectRollback()
 
-		e := buildTestEntity()
+		e := buildTestUser()
 		updateErr := repo.Update(context.Background(), e)
 
 		assert.Error(t, updateErr)
@@ -572,7 +572,7 @@ func TestUserRepository_Update(t *testing.T) {
 	t.Run("transaction begin error", func(t *testing.T) {
 		mock.ExpectBegin().WillReturnError(sql.ErrConnDone)
 
-		e := buildTestEntity()
+		e := buildTestUser()
 		updateErr := repo.Update(context.Background(), e)
 
 		assert.Error(t, updateErr)
@@ -587,7 +587,7 @@ func TestUserRepository_Update(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(0, 1))
 		mock.ExpectCommit().WillReturnError(sql.ErrConnDone)
 
-		e := buildTestEntity()
+		e := buildTestUser()
 		updateErr := repo.Update(context.Background(), e)
 
 		assert.Error(t, updateErr)

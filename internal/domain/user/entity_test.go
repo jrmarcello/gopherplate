@@ -20,7 +20,7 @@ func TestNewUser(t *testing.T) {
 	assert.NotZero(t, u.UpdatedAt)
 }
 
-func TestEntity_Deactivate(t *testing.T) {
+func TestUser_Deactivate(t *testing.T) {
 	email, _ := vo.NewEmail("test@example.com")
 	u := NewUser("Test Name", email)
 
@@ -29,7 +29,7 @@ func TestEntity_Deactivate(t *testing.T) {
 	assert.False(t, u.Active)
 }
 
-func TestEntity_Activate(t *testing.T) {
+func TestUser_Activate(t *testing.T) {
 	email, _ := vo.NewEmail("test@example.com")
 	u := NewUser("Test Name", email)
 	u.Deactivate()
@@ -39,7 +39,7 @@ func TestEntity_Activate(t *testing.T) {
 	assert.True(t, u.Active)
 }
 
-func TestEntity_UpdateName(t *testing.T) {
+func TestUser_UpdateName(t *testing.T) {
 	email, _ := vo.NewEmail("test@example.com")
 	u := NewUser("Old Name", email)
 
@@ -48,7 +48,7 @@ func TestEntity_UpdateName(t *testing.T) {
 	assert.Equal(t, "New Name", u.Name)
 }
 
-func TestEntity_UpdateEmail(t *testing.T) {
+func TestUser_UpdateEmail(t *testing.T) {
 	email, _ := vo.NewEmail("old@example.com")
 	u := NewUser("Test Name", email)
 	newEmail, _ := vo.NewEmail("new@example.com")

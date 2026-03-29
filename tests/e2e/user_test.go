@@ -128,12 +128,12 @@ func extractData(t *testing.T, body []byte) map[string]interface{} {
 // SUCCESS SCENARIOS
 // =============================================================================
 
-func TestE2E_CreateEntity_Success(t *testing.T) {
-	require.NoError(t, CleanupEntities())
+func TestE2E_CreateUser_Success(t *testing.T) {
+	require.NoError(t, CleanupUsers())
 	router := setupTestRouter()
 
 	body := `{
-		"name": "Test Entity",
+		"name": "Test User",
 		"email": "test@example.com"
 	}`
 
@@ -157,16 +157,16 @@ func TestE2E_CreateEntity_Success(t *testing.T) {
 	assert.Equal(t, 1, count)
 }
 
-func TestE2E_EntityFullCycle(t *testing.T) {
-	require.NoError(t, CleanupEntities())
+func TestE2E_UserFullCycle(t *testing.T) {
+	require.NoError(t, CleanupUsers())
 	router := setupTestRouter()
 
 	// 1. Create
-	entity := map[string]string{
+	user := map[string]string{
 		"name":  "Cycle Test",
 		"email": "cycle@example.com",
 	}
-	body, _ := json.Marshal(entity)
+	body, _ := json.Marshal(user)
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "/users", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -216,7 +216,7 @@ func TestE2E_EntityFullCycle(t *testing.T) {
 	router.ServeHTTP(w, req)
 	require.Equal(t, http.StatusOK, w.Code)
 
-	// 7. Verify Delete (soft delete - entity becomes inactive)
+	// 7. Verify Delete (soft delete - user becomes inactive)
 	w = httptest.NewRecorder()
 	req = httptest.NewRequest("GET", "/users/"+id, nil)
 	router.ServeHTTP(w, req)
@@ -224,7 +224,7 @@ func TestE2E_EntityFullCycle(t *testing.T) {
 	// Vamos verificar se ainda existe mas está inativo
 	if w.Code == http.StatusOK {
 		fetched = extractData(t, w.Body.Bytes())
-		assert.False(t, fetched["active"].(bool), "Entity should be inactive after delete")
+		assert.False(t, fetched["active"].(bool), "User should be inactive after delete")
 	}
 }
 
@@ -232,11 +232,11 @@ func TestE2E_EntityFullCycle(t *testing.T) {
 // ERROR SCENARIOS
 // =============================================================================
 
-func TestE2E_CreateEntity_InvalidEmail(t *testing.T) {
+func TestE2E_CreateUser_InvalidEmail(t *testing.T) {
 	router := setupTestRouter()
 
 	body := `{
-		"name": "Test Entity",
+		"name": "Test User",
 		"email": "invalid-email"
 	}`
 
@@ -250,7 +250,7 @@ func TestE2E_CreateEntity_InvalidEmail(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "invalid request body")
 }
 
-func TestE2E_CreateEntity_EmptyRequest(t *testing.T) {
+func TestE2E_CreateUser_EmptyRequest(t *testing.T) {
 	router := setupTestRouter()
 
 	body := `{}`
@@ -265,7 +265,7 @@ func TestE2E_CreateEntity_EmptyRequest(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestE2E_GetEntity_NotFound(t *testing.T) {
+func TestE2E_GetUser_NotFound(t *testing.T) {
 	router := setupTestRouter()
 
 	// UUID v7 válido mas não existe
@@ -277,7 +277,7 @@ func TestE2E_GetEntity_NotFound(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
-func TestE2E_GetEntity_InvalidID(t *testing.T) {
+func TestE2E_GetUser_InvalidID(t *testing.T) {
 	router := setupTestRouter()
 
 	req := httptest.NewRequest("GET", "/users/invalid-id", nil)
@@ -288,7 +288,7 @@ func TestE2E_GetEntity_InvalidID(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestE2E_UpdateEntity_NotFound(t *testing.T) {
+func TestE2E_UpdateUser_NotFound(t *testing.T) {
 	router := setupTestRouter()
 
 	update := map[string]string{"name": "Updated Name"}
@@ -303,11 +303,11 @@ func TestE2E_UpdateEntity_NotFound(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
-func TestE2E_UpdateEntity_InvalidEmail(t *testing.T) {
-	require.NoError(t, CleanupEntities())
+func TestE2E_UpdateUser_InvalidEmail(t *testing.T) {
+	require.NoError(t, CleanupUsers())
 	router := setupTestRouter()
 
-	// 1. Create entity
+	// 1. Create user
 	createBody := `{"name": "Test", "email": "valid@example.com"}`
 	req := httptest.NewRequest("POST", "/users", bytes.NewBufferString(createBody))
 	req.Header.Set("Content-Type", "application/json")
@@ -333,7 +333,7 @@ func TestE2E_UpdateEntity_InvalidEmail(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestE2E_DeleteEntity_NotFound(t *testing.T) {
+func TestE2E_DeleteUser_NotFound(t *testing.T) {
 	router := setupTestRouter()
 
 	req := httptest.NewRequest("DELETE", "/users/018e4a2c-6b4d-7000-9410-abcdef123456", nil)
@@ -421,7 +421,7 @@ func TestE2E_ServiceKeyAuth_Errors(t *testing.T) {
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
-		// Não deve ser 401 (pode ser 404 se entity não existe, mas não 401)
+		// Não deve ser 401 (pode ser 404 se user não existe, mas não 401)
 		assert.NotEqual(t, http.StatusUnauthorized, w.Code)
 	})
 
@@ -440,14 +440,14 @@ func TestE2E_ServiceKeyAuth_Errors(t *testing.T) {
 // =============================================================================
 
 func TestE2E_ListEntities_Pagination(t *testing.T) {
-	require.NoError(t, CleanupEntities())
+	require.NoError(t, CleanupUsers())
 	router := setupTestRouter()
 
-	// Create 5 entities
+	// Create 5 users
 	for i := 1; i <= 5; i++ {
 		body, _ := json.Marshal(map[string]string{
-			"name":  "Entity " + string(rune('A'+i-1)),
-			"email": "entity" + string(rune('a'+i-1)) + "@example.com",
+			"name":  "User " + string(rune('A'+i-1)),
+			"email": "user" + string(rune('a'+i-1)) + "@example.com",
 		})
 		req := httptest.NewRequest("POST", "/users", bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
@@ -481,15 +481,15 @@ func TestE2E_ListEntities_Pagination(t *testing.T) {
 // =============================================================================
 
 func TestE2E_CacheBehavior(t *testing.T) {
-	require.NoError(t, CleanupEntities())
+	require.NoError(t, CleanupUsers())
 	router := setupTestRouter()
 
-	// 1. Create an entity
-	entity := map[string]string{
-		"name":  "Cache Test Entity",
+	// 1. Create a user
+	user := map[string]string{
+		"name":  "Cache Test User",
 		"email": "cache@example.com",
 	}
-	body, _ := json.Marshal(entity)
+	body, _ := json.Marshal(user)
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "/users", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -511,7 +511,7 @@ func TestE2E_CacheBehavior(t *testing.T) {
 	duration1 := time.Since(start1)
 
 	fetched1 := extractData(t, w.Body.Bytes())
-	assert.Equal(t, "Cache Test Entity", fetched1["name"])
+	assert.Equal(t, "Cache Test User", fetched1["name"])
 
 	// 3. Second GET - should be cache hit (typically faster)
 	start2 := time.Now()
@@ -522,14 +522,14 @@ func TestE2E_CacheBehavior(t *testing.T) {
 	duration2 := time.Since(start2)
 
 	fetched2 := extractData(t, w.Body.Bytes())
-	assert.Equal(t, "Cache Test Entity", fetched2["name"])
+	assert.Equal(t, "Cache Test User", fetched2["name"])
 
 	// Log performance (cache hit should be similar or faster)
 	t.Logf("First GET (cache miss): %v", duration1)
 	t.Logf("Second GET (cache hit): %v", duration2)
 
-	// 4. Update the entity - should invalidate cache
-	updateBody := map[string]string{"name": "Updated Cache Entity"}
+	// 4. Update the user - should invalidate cache
+	updateBody := map[string]string{"name": "Updated Cache User"}
 	body, _ = json.Marshal(updateBody)
 	w = httptest.NewRecorder()
 	req = httptest.NewRequest("PUT", "/users/"+id, bytes.NewReader(body))
@@ -544,15 +544,15 @@ func TestE2E_CacheBehavior(t *testing.T) {
 	require.Equal(t, http.StatusOK, w.Code)
 
 	fetched3 := extractData(t, w.Body.Bytes())
-	assert.Equal(t, "Updated Cache Entity", fetched3["name"], "Cache should be invalidated after update")
+	assert.Equal(t, "Updated Cache User", fetched3["name"], "Cache should be invalidated after update")
 }
 
 // =============================================================================
 // PERFORMANCE
 // =============================================================================
 
-func TestE2E_CreateEntity_PerformanceBaseline(t *testing.T) {
-	require.NoError(t, CleanupEntities())
+func TestE2E_CreateUser_PerformanceBaseline(t *testing.T) {
+	require.NoError(t, CleanupUsers())
 	router := setupTestRouter()
 
 	body := `{

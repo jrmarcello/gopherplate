@@ -10,7 +10,7 @@ data:
   # Database - Writer (credentials via ExternalSecret)
   DB_HOST: "postgres-service"
   DB_PORT: "5432"
-  DB_NAME: "entities"
+  DB_NAME: "users"
   DB_SSLMODE: "require"
   DB_MAX_OPEN_CONNS: "25"
   DB_MAX_IDLE_CONNS: "10"

@@ -61,7 +61,7 @@ type Cache interface {
 
 ### Cliente Redis
 
-A implementação está em [`pkg/cache/redis.go`](../../pkg/cache/redis.go):
+A implementação está em [`pkg/cache/redisclient/client.go`](../../pkg/cache/redisclient/client.go):
 
 | Método | Descrição |
 | -------- | ----------- |
@@ -79,7 +79,7 @@ A implementação está em [`pkg/cache/redis.go`](../../pkg/cache/redis.go):
 ```go
 // GET - Cache-first com singleflight
 func (uc *GetUseCase) Execute(ctx context.Context, input dto.GetInput) (*dto.GetOutput, error) {
-    cacheKey := "entity:" + input.ID
+    cacheKey := "user:" + input.ID
 
     // 1. Tentar cache primeiro
     if uc.Cache != nil {
@@ -90,7 +90,7 @@ func (uc *GetUseCase) Execute(ctx context.Context, input dto.GetInput) (*dto.Get
     }
 
     // 2. Cache miss - buscar no DB (com singleflight para evitar stampede)
-    var e *entity.Entity
+    var u *user.User
     if uc.Flight != nil {
         val, flightErr, _ := uc.Flight.byID.Do(input.ID, func() (any, error) {
             return uc.Repo.FindByID(ctx, id)
@@ -98,10 +98,10 @@ func (uc *GetUseCase) Execute(ctx context.Context, input dto.GetInput) (*dto.Get
         if flightErr != nil {
             return nil, flightErr
         }
-        e = val.(*entity.Entity)
+        u = val.(*user.User)
     } else {
         var findErr error
-        e, findErr = uc.Repo.FindByID(ctx, id)
+        u, findErr = uc.Repo.FindByID(ctx, id)
         if findErr != nil {
             return nil, findErr
         }
@@ -121,7 +121,7 @@ func (uc *UpdateUseCase) Execute(ctx context.Context, input dto.UpdateInput) (*d
 
     // Invalidar cache
     if uc.Cache != nil {
-        uc.Cache.Delete(ctx, "entity:" + input.ID)
+        uc.Cache.Delete(ctx, "user:" + input.ID)
     }
 
     return output, nil
@@ -184,7 +184,7 @@ if cfg.MinIdleConns > 0 {
 
 - **TTL curto**: Prefira TTL de 1-5 minutos para dados que mudam
 - **Graceful degradation**: Se Redis falhar, continue operando (só mais lento)
-- **Keys descritivas**: Use padrão `entity:id` para facilitar debug
+- **Keys descritivas**: Use padrão `user:id` para facilitar debug
 - **Invalidar nas mutações**: Sempre invalide após Update/Delete
 
 ### ❌ Evitar
@@ -202,9 +202,9 @@ if cfg.MinIdleConns > 0 {
 Os testes de use case usam mocks para simular o cache:
 
 ```go
-mockCache.On("Get", mock.Anything, "entity:123", mock.Anything).
+mockCache.On("Get", mock.Anything, "user:123", mock.Anything).
     Return(errors.New("cache miss"))
-mockCache.On("Set", mock.Anything, "entity:123", mock.Anything).
+mockCache.On("Set", mock.Anything, "user:123", mock.Anything).
     Return(nil)
 ```
 

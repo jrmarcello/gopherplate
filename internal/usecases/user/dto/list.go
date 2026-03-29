@@ -1,10 +1,10 @@
 package dto
 
 // =============================================================================
-// List Entity DTOs
+// List User DTOs
 // =============================================================================
 
-// ListInput representa os dados de entrada para listar entities.
+// ListInput representa os dados de entrada para listar users.
 type ListInput struct {
 	Page       int    `form:"page"`                    // Página atual (1-indexed)
 	Limit      int    `form:"limit"`                   // Itens por página

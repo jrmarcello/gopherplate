@@ -1,8 +1,8 @@
 package main
 
-// @title           Entity API
+// @title           Go Boilerplate API
 // @version         1.0
-// @description     Microservice for entity management with Clean Architecture.
+// @description     API para gerenciamento de usuários e roles com Clean Architecture.
 
 // @contact.name   Appmax Engineering
 // @contact.url    https://bitbucket.org/appmax-space/go-boilerplate

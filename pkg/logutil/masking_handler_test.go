@@ -44,11 +44,11 @@ func TestMaskingHandler_Handle_passesNonSensitiveAttributes(t *testing.T) {
 	maskingHandler := NewMaskingHandler(masker, jsonHandler)
 	logger := slog.New(maskingHandler)
 
-	logger.Info("request", "method", "GET", "path", "/api/v1/entities", "status", 200)
+	logger.Info("request", "method", "GET", "path", "/api/v1/users", "status", 200)
 
 	logEntry := parseJSONLog(t, &buf)
 	assert.Equal(t, "GET", logEntry["method"], "method should pass through unchanged")
-	assert.Equal(t, "/api/v1/entities", logEntry["path"], "path should pass through unchanged")
+	assert.Equal(t, "/api/v1/users", logEntry["path"], "path should pass through unchanged")
 	assert.Equal(t, float64(200), logEntry["status"], "status should pass through unchanged")
 }
 

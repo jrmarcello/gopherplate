@@ -1,6 +1,6 @@
-# Arquitetura do Entity Service
+# Arquitetura do User Service
 
-Documentação técnica da arquitetura do microsserviço de gestão de entities, seguindo **Clean Architecture** e **DDD**.
+Documentação técnica da arquitetura do microsserviço de gestão de usuários, seguindo **Clean Architecture** e **DDD**.
 
 ---
 
@@ -9,11 +9,11 @@ Documentação técnica da arquitetura do microsserviço de gestão de entities,
 - [Diagrama de Casos de Uso](#diagrama-de-casos-de-uso)
 - [Diagrama de Componentes](#diagrama-de-componentes-clean-architecture)
 - [Diagramas de Sequência](#diagramas-de-sequência)
-  - [Criar Entity](#1-criar-entity)
-  - [Buscar Entity por ID](#2-buscar-entity-por-id)
-  - [Listar Entities](#3-listar-entities)
-  - [Atualizar Entity](#4-atualizar-entity)
-  - [Deletar Entity](#5-deletar-entity-soft-delete)
+  - [Criar User](#1-criar-user)
+  - [Buscar User por ID](#2-buscar-user-por-id)
+  - [Listar Users](#3-listar-users)
+  - [Atualizar User](#4-atualizar-user)
+  - [Deletar User](#5-deletar-user-soft-delete)
 - [Fluxo de Dados](#fluxo-de-dados-entre-camadas)
 
 ---
@@ -27,12 +27,12 @@ flowchart LR
         Admin["👤 Admin"]
     end
 
-    subgraph Sistema["Entity Service"]
-        UC1["Criar Entity"]
-        UC2["Buscar Entity"]
-        UC3["Listar Entities"]
-        UC4["Atualizar Entity"]
-        UC5["Deletar Entity"]
+    subgraph Sistema["User Service"]
+        UC1["Criar User"]
+        UC2["Buscar User"]
+        UC3["Listar Users"]
+        UC4["Atualizar User"]
+        UC5["Deletar User"]
     end
 
     Client --> UC1
@@ -49,11 +49,11 @@ flowchart LR
 
 | Caso de Uso | Ator | Descrição |
 | --- | --- | --- |
-| **Criar Entity** | API Client | Cadastra nova entity com validação de email e geração de UUID v7 |
-| **Buscar Entity** | API Client | Retorna dados de uma entity por ID (com cache) |
-| **Listar Entities** | API Client | Lista entities com paginação e filtros (nome, email, active) |
-| **Atualizar Entity** | Admin | Atualiza dados (nome, email) de uma entity existente |
-| **Deletar Entity** | Admin | Realiza soft delete (active=false) |
+| **Criar User** | API Client | Cadastra novo usuário com validação de email e geração de UUID v7 |
+| **Buscar User** | API Client | Retorna dados de um usuário por ID (com cache) |
+| **Listar Users** | API Client | Lista usuários com paginação e filtros (nome, email, active) |
+| **Atualizar User** | Admin | Atualiza dados (nome, email) de um usuário existente |
+| **Deletar User** | Admin | Realiza soft delete (active=false) |
 
 ---
 
@@ -70,9 +70,9 @@ flowchart TB
 
     subgraph Infrastructure["⚙️ Infrastructure Layer"]
         direction TB
-        Handler["EntityHandler\n(handler/entity.go)"]
+        Handler["UserHandler\n(handler/user.go)"]
         Middlewares["Middlewares\n(Logger, CORS, Idempotency)"]
-        RepoImpl["EntityRepository\n(repository/entity.go)"]
+        RepoImpl["UserRepository\n(repository/user.go)"]
         CacheImpl["RedisCache\n(pkg/cache/redis.go)"]
         Telemetry["Telemetry\n(otel.go)"]
     end
@@ -89,7 +89,7 @@ flowchart TB
 
     subgraph Domain["💎 Domain Layer"]
         direction TB
-        Entity["Entity\nAggregate"]
+        Entity["User\nAggregate"]
         VOs["Value Objects\n(ID, Email)"]
         RepoInterface["Repository\nInterface"]
         Errors["Domain Errors"]
@@ -133,7 +133,7 @@ O **Domain** não conhece nenhuma outra camada. O **Application** conhece apenas
 
 ## Diagramas de Sequência
 
-### 1. Criar Entity
+### 1. Criar User
 
 ```mermaid
 sequenceDiagram
@@ -143,11 +143,11 @@ sequenceDiagram
     participant H as Handler
     participant UC as CreateUseCase
     participant VO as Value Objects
-    participant E as Entity Factory
+    participant E as User Factory
     participant R as Repository
     participant DB as PostgreSQL
 
-    Client->>+MW: POST /entities<br/>X-Idempotency-Key: abc123<br/>{name, email}
+    Client->>+MW: POST /users<br/>X-Idempotency-Key: abc123<br/>{name, email}
     
     Note over MW: Logger: gera X-Request-ID
     Note over MW: OTEL: inicia span
@@ -166,13 +166,13 @@ sequenceDiagram
     end
     VO-->>-UC: Email (validado)
 
-    UC->>+E: NewEntity(name, email)
+    UC->>+E: NewUser(name, email)
     Note over E: Gera UUID v7<br/>Define timestamps<br/>Active = true
-    E-->>-UC: Entity
+    E-->>-UC: User
 
-    UC->>+R: Create(ctx, entity)
-    R->>R: fromEntity() → DB Model
-    R->>+DB: INSERT INTO entities...
+    UC->>+R: Create(ctx, user)
+    R->>R: fromUser() → DB Model
+    R->>+DB: INSERT INTO users...
     alt Email duplicado
         DB-->>R: unique_violation
         R-->>UC: error
@@ -193,7 +193,7 @@ sequenceDiagram
 
 ---
 
-### 2. Buscar Entity por ID
+### 2. Buscar User por ID
 
 ```mermaid
 sequenceDiagram
@@ -206,13 +206,13 @@ sequenceDiagram
     participant R as Repository
     participant DB as PostgreSQL
 
-    Client->>+H: GET /entities/{id}
+    Client->>+H: GET /users/{id}
 
     H->>+UC: Execute(ctx, InputDTO{ID})
 
-    UC->>+C: Get(ctx, "entity:{id}")
+    UC->>+C: Get(ctx, "user:{id}")
     alt Cache Hit
-        C-->>UC: Entity JSON
+        C-->>UC: User JSON
         UC-->>H: OutputDTO (from cache)
         H-->>Client: 200 OK
     else Cache Miss
@@ -221,18 +221,18 @@ sequenceDiagram
         UC->>+SF: Do(id, fetchFn)
         Note over SF: Deduplicação de requests<br/>concorrentes para mesmo ID<br/>(previne cache stampede)
         SF->>+R: FindByID(ctx, id)
-        R->>+DB: SELECT * FROM entities WHERE id = $1
+        R->>+DB: SELECT * FROM users WHERE id = $1
         alt Não encontrado
             DB-->>R: sql.ErrNoRows
-            R-->>UC: ErrEntityNotFound
+            R-->>UC: ErrUserNotFound
             UC-->>H: error
             H-->>Client: 404 Not Found
         end
-        DB-->>-R: entityDB
-        R-->>-SF: Entity
-        SF-->>-UC: Entity
+        DB-->>-R: userDB
+        R-->>-SF: User
+        SF-->>-UC: User
 
-        UC->>C: Set(ctx, "entity:{id}", Entity JSON)
+        UC->>C: Set(ctx, "user:{id}", User JSON)
 
         UC-->>-H: OutputDTO
         H-->>-Client: 200 OK
@@ -241,7 +241,7 @@ sequenceDiagram
 
 ---
 
-### 3. Listar Entities
+### 3. Listar Users
 
 ```mermaid
 sequenceDiagram
@@ -252,7 +252,7 @@ sequenceDiagram
     participant R as Repository
     participant DB as PostgreSQL
 
-    Client->>+H: GET /entities?page=1&limit=10&name=Test
+    Client->>+H: GET /users?page=1&limit=10&name=Test
     
     H->>H: Bind Query → InputDTO
     H->>+UC: Execute(ctx, InputDTO)
@@ -264,16 +264,16 @@ sequenceDiagram
     
     R->>R: Build WHERE clause<br/>com filtros dinâmicos
     
-    R->>+DB: SELECT COUNT(*) FROM entities WHERE...
+    R->>+DB: SELECT COUNT(*) FROM users WHERE...
     DB-->>-R: total = 42
     
-    R->>+DB: SELECT * FROM entities<br/>WHERE... ORDER BY created_at DESC<br/>LIMIT 10 OFFSET 0
-    DB-->>-R: []entityDB
-    
-    R->>R: toEntity() para cada item
-    R-->>-UC: ListResult{entities, total, page, limit}
+    R->>+DB: SELECT * FROM users<br/>WHERE... ORDER BY created_at DESC<br/>LIMIT 10 OFFSET 0
+    DB-->>-R: []userDB
 
-    UC->>UC: Entities → OutputDTO
+    R->>R: toUser() para cada item
+    R-->>-UC: ListResult{users, total, page, limit}
+
+    UC->>UC: Users → OutputDTO
     UC-->>-H: OutputDTO{data, pagination}
 
     H-->>-Client: 200 OK
@@ -281,7 +281,7 @@ sequenceDiagram
 
 ---
 
-### 4. Atualizar Entity
+### 4. Atualizar User
 
 ```mermaid
 sequenceDiagram
@@ -294,37 +294,37 @@ sequenceDiagram
     participant C as Redis Cache
     participant DB as PostgreSQL
 
-    Admin->>+H: PUT /entities/{id}<br/>{name, email}
+    Admin->>+H: PUT /users/{id}<br/>{name, email}
 
     H->>H: Bind JSON → InputDTO
     H->>+UC: Execute(ctx, InputDTO)
 
     UC->>+R: FindByID(ctx, id)
     alt Não encontrado
-        R-->>UC: ErrEntityNotFound
+        R-->>UC: ErrUserNotFound
         UC-->>H: error
         H-->>Admin: 404 Not Found
     end
-    R-->>-UC: Entity
+    R-->>-UC: User
 
     opt Email alterado
         UC->>+VO: NewEmail(newEmail)
         VO-->>-UC: Email (validado)
-        UC->>UC: entity.UpdateEmail(email)
+        UC->>UC: user.UpdateEmail(email)
     end
 
     opt Nome alterado
-        UC->>UC: entity.UpdateName(name)
+        UC->>UC: user.UpdateName(name)
     end
 
     Note over UC: UpdatedAt = time.Now()
 
-    UC->>+R: Update(ctx, entity)
-    R->>+DB: UPDATE entities SET... WHERE id = $1
+    UC->>+R: Update(ctx, user)
+    R->>+DB: UPDATE users SET... WHERE id = $1
     DB-->>-R: rowsAffected = 1
     R-->>-UC: nil
     
-    UC->>C: Delete(ctx, "entity:{id}")
+    UC->>C: Delete(ctx, "user:{id}")
     Note over C: Invalida cache
 
     UC-->>-H: OutputDTO
@@ -334,7 +334,7 @@ sequenceDiagram
 
 ---
 
-### 5. Deletar Entity (Soft Delete)
+### 5. Deletar User (Soft Delete)
 
 ```mermaid
 sequenceDiagram
@@ -346,17 +346,17 @@ sequenceDiagram
     participant C as Redis Cache
     participant DB as PostgreSQL
 
-    Admin->>+H: DELETE /entities/{id}
+    Admin->>+H: DELETE /users/{id}
 
     H->>+UC: Execute(ctx, InputDTO{ID})
 
     UC->>+R: Delete(ctx, id)
     
-    R->>+DB: UPDATE entities<br/>SET active = false, updated_at = now()<br/>WHERE id = $1 AND active = true
+    R->>+DB: UPDATE users<br/>SET active = false, updated_at = now()<br/>WHERE id = $1 AND active = true
     
     alt Não encontrado ou já deletado
         DB-->>R: rowsAffected = 0
-        R-->>UC: ErrEntityNotFound
+        R-->>UC: ErrUserNotFound
         UC-->>H: error
         H-->>Admin: 404 Not Found
     end
@@ -364,7 +364,7 @@ sequenceDiagram
     DB-->>-R: rowsAffected = 1
     R-->>-UC: nil
     
-    UC->>C: Delete(ctx, "entity:{id}")
+    UC->>C: Delete(ctx, "user:{id}")
     Note over C: Invalida cache
 
     UC-->>-H: OutputDTO{success: true}
@@ -388,7 +388,7 @@ flowchart LR
 
     subgraph UseCase["UseCase"]
         VOs["Value Objects\n(validados)"]
-        Entity["Entity\n(regras de negócio)"]
+        Entity["User\n(regras de negócio)"]
     end
 
     subgraph Repository["Repository"]
@@ -401,9 +401,9 @@ flowchart LR
 
     JSON -->|"ShouldBindJSON()"| InputDTO
     InputDTO -->|"vo.NewEmail()"| VOs
-    VOs -->|"NewEntity()"| Entity
-    Entity -->|"fromEntity()"| DBModel
-    DBModel -->|"toEntity()"| Entity
+    VOs -->|"NewUser()"| Entity
+    Entity -->|"fromUser()"| DBModel
+    DBModel -->|"toUser()"| Entity
     Entity -->|"→ OutputDTO"| Response
 
     style Input fill:#e8f5e9
@@ -417,8 +417,8 @@ flowchart LR
 | **HTTP** | JSON string | `{"name": "Alice", "email": "alice@example.com"}` |
 | **Handler** | InputDTO (primitivos) | `dto.CreateInput{Name: "Alice"}` |
 | **UseCase** | Value Object (validado) | `vo.Email{value: "alice@example.com"}` |
-| **Entity** | Agregado completo | `Entity{ID, Name, Email, Active...}` |
-| **Repository** | DB Model (nullable) | `entityDB{Name: "Alice", Email: "..."}` |
+| **Entity** | Agregado completo | `User{ID, Name, Email, Active...}` |
+| **Repository** | DB Model (nullable) | `userDB{Name: "Alice", Email: "..."}` |
 | **Database** | SQL | `name VARCHAR(255)` |
 
 ---
@@ -428,8 +428,8 @@ flowchart LR
 ```text
 internal/
 ├── domain/                    # 💎 Camada de Domínio
-│   └── entity/
-│       ├── entity.go          # Agredate Entity
+│   └── user/
+│       ├── user.go            # Aggregate User
 │       ├── errors.go          # Erros de domínio
 │       ├── filter.go          # Filtros de listagem
 │       └── vo/                # Value Objects
@@ -438,7 +438,7 @@ internal/
 │           └── errors.go      # Erros de VO
 │
 ├── usecases/                  # 📦 Camada de Aplicação
-│   └── entity/
+│   └── user/
 │       ├── create.go          # Use Case de Criação
 │       ├── get.go             # Use Case de Leitura
 │       ├── list.go            # Use Case de Listagem
@@ -456,7 +456,7 @@ internal/
 │   │   │   └── migration/
 │   ├── web/
 │   │   ├── handler/
-│   │   │   └── entity.go      # HTTP Hanlders
+│   │   │   └── user.go         # HTTP Handlers
 │   │   ├── middleware/        # Middlewares (Logger, Auth, etc)
 │   │   └── router/            # Rotas Gin
 │   └── telemetry/

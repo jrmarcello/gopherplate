@@ -40,7 +40,7 @@ SERVICE_KEYS="banking-router:sk_banking_...,ledger:sk_ledger_..."
 
 ### Rotas
 
-- **Protegidas**: Todas as rotas de negócio (`/entities/*`)
+- **Protegidas**: Todas as rotas de negócio (`/users/*`, `/roles/*`)
 - **Públicas**: `/health`, `/ready`, `/swagger/*` (probes do Kubernetes e docs)
 
 ### Dev Mode

@@ -178,8 +178,8 @@ func GetTestDB() *sqlx.DB {
 	return testDB
 }
 
-// CleanupEntities remove todas as entities do banco de teste
-func CleanupEntities() error {
+// CleanupUsers remove todos os users do banco de teste
+func CleanupUsers() error {
 	_, err := testDB.Exec("DELETE FROM users")
 	return err
 }

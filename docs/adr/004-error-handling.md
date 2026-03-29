@@ -69,9 +69,9 @@ Adotamos um sistema de **Tratamento de Erros com Tradução em Camadas**, onde c
 ### Erros de Domínio
 
 ```go
-// domain/entity/errors.go
+// domain/user/errors.go
 var (
-    ErrNotFound     = errors.New("entity not found")
+    ErrNotFound     = errors.New("user not found")
     ErrInvalidEmail = errors.New("invalid email format")
 )
 ```
@@ -93,9 +93,9 @@ func HandleError(c *gin.Context, span trace.Span, err error) {
 
 func translateError(err error) (int, string, string) {
     switch {
-    case errors.Is(err, entity.ErrNotFound):
-        return 404, "NOT_FOUND", "Entity not found"
-    case errors.Is(err, entity.ErrInvalidEmail):
+    case errors.Is(err, user.ErrNotFound):
+        return 404, "NOT_FOUND", "User not found"
+    case errors.Is(err, user.ErrInvalidEmail):
         return 400, "INVALID_EMAIL", "Invalid email format"
     default:
         return 500, "INTERNAL_ERROR", "Internal server error"
@@ -107,7 +107,7 @@ func translateError(err error) (int, string, string) {
 
 ```json
 {
-    "error": "Entity not found",
+    "error": "User not found",
     "code": "NOT_FOUND",
     "trace_id": "abc123..."
 }

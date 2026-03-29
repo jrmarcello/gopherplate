@@ -12,11 +12,11 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      POSTGRES_DB: ${POSTGRES_DB:-entities}
+      POSTGRES_DB: ${POSTGRES_DB:-users}
     volumes:
       - go-boilerplate-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-entities}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-users}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -64,7 +64,7 @@ services:
       DB_PORT: "5432"
       DB_USER: ${POSTGRES_USER:-user}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      DB_NAME: ${POSTGRES_DB:-entities}
+      DB_NAME: ${POSTGRES_DB:-users}
       DB_SSLMODE: disable
     depends_on:
       go-boilerplate-db:
@@ -90,13 +90,13 @@ services:
       DB_PORT: "5432"
       DB_USER: ${POSTGRES_USER:-user}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      DB_NAME: ${POSTGRES_DB:-entities}
+      DB_NAME: ${POSTGRES_DB:-users}
       DB_SSLMODE: disable
       REDIS_URL: redis://go-boilerplate-redis:6379
       REDIS_ENABLED: "true"
       SWAGGER_ENABLED: "true"
       SERVICE_KEYS: ""
-      OTEL_SERVICE_NAME: entity-service
+      OTEL_SERVICE_NAME: go-boilerplate
       OTEL_COLLECTOR_URL: otel-collector:4317
       OTEL_INSECURE: "true"
     depends_on:

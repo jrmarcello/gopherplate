@@ -6,7 +6,7 @@ import (
 	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
 )
 
-// Entity é a Entidade principal (Aggregate Root) do domínio.
+// User é a Entidade principal (Aggregate Root) do domínio.
 // Estrutura simplificada para o boilerplate.
 type User struct {
 	ID        vo.ID
@@ -17,7 +17,7 @@ type User struct {
 	UpdatedAt time.Time
 }
 
-// NewUser cria uma nova Entity com valores padrão.
+// NewUser cria um novo User com valores padrão.
 func NewUser(name string, email vo.Email) *User {
 	return &User{
 		ID:        vo.NewID(),
@@ -29,25 +29,25 @@ func NewUser(name string, email vo.Email) *User {
 	}
 }
 
-// Deactivate desativa a entity (soft delete).
+// Deactivate desativa o user (soft delete).
 func (e *User) Deactivate() {
 	e.Active = false
 	e.UpdatedAt = time.Now()
 }
 
-// Activate reativa a entity.
+// Activate reativa o user.
 func (e *User) Activate() {
 	e.Active = true
 	e.UpdatedAt = time.Now()
 }
 
-// UpdateEmail atualiza o email da entity.
+// UpdateEmail atualiza o email do user.
 func (e *User) UpdateEmail(email vo.Email) {
 	e.Email = email
 	e.UpdatedAt = time.Now()
 }
 
-// UpdateName atualiza o nome da entity.
+// UpdateName atualiza o nome do user.
 func (e *User) UpdateName(name string) {
 	e.Name = name
 	e.UpdatedAt = time.Now()

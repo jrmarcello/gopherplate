@@ -118,7 +118,7 @@ func TestLogContext_ToSlogAttrs_includesExtra(t *testing.T) {
 }
 
 func TestErrorLogFields_DomainErrorCode(t *testing.T) {
-	domainErr := errors.New("entity not found")
+	domainErr := errors.New("user not found")
 	attrs := ErrorLogFields(domainErr, "NOT_FOUND")
 
 	keys := make(map[string]any)
@@ -128,7 +128,7 @@ func TestErrorLogFields_DomainErrorCode(t *testing.T) {
 		keys[key] = attrs[i+1]
 	}
 
-	assert.Equal(t, "entity not found", keys["error.message"])
+	assert.Equal(t, "user not found", keys["error.message"])
 	assert.Equal(t, "NOT_FOUND", keys["error.code"])
 	_, hasStack := keys["error.stack"]
 	assert.False(t, hasStack, "domain error codes should NOT have stack trace")

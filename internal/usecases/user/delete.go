@@ -10,7 +10,7 @@ import (
 	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user/interfaces"
 )
 
-// DeleteUseCase implementa o caso de uso de deleção (soft delete) de entity.
+// DeleteUseCase implementa o caso de uso de deleção (soft delete) de user.
 type DeleteUseCase struct {
 	Repo  interfaces.Repository
 	Cache interfaces.Cache
@@ -29,7 +29,7 @@ func (uc *DeleteUseCase) WithCache(cache interfaces.Cache) *DeleteUseCase {
 	return uc
 }
 
-// Execute realiza soft delete de uma entity.
+// Execute realiza soft delete de um user.
 //
 // Fluxo:
 //  1. Validar ID

@@ -68,7 +68,7 @@ Adotamos a **Clean Architecture** proposta por Robert C. Martin, focando em seus
 
 | Camada | Responsabilidade | Exemplo |
 | ------ | ---------------- | ------- |
-| **Domain** | Entidades e Value Objects puros | `Entity`, `ID`, `Email` |
+| **Domain** | Entidades e Value Objects puros | `User`, `ID`, `Email` |
 | **Usecases** | Lógica de aplicação, DTOs, interfaces de repositório | `CreateUseCase`, `Repository` (interface) |
 | **Infrastructure** | Implementações concretas (DB, Web, Cache) | `PostgresRepository`, `GinHandler` |
 
@@ -77,26 +77,35 @@ Adotamos a **Clean Architecture** proposta por Robert C. Martin, focando em seus
 ```text
 internal/
 ├── domain/              # 🟢 Camada mais interna (sem dependências externas)
-│   └── entity/
-│       ├── entity.go         # Entidade de domínio
-│       ├── errors.go         # Erros de domínio
-│       └── filter.go         # Filtros de busca
+│   ├── user/
+│   │   ├── user.go           # Entidade de domínio
+│   │   ├── errors.go         # Erros de domínio
+│   │   └── filter.go         # Filtros de busca
+│   └── role/
+│       ├── role.go
+│       └── errors.go
 │
 ├── usecases/            # 🟡 Orquestração (depende apenas do Domain)
-│   └── entity/
+│   ├── user/
+│   │   ├── interfaces/
+│   │   │   └── repository.go  # Interface do repositório (definida aqui!)
+│   │   ├── create.go          # Caso de uso de criação
+│   │   ├── get.go
+│   │   └── dto/               # Data Transfer Objects
+│   └── role/
 │       ├── interfaces/
-│       │   └── repository.go  # Interface do repositório (definida aqui!)
-│       ├── create.go          # Caso de uso de criação
-│       ├── get.go
-│       └── dto/               # Data Transfer Objects
+│       │   └── repository.go
+│       └── create.go
 │
 └── infrastructure/      # 🔴 Camada externa (implementa interfaces)
     ├── db/postgres/
     │   └── repository/
-    │       └── entity.go      # Implementação concreta do Repository
+    │       ├── user.go        # Implementação concreta do Repository
+    │       └── role.go
     └── web/
         ├── handler/
-        │   └── entity.go      # Handler HTTP (Gin)
+        │   ├── user.go        # Handler HTTP (Gin)
+        │   └── role.go
         └── router/
 ```
 
@@ -105,21 +114,21 @@ internal/
 O **Use Case** define a interface do repositório. A **Infrastructure** a implementa.
 
 ```go
-// usecases/entity/interfaces/repository.go (Camada Interna)
+// usecases/user/interfaces/repository.go (Camada Interna)
 type Repository interface {
-    Save(ctx context.Context, e *entity.Entity) error
-    FindByID(ctx context.Context, id vo.ID) (*entity.Entity, error)
+    Save(ctx context.Context, u *user.User) error
+    FindByID(ctx context.Context, id vo.ID) (*user.User, error)
 }
 ```
 
 ```go
-// infrastructure/db/postgres/repository/entity.go (Camada Externa)
-type EntityRepository struct {
-    db *sqlx.DB
+// infrastructure/db/postgres/repository/user.go (Camada Externa)
+type UserRepository struct {
+    db *sql.DB
 }
 
-func (r *EntityRepository) Save(ctx context.Context, e *entity.Entity) error {
-    // Implementação concreta usando sqlx
+func (r *UserRepository) Save(ctx context.Context, u *user.User) error {
+    // Implementação concreta usando database/sql
 }
 ```
 
@@ -130,15 +139,16 @@ No `main.go` ou `server.go`, injetamos as dependências concretas:
 ```go
 // cmd/api/server.go
 func Run(cfg *config.Config) {
-    db := postgres.Connect(cfg.DB.DSN)
+    writerCfg := database.DefaultConfig("postgres", cfg.DB.GetWriterDSN())
+    cluster, _ := database.NewDBCluster(writerCfg, nil)
 
     // Injeção de Dependência
-    repo := repository.NewEntityRepository(db)   // Implementação concreta
-    createUC := entityuc.NewCreateUseCase(repo)  // Use Case recebe a interface
-    handler := handler.NewEntityHandler(createUC)
+    repo := repository.NewUserRepository(cluster.Writer())   // Implementação concreta
+    createUC := useruc.NewCreateUseCase(repo)                // Use Case recebe a interface
+    handler := handler.NewUserHandler(createUC)
 
     router.Setup(handler)
 }
 ```
 
-O Use Case (`createUC`) **não sabe** que está falando com Postgres. Ele só conhece a interface `Repository`. Isso permite trocar a implementação (ex: para MongoDB ou um mock em testes) sem alterar o caso de uso.
+O Use Case (`createUC`) **não sabe** que está falando com PostgreSQL. Ele só conhece a interface `Repository`. Isso permite trocar a implementação (ex: para MongoDB ou um mock em testes) sem alterar o caso de uso.

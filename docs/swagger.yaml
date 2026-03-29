@@ -69,7 +69,7 @@ definitions:
         maxLength: 255
         type: string
       name:
-        description: Nome da entity
+        description: Nome do user
         maxLength: 255
         type: string
     required:
@@ -265,7 +265,7 @@ paths:
       - roles
   /users:
     get:
-      description: Get a paginated list of entities
+      description: Get a paginated list of users
       parameters:
       - description: Page number
         in: query
@@ -301,15 +301,15 @@ paths:
       security:
       - ServiceName: []
       - ServiceKey: []
-      summary: List entities
+      summary: List users
       tags:
       - users
     post:
       consumes:
       - application/json
-      description: Create a new entity with the input payload
+      description: Create a new user with the input payload
       parameters:
-      - description: Entity info
+      - description: User info
         in: body
         name: request
         required: true
@@ -333,14 +333,14 @@ paths:
       security:
       - ServiceName: []
       - ServiceKey: []
-      summary: Create a new entity
+      summary: Create a new user
       tags:
       - users
   /users/{id}:
     delete:
-      description: Soft delete an entity by ID
+      description: Soft delete a user by ID
       parameters:
-      - description: Entity ID
+      - description: User ID
         in: path
         name: id
         required: true
@@ -363,13 +363,13 @@ paths:
       security:
       - ServiceName: []
       - ServiceKey: []
-      summary: Delete an entity
+      summary: Delete a user
       tags:
       - users
     get:
-      description: Get entity details by unique ID
+      description: Get user details by unique ID
       parameters:
-      - description: Entity ID
+      - description: User ID
         in: path
         name: id
         required: true
@@ -392,15 +392,15 @@ paths:
       security:
       - ServiceName: []
       - ServiceKey: []
-      summary: Get an entity by ID
+      summary: Get a user by ID
       tags:
       - users
     put:
       consumes:
       - application/json
-      description: Update entity details by ID
+      description: Update user details by ID
       parameters:
-      - description: Entity ID
+      - description: User ID
         in: path
         name: id
         required: true
@@ -433,7 +433,7 @@ paths:
       security:
       - ServiceName: []
       - ServiceKey: []
-      summary: Update an entity
+      summary: Update a user
       tags:
       - users
 swagger: "2.0"

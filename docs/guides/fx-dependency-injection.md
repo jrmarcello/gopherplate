@@ -34,12 +34,12 @@ go get go.uber.org/fx@latest
 ```go
 // cmd/api/server.go
 func buildDependencies(cluster *database.DBCluster, cfg *config.Config, ...) router.Dependencies {
-    repo := repository.NewEntityRepository(cluster)
+    repo := repository.NewUserRepository(cluster)
     redisClient, _ := pkgcache.NewRedisClient(cfg.Redis)
-    createUC := entityuc.NewCreateUseCase(repo)
-    getUC := entityuc.NewGetUseCase(repo).WithCache(redisClient)
+    createUC := useruc.NewCreateUseCase(repo)
+    getUC := useruc.NewGetUseCase(repo).WithCache(redisClient)
     // ... mais 10 linhas de wiring ...
-    entityHandler := handler.NewEntityHandler(createUC, getUC, listUC, updateUC, deleteUC, metrics)
+    userHandler := handler.NewUserHandler(createUC, getUC, listUC, updateUC, deleteUC, metrics)
     return router.Dependencies{...}
 }
 ```
@@ -121,28 +121,28 @@ package usecases
 import (
     "go.uber.org/fx"
 
-    entityuc "bitbucket.org/appmax-space/go-boilerplate/internal/usecases/entity_example"
-    "bitbucket.org/appmax-space/go-boilerplate/internal/usecases/entity_example/interfaces"
+    useruc "bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user"
+    "bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user/interfaces"
     pkgcache "bitbucket.org/appmax-space/go-boilerplate/pkg/cache"
 )
 
 var Module = fx.Module("usecases",
     fx.Provide(
-        func(repo interfaces.Repository, cache *pkgcache.RedisClient) *entityuc.CreateUseCase {
-            return entityuc.NewCreateUseCase(repo)
+        func(repo interfaces.Repository, cache *pkgcache.RedisClient) *useruc.CreateUseCase {
+            return useruc.NewCreateUseCase(repo)
         },
-        func(repo interfaces.Repository, cache *pkgcache.RedisClient) *entityuc.GetUseCase {
-            fg := entityuc.NewFlightGroup()
-            return entityuc.NewGetUseCase(repo).WithCache(cache).WithFlight(fg)
+        func(repo interfaces.Repository, cache *pkgcache.RedisClient) *useruc.GetUseCase {
+            fg := useruc.NewFlightGroup()
+            return useruc.NewGetUseCase(repo).WithCache(cache).WithFlight(fg)
         },
-        func(repo interfaces.Repository) *entityuc.ListUseCase {
-            return entityuc.NewListUseCase(repo)
+        func(repo interfaces.Repository) *useruc.ListUseCase {
+            return useruc.NewListUseCase(repo)
         },
-        func(repo interfaces.Repository, cache *pkgcache.RedisClient) *entityuc.UpdateUseCase {
-            return entityuc.NewUpdateUseCase(repo).WithCache(cache)
+        func(repo interfaces.Repository, cache *pkgcache.RedisClient) *useruc.UpdateUseCase {
+            return useruc.NewUpdateUseCase(repo).WithCache(cache)
         },
-        func(repo interfaces.Repository, cache *pkgcache.RedisClient) *entityuc.DeleteUseCase {
-            return entityuc.NewDeleteUseCase(repo).WithCache(cache)
+        func(repo interfaces.Repository, cache *pkgcache.RedisClient) *useruc.DeleteUseCase {
+            return useruc.NewDeleteUseCase(repo).WithCache(cache)
         },
     ),
 )
@@ -261,9 +261,9 @@ O graceful shutdown que hoje esta em `runWithGracefulShutdown()` e substituido p
 
 ```go
 // Um modulo por bounded context
-var Module = fx.Module("entity",
+var Module = fx.Module("user",
     fx.Provide(
-        repository.NewEntityRepository,
+        repository.NewUserRepository,
         NewCreateUseCase,
         NewGetUseCase,
         // ...
@@ -289,16 +289,16 @@ uc := NewGetUseCase(repo).WithCache(cache).WithFlight(fg)
 type HandlerParams struct {
     fx.In
 
-    CreateUC *entityuc.CreateUseCase
-    GetUC    *entityuc.GetUseCase
-    ListUC   *entityuc.ListUseCase
-    UpdateUC *entityuc.UpdateUseCase
-    DeleteUC *entityuc.DeleteUseCase
+    CreateUC *useruc.CreateUseCase
+    GetUC    *useruc.GetUseCase
+    ListUC   *useruc.ListUseCase
+    UpdateUC *useruc.UpdateUseCase
+    DeleteUC *useruc.DeleteUseCase
     Metrics  *telemetry.Metrics `optional:"true"`
 }
 
-func NewEntityHandler(p HandlerParams) *EntityHandler {
-    return &EntityHandler{
+func NewUserHandler(p HandlerParams) *UserHandler {
+    return &UserHandler{
         CreateUC: p.CreateUC,
         GetUC:    p.GetUC,
         // ...

@@ -36,7 +36,7 @@ Adotar formato padronizado de resposta HTTP usando os helpers de **`pkg/httputil
     "total_pages": 10
   },
   "links": {
-    "next": "/api/v1/entities?page=2",
+    "next": "/api/v1/users?page=2",
     "prev": null
   }
 }
@@ -60,7 +60,7 @@ Adotar formato padronizado de resposta HTTP usando os helpers de **`pkg/httputil
 
 ```go
 // Sucesso simples
-httputil.SendSuccess(c, http.StatusOK, entity)
+httputil.SendSuccess(c, http.StatusOK, user)
 
 // Sucesso com metadados (listagem)
 httputil.SendSuccessWithMeta(c, http.StatusOK, items, pagination, links)

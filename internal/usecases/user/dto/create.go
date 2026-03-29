@@ -1,12 +1,12 @@
 package dto
 
 // =============================================================================
-// Create Entity DTOs
+// Create User DTOs
 // =============================================================================
 
-// CreateInput representa os dados de entrada para criação de entity.
+// CreateInput representa os dados de entrada para criação de user.
 type CreateInput struct {
-	Name  string `json:"name" binding:"required,max=255"`        // Nome da entity
+	Name  string `json:"name" binding:"required,max=255"`        // Nome do user
 	Email string `json:"email" binding:"required,email,max=255"` // Email (validado via binding + UseCase)
 }
 

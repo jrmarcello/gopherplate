@@ -5,8 +5,8 @@ applies-to: "**/*.go"
 
 ## Error Handling
 - Use unique error variable names to avoid shadowing: `parseErr`, `saveErr`, `fetchErr` (never reuse `err`)
-- Wrap errors with context: `fmt.Errorf("creating entity: %w", err)`
-- Domain errors are pure: `entity.ErrNotFound`, `entity.ErrDuplicateEmail`
+- Wrap errors with context: `fmt.Errorf("creating user: %w", err)`
+- Domain errors are pure: `user.ErrNotFound`, `user.ErrDuplicateEmail`
 - Never return HTTP status codes from domain or usecases
 
 ## Architecture

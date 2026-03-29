@@ -12,7 +12,7 @@ import (
 	"bitbucket.org/appmax-space/go-boilerplate/pkg/cache"
 )
 
-// GetUseCase implementa o caso de uso de buscar entity por ID.
+// GetUseCase implementa o caso de uso de buscar user por ID.
 type GetUseCase struct {
 	Repo   interfaces.Repository
 	Cache  interfaces.Cache   // optional, set via WithCache()
@@ -38,7 +38,7 @@ func (uc *GetUseCase) WithFlight(fg *cache.FlightGroup) *GetUseCase {
 	return uc
 }
 
-// Execute busca uma entity pelo ID.
+// Execute busca um user pelo ID.
 //
 // Fluxo com cache:
 //  1. Tenta buscar no cache
@@ -94,7 +94,7 @@ func (uc *GetUseCase) Execute(ctx context.Context, input dto.GetInput) (*dto.Get
 	// 4. Armazenar no cache
 	if uc.Cache != nil {
 		if err := uc.Cache.Set(ctx, cacheKey, output); err != nil {
-			slog.Warn("failed to cache entity", "key", cacheKey, "error", err)
+			slog.Warn("failed to cache user", "key", cacheKey, "error", err)
 		}
 	}
 

@@ -1,15 +1,15 @@
 package dto
 
 // =============================================================================
-// Get Entity DTOs
+// Get User DTOs
 // =============================================================================
 
-// GetInput representa os dados de entrada para buscar uma entity.
+// GetInput representa os dados de entrada para buscar um user.
 type GetInput struct {
-	ID string `json:"id"` // UUID v7 da entity
+	ID string `json:"id"` // UUID v7 do user
 }
 
-// GetOutput representa os dados de saída da entity encontrada.
+// GetOutput representa os dados de saída do user encontrado.
 type GetOutput struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`

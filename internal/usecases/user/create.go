@@ -10,7 +10,7 @@ import (
 	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user/interfaces"
 )
 
-// CreateUseCase implementa o caso de uso de criação de entity.
+// CreateUseCase implementa o caso de uso de criação de user.
 type CreateUseCase struct {
 	Repo interfaces.Repository
 }
@@ -20,11 +20,11 @@ func NewCreateUseCase(repo interfaces.Repository) *CreateUseCase {
 	return &CreateUseCase{Repo: repo}
 }
 
-// Execute executa o caso de uso de criação de entity.
+// Execute executa o caso de uso de criação de user.
 //
 // Fluxo:
 //  1. Converte primitivos (string) para Value Objects (validação acontece aqui)
-//  2. Cria a entidade Entity usando a Factory
+//  2. Cria a entidade User usando a Factory
 //  3. Persiste no banco via Repository
 //  4. Retorna DTO com ID e timestamp
 func (uc *CreateUseCase) Execute(ctx context.Context, input dto.CreateInput) (*dto.CreateOutput, error) {

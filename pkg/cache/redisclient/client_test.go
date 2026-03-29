@@ -151,18 +151,18 @@ func TestSetAndGet_Success(t *testing.T) {
 	client, _ := newTestClient(t)
 	ctx := context.Background()
 
-	type entity struct {
+	type testUser struct {
 		Name  string `json:"name"`
 		Email string `json:"email"`
 	}
 
 	// Set
-	setErr := client.Set(ctx, "entity:1", entity{Name: "Test", Email: "t@test.com"})
+	setErr := client.Set(ctx, "user:1", testUser{Name: "Test", Email: "t@test.com"})
 	assert.NoError(t, setErr)
 
 	// Get
-	var dest entity
-	getErr := client.Get(ctx, "entity:1", &dest)
+	var dest testUser
+	getErr := client.Get(ctx, "user:1", &dest)
 	assert.NoError(t, getErr)
 	assert.Equal(t, "Test", dest.Name)
 	assert.Equal(t, "t@test.com", dest.Email)

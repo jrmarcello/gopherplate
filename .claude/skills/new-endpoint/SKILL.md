@@ -11,17 +11,17 @@ Scaffolds a new API endpoint following Clean Architecture patterns.
 ## Example
 
 ```
-/new-endpoint POST /api/v1/entities "Create a new entity"
+/new-endpoint POST /api/v1/users "Create a new user"
 ```
 
 ## Implementation Order (Clean Architecture inside-out)
 
-### 1. Domain Layer (`internal/domain/entity_example/`)
-- Add/update entity fields if needed
+### 1. Domain Layer (`internal/domain/user/`)
+- Add/update domain fields if needed
 - Add domain errors if needed
 - Add Value Objects if needed
 
-### 2. Use Case Layer (`internal/usecases/entity_example/`)
+### 2. Use Case Layer (`internal/usecases/user/`)
 - Create use case file (e.g., `create.go`)
 - Define interfaces in `interfaces/` subdirectory
 - Create DTOs in `dto/` subdirectory
