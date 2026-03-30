@@ -38,8 +38,10 @@ go install bitbucket.org/appmax-space/go-boilerplate/cmd/cli@latest
 
 ```bash
 boilerplate version
-# boilerplate v0.1.0
+# boilerplate dev
 ```
+
+> A versão mostra `dev` quando compilado localmente. Releases futuras terão versionamento via ldflags.
 
 ---
 
@@ -87,22 +89,47 @@ Ao executar `boilerplate new`, o CLI guia você por uma série de perguntas:
 ```bash
 $ boilerplate new payment-service
 
-  Nome do serviço: payment-service
-  Module path: bitbucket.org/appmax-space/payment-service
-  Banco de dados: PostgreSQL
-  Protocolo: HTTP/REST (Gin)
-  Injeção de dependência: Manual
-  Cache Redis? sim
-  Idempotência? sim
-  Service Key Auth? sim
-  Manter domínios de exemplo? não
+  Nome do serviço []: payment-service
+  Module path [github.com/appmax/payment-service]: bitbucket.org/appmax-space/payment-service
+  Banco de dados (postgres/mysql/sqlite3/other) [postgres]: postgres
 
-  ✔ Projeto criado em ./payment-service
+  Protocolo: HTTP/REST (Gin) [gRPC: em breve]
+  Injeção de dependência: Manual [Uber Fx: em breve]
 
-  Próximos passos:
-    cd payment-service
-    make setup
-    make dev
+  Incluir cache Redis? [Y/n]: y
+  Incluir idempotência? [Y/n]: y
+  Incluir Service Key Auth? [Y/n]: y
+  Manter domínios de exemplo (user/role)? [Y/n]: n
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Resumo
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Serviço:      payment-service
+  Module:       bitbucket.org/appmax-space/payment-service
+  Banco:        postgres
+  Protocolo:    http
+  DI:           manual
+  Redis:        sim
+  Idempotência: sim
+  Auth:         sim
+  Exemplos:     não
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Criando payment-service...
+
+  Rewriting module path...
+  Replacing service name...
+  Removing disabled features...
+  Cleaning up wiring...
+  Initializing git...
+  Running go mod tidy...
+
+Projeto 'payment-service' criado com sucesso!
+
+Próximos passos:
+  cd payment-service
+  make setup     # Instala tools + sobe Docker + roda migrations
+  make dev       # Inicia servidor com hot reload
 ```
 
 #### Estrutura gerada
@@ -143,9 +170,10 @@ payment-service/
 ├── docs/                        # Documentação
 ├── deploy/                      # Kustomize overlays (staging/production)
 ├── .env.example                 # Template de variáveis de ambiente
-├── docker-compose.yml           # Infraestrutura local (Postgres, Redis)
+├── docker/
+│   ├── docker-compose.yml       # Infraestrutura local (Postgres, Redis)
+│   └── Dockerfile               # Build multi-stage
 ├── Makefile                     # Comandos de desenvolvimento
-├── Dockerfile                   # Build multi-stage
 ├── go.mod
 └── go.sum
 ```
@@ -200,24 +228,26 @@ internal/
     │   │   └── order.go         # HTTP handlers
     │   └── router/
     │       └── order.go         # Registro de rotas
-    └── telemetry/
-        └── metrics.go           # (atualizado com métricas do novo domínio)
 ```
 
 #### Próximos passos após `add domain`
 
+O CLI imprime instruções de wiring com código copy-pasteable. Em resumo:
+
 1. **Wiring**: Registre as dependências do novo domínio em `cmd/api/server.go:buildDependencies()`
-2. **Migration**: Execute `make migrate-up` para criar a tabela no banco
-3. **Customização**: Edite a entity, value objects e use cases conforme sua regra de negócio
-4. **Testes**: Os arquivos de teste base (`*_test.go`) são gerados junto com os mocks
+2. **Router**: Registre as rotas em `internal/infrastructure/web/router/router.go`
+3. **Migration**: Execute `make migrate-up` para criar a tabela no banco
+4. **Customização**: Edite a entity, value objects e use cases conforme sua regra de negócio
 
 ```go
 // cmd/api/server.go — exemplo de wiring manual
-orderRepo := repository.NewOrderRepository(dbCluster)
-createOrderUC := order.NewCreateUseCase(orderRepo)
-// ...
-orderHandler := handler.NewOrderHandler(createOrderUC, getOrderUC, listOrderUC, updateOrderUC, deleteOrderUC)
-router.RegisterOrderRoutes(r, orderHandler)
+orderRepo := repository.NewOrderRepository(sqlxWriter, sqlxReader)
+orderCreateUC := orderuc.NewCreateUseCase(orderRepo)
+orderGetUC := orderuc.NewGetUseCase(orderRepo)
+orderListUC := orderuc.NewListUseCase(orderRepo)
+orderUpdateUC := orderuc.NewUpdateUseCase(orderRepo)
+orderDeleteUC := orderuc.NewDeleteUseCase(orderRepo)
+orderHandler := handler.NewOrderHandler(orderCreateUC, orderGetUC, orderListUC, orderUpdateUC, orderDeleteUC)
 ```
 
 ---
@@ -228,39 +258,48 @@ Exibe a versão instalada do CLI.
 
 ```bash
 boilerplate version
-# boilerplate v0.1.0
+# boilerplate dev
 ```
 
 ---
 
 ## Flags (modo não-interativo)
 
-Para uso em CI/CD ou scripts, todas as opções podem ser passadas como flags, eliminando os prompts interativos.
+Para uso em CI/CD ou scripts, todas as opções podem ser passadas como flags, eliminando os prompts interativos. Use `-y` para aceitar os defaults sem prompts.
 
 ### Referência de flags para `boilerplate new`
 
 | Flag | Tipo | Default | Descrição |
 |------|------|---------|-----------|
 | `--module` | string | — | Go module path (ex: `bitbucket.org/org/svc`) |
-| `--db` | string | — | Driver de banco: `postgres`, `mysql`, `sqlite`, `other` |
-| `--protocol` | string | `http` | Protocolo da API: `http` (gRPC em breve) |
-| `--di` | string | `manual` | Estratégia de DI: `manual` (Uber Fx em breve) |
+| `--db` | string | `postgres` | Driver de banco: `postgres`, `mysql`, `sqlite3`, `other` |
+| `--template` | string | `.` | Path do diretório raiz do template |
 | `--no-redis` | bool | `false` | Desabilita cache Redis e pacotes relacionados |
 | `--no-auth` | bool | `false` | Desabilita Service Key Auth |
 | `--no-idempotency` | bool | `false` | Desabilita middleware de idempotência |
-| `--keep-examples` | bool | `false` | Mantém os domínios de exemplo (`user` e `role`) |
+| `--no-examples` | bool | `false` | Remove os domínios de exemplo (`user` e `role`) |
+| `--keep-examples` | bool | `false` | Mantém explicitamente os domínios de exemplo |
+| `-y`, `--yes` | bool | `false` | Aceita todos os defaults (modo não-interativo) |
+
+> **Nota sobre exemplos:** No modo interativo, o default é manter os domínios de exemplo (o prompt pergunta "Manter domínios de exemplo? [Y/n]"). No modo `-y`, os defaults também mantêm. Use `--no-examples` para removê-los explicitamente.
 
 ### Exemplo em CI/scripting
 
 ```bash
+# Projeto minimal: sem Redis, sem auth, sem exemplos
 boilerplate new my-svc \
   --module bitbucket.org/appmax-space/my-svc \
   --db postgres \
   --no-redis \
-  --no-auth
-```
+  --no-auth \
+  --no-examples \
+  -y
 
-Neste exemplo, o projeto é gerado com PostgreSQL, sem Redis (e consequentemente sem idempotência), e sem Service Key Auth. Os domínios de exemplo são removidos por padrão.
+# Projeto com todos os defaults (Redis, auth, idempotência, exemplos)
+boilerplate new my-svc \
+  --module bitbucket.org/appmax-space/my-svc \
+  -y
+```
 
 ---
 
@@ -270,10 +309,10 @@ Neste exemplo, o projeto é gerado com PostgreSQL, sem Redis (e consequentemente
 
 | Opção | Driver | Pacote Go | Descrição |
 |-------|--------|-----------|-----------|
-| **PostgreSQL** | `pgx` | `github.com/jackc/pgx/v5/stdlib` | Driver recomendado. Migrations via Goose, repositórios com sqlx. |
-| **MySQL** | `mysql` | `github.com/go-sql-driver/mysql` | Configurado com `pkg/database.DBCluster`. Migrations adaptadas para MySQL. |
-| **SQLite3** | `sqlite3` | `github.com/mattn/go-sqlite3` | Ideal para testes e prototipagem. Arquivo local, sem infraestrutura externa. |
-| **Outro** | — | — | Gera o projeto com `pkg/database` configurado mas sem driver específico. Você adiciona o driver desejado. |
+| **PostgreSQL** | `postgres` | `github.com/lib/pq` | Driver padrão. Migrations via Goose, repositórios com sqlx. |
+| **MySQL** | `mysql` | `github.com/go-sql-driver/mysql` | Configurado com `pkg/database.DBCluster`. |
+| **SQLite3** | `sqlite` | `modernc.org/sqlite` | Pure Go, sem CGO. Ideal para testes e prototipagem. |
+| **Outro** | — | — | Gera o projeto com `pkg/database` configurado mas sem driver específico. Adicione o driver desejado manualmente. |
 
 > **Todos os drivers** usam a abstração `database/sql` via `pkg/database.DBCluster`, que suporta split Writer/Reader. Consulte o guia [Multi-Database](multi-database.md) para detalhes.
 
@@ -302,8 +341,8 @@ Neste exemplo, o projeto é gerado com PostgreSQL, sem Redis (e consequentemente
 
 | Estado | O que inclui | Quando usar |
 |--------|-------------|-------------|
-| **Mantidos** (`--keep-examples`) | Domínios `user` (CRUD completo com cache, singleflight, idempotência) e `role` (exemplo simples de multi-domain DI). Incluem testes unitários e E2E. | Primeiro contato com o template. Use como referência para entender os padrões. |
-| **Removidos** (padrão) | Remove `internal/domain/user/`, `internal/domain/role/`, use cases, handlers, routers, repositories e migrations dos domínios de exemplo. | Projetos reais. Crie seus próprios domínios com `boilerplate add domain`. |
+| **Mantidos** (padrão) | Domínios `user` (CRUD completo com cache, singleflight, idempotência) e `role` (exemplo simples de multi-domain DI). Incluem testes unitários e E2E. | Primeiro contato com o template. Use como referência para entender os padrões. |
+| **Removidos** (`--no-examples`) | Remove `internal/domain/user/`, `internal/domain/role/`, use cases, handlers, routers, repositories e migrations dos domínios de exemplo. | Projetos reais. Crie seus próprios domínios com `boilerplate add domain`. |
 
 ---
 
@@ -316,20 +355,25 @@ Os templates usados pelo CLI estão embarcados no binário via Go `embed.FS`. Is
 ```text
 cmd/cli/
 ├── main.go                      # Entrypoint do CLI
-└── templates/                   # Templates embarcados (embed.FS)
-    ├── project/                 # Template do projeto completo (boilerplate new)
-    │   ├── cmd/
-    │   ├── config/
-    │   ├── internal/
-    │   ├── pkg/
-    │   └── ...
-    └── domain/                  # Template de domínio (boilerplate add domain)
+├── commands/                    # Cobra commands (new, add domain, version)
+├── scaffold/                    # Engine de scaffold (config, helpers, renderer, rewriter, remover, wiring)
+└── templates/
+    ├── boilerplate/             # Lógica de copy + transform para `boilerplate new`
+    │   ├── copy.go              # Copia o projeto excluindo paths irrelevantes
+    │   ├── snapshot.go          # Lista de exclusões (ExcludePaths)
+    │   ├── servicename.go       # Substituição do nome do serviço em configs
+    │   └── dbdriver.go          # Troca de driver de banco nos imports
+    └── domain/                  # Templates .tmpl para `boilerplate add domain`
         ├── entity.go.tmpl
-        ├── usecase.go.tmpl
-        ├── repository.go.tmpl
+        ├── errors.go.tmpl
+        ├── create_usecase.go.tmpl
+        ├── repository_postgres.go.tmpl
         ├── handler.go.tmpl
-        └── ...
+        ├── migration.sql.tmpl
+        └── ...                  # (18 templates no total)
 ```
+
+> **Nota sobre `boilerplate new`:** O comando não usa templates `.tmpl` para o projeto inteiro. Ele copia a árvore real do template, depois aplica transformações: reescrita de module path, substituição do nome do serviço, troca de driver DB, remoção de features desabilitadas, e regeneração do wiring (`server.go`/`router.go`). Isso garante que o projeto gerado sempre reflete a versão mais atual do template.
 
 ### Como customizar
 
@@ -455,10 +499,12 @@ boilerplate new minimal-svc \
   --module bitbucket.org/appmax-space/minimal-svc \
   --db postgres \
   --no-redis \
-  --no-auth
+  --no-auth \
+  --no-examples \
+  -y
 ```
 
-Isso gera um projeto apenas com Clean Architecture, PostgreSQL e OpenTelemetry -- sem cache, idempotência ou autenticação de serviço.
+Isso gera um projeto apenas com Clean Architecture, PostgreSQL e OpenTelemetry -- sem cache, idempotência, autenticação ou domínios de exemplo.
 
 ---
 
