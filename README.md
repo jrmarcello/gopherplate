@@ -437,6 +437,8 @@ O projeto inclui 8 ADRs (Architecture Decision Records) em `docs/adr/` explicand
 | [fx-dependency-injection.md](docs/guides/fx-dependency-injection.md) | Uber Fx como alternativa ao DI manual |
 | [multi-database.md](docs/guides/multi-database.md) | Estratégia para serviços com múltiplos bancos |
 | [sdd-ralph-loop.md](docs/guides/sdd-ralph-loop.md) | SDD + Ralph Loop — fluxo spec-driven com execução autônoma |
+| [grpc.md](docs/guides/grpc.md) | gRPC como alternativa ao REST (buf, dual server, interceptors) |
+| [recommended-libraries.md](docs/guides/recommended-libraries.md) | Bibliotecas recomendadas (resiliência, crypto, event bus, notificações, sagas) |
 
 Para agentes de IA, ver [AGENTS.md](AGENTS.md) e [CLAUDE.md](CLAUDE.md).
 
