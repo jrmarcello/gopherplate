@@ -9,6 +9,37 @@ and this project adheres to [Conventional Commits](https://www.conventionalcommi
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-03-30
+
+### Added
+
+- **Template CLI** (`cmd/cli/`): `boilerplate` CLI for scaffolding new services and domains — generates full Clean Architecture skeleton from templates. See `docs/guides/template-cli.md`
+- **Role domain**: second example domain (`internal/domain/role/`, `internal/usecases/role/`) wired into server and router as a multi-domain DI reference
+- **SDD + Ralph Loop**: AI-assisted development workflow — spec files in `.specs/`, `/spec` skill generates SDDs, `/ralph-loop` executes tasks autonomously via Stop hook
+- **Parallelism in SDD**: dependency graph + file-conflict analysis, Hybrid B+C merge strategy for parallel task batches. See `docs/guides/sdd-ralph-loop.md`
+- **gRPC guide**: documentation for integrating gRPC into the boilerplate (`docs/guides/grpc.md`)
+- **Recommended libraries guide**: complementary modules section with ecosystem recommendations (`docs/guides/`)
+
+### Changed
+
+- **Rename `entity_example` → `user`**: domain, use cases, repository, handlers, routes and docs all consistently use `user` terminology
+- **`pkg/database`**: decoupled from sqlx and PostgreSQL driver — now driver-agnostic (`database/sql`), supports postgres/mysql/sqlite3
+- **`pkg/telemetry`**: decoupled from hardcoded gRPC exporters — exporter is now configurable
+- **README**: reorganized by developer journey; added AI DX tools section (SDD, Ralph Loop, skills)
+
+### Fixed
+
+- **docker/docker**: upgraded v28.5.1 → v28.5.2 to address 2 HIGH vulnerabilities
+- Consolidated migrations and corrected routes (`/entities` → `/users`)
+
+### Tests
+
+- Comprehensive unit and integration test coverage for multi-domain architecture (user + role)
+
+### Chore
+
+- Removed unused dependencies and updated indirect dependencies (`go.mod` / `go.sum` tidy)
+
 ## [0.5.0] - 2026-03-27
 
 ### Added

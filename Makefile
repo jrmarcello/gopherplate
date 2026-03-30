@@ -60,7 +60,7 @@ help: ## Exibe esta mensagem de ajuda
 	@grep -Eh '^(setup|tools):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "\033[1;33m  Development\033[0m"
-	@grep -Eh '^(dev|run|run-stop|build|clean|changelog):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -Eh '^(dev|run|run-stop|build|clean|changelog|release):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "\033[1;33m  CLI\033[0m"
 	@grep -Eh '^(build-cli|install-cli):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -164,13 +164,26 @@ clean: ## Remove arquivos gerados
 	rm -rf bin/ tests/coverage/ tests/load/results/
 	@echo "Cleaned"
 
-changelog: ## Gera sugestão de changelog a partir dos commits
+changelog: ## Gera sugestão de changelog a partir dos commits (somente visualização)
 	@command -v git-cliff >/dev/null 2>&1 || { echo "git-cliff not found. Install: brew install git-cliff"; exit 1; }
 	@echo "Gerando changelog sugerido (não sobrescreve CHANGELOG.md)..."
 	@git-cliff --output /dev/stdout
 	@echo ""
-	@echo "Para atualizar o CHANGELOG.md, revise a saída acima e edite manualmente."
-	@echo "Ou use: git-cliff --output CHANGELOG.md"
+	@echo "Para criar uma release, use: make release VERSION=x.y.z"
+
+release: ## Cria release: tag + CHANGELOG.md automático (uso: make release VERSION=0.7.0)
+	@command -v git-cliff >/dev/null 2>&1 || { echo "git-cliff not found. Install: brew install git-cliff"; exit 1; }
+	@[ -n "$(VERSION)" ] || { echo "Erro: informe a versão. Uso: make release VERSION=0.7.0"; exit 1; }
+	@[ -z "$$(git status --porcelain)" ] || { echo "Erro: working tree com mudanças não commitadas. Faça commit antes."; exit 1; }
+	@echo "Criando release v$(VERSION)..."
+	@git tag "v$(VERSION)"
+	@git-cliff --output CHANGELOG.md
+	@git add CHANGELOG.md
+	@git commit -m "chore(release): v$(VERSION) [skip ci]"
+	@git tag -f "v$(VERSION)"
+	@echo ""
+	@echo "Release v$(VERSION) criada. Para publicar:"
+	@echo "  git push origin main --tags"
 
 # ============================================
 # QUALIDADE DE CÓDIGO
