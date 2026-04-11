@@ -31,7 +31,7 @@ func SwitchDBDriver(projectDir, dbChoice string) error {
 		return nil // default driver, nothing to change
 	}
 
-	return filepath.Walk(projectDir, func(path string, info os.FileInfo, walkErr error) error {
+	return filepath.Walk(projectDir, func(path string, info os.FileInfo, walkErr error) error { //nolint:gosec // CLI scaffold tool, TOCTOU risk is acceptable
 		if walkErr != nil {
 			return walkErr
 		}
@@ -39,7 +39,7 @@ func SwitchDBDriver(projectDir, dbChoice string) error {
 			return nil
 		}
 
-		content, readErr := os.ReadFile(path)
+		content, readErr := os.ReadFile(path) //nolint:gosec // CLI tool reads project files for driver substitution
 		if readErr != nil {
 			return fmt.Errorf("reading %s: %w", path, readErr)
 		}
@@ -51,7 +51,7 @@ func SwitchDBDriver(projectDir, dbChoice string) error {
 			return nil
 		}
 
-		writeErr := os.WriteFile(path, []byte(newContent), info.Mode())
+		writeErr := os.WriteFile(path, []byte(newContent), info.Mode()) //nolint:gosec // CLI tool writes to user-specified project directory
 		if writeErr != nil {
 			return fmt.Errorf("writing %s: %w", path, writeErr)
 		}

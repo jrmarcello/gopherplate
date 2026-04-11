@@ -48,7 +48,7 @@ FROM gcr.io/distroless/static-debian12:nonroot
 LABEL org.opencontainers.image.title="go-boilerplate" \
     org.opencontainers.image.description="Go Boilerplate API - Clean Architecture" \
     org.opencontainers.image.vendor="Appmax" \
-    org.opencontainers.image.source="https://bitbucket.org/appmax-space/go-boilerplate"
+    org.opencontainers.image.source="https://github.com/jrmarcello/go-boilerplate"
 
 WORKDIR /app
 

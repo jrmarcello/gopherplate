@@ -14,7 +14,7 @@ import (
 
 func TestDefaultConfig(t *testing.T) {
 	t.Run("returns config with provided DSN", func(t *testing.T) {
-		dsn := "postgres://user:pass@localhost:5432/testdb?sslmode=disable"
+		dsn := "postgres://user:pass@localhost:5432/testdb?sslmode=disable" //nolint:gosec // test DSN, not real credentials
 		cfg := DefaultConfig("postgres", dsn)
 
 		assert.Equal(t, "postgres", cfg.Driver)
@@ -60,7 +60,7 @@ func newMockDBWithPing(t *testing.T) (*sql.DB, sqlmock.Sqlmock) {
 func TestNewDBClusterFromDB(t *testing.T) {
 	t.Run("creates cluster with writer equals reader (fallback)", func(t *testing.T) {
 		db, _ := newMockDB(t)
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 
 		cluster := NewDBClusterFromDB(db)
 
@@ -71,7 +71,7 @@ func TestNewDBClusterFromDB(t *testing.T) {
 
 	t.Run("HasSeparateReader returns false", func(t *testing.T) {
 		db, _ := newMockDB(t)
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 
 		cluster := NewDBClusterFromDB(db)
 
@@ -82,7 +82,7 @@ func TestNewDBClusterFromDB(t *testing.T) {
 func TestDBCluster_Writer(t *testing.T) {
 	t.Run("returns the writer connection", func(t *testing.T) {
 		db, _ := newMockDB(t)
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 
 		cluster := NewDBClusterFromDB(db)
 
@@ -93,7 +93,7 @@ func TestDBCluster_Writer(t *testing.T) {
 func TestDBCluster_Reader(t *testing.T) {
 	t.Run("returns writer when no separate reader", func(t *testing.T) {
 		writerDB, _ := newMockDB(t)
-		defer writerDB.Close()
+		defer func() { _ = writerDB.Close() }()
 
 		cluster := NewDBClusterFromDB(writerDB)
 
@@ -102,10 +102,10 @@ func TestDBCluster_Reader(t *testing.T) {
 
 	t.Run("returns separate reader when configured", func(t *testing.T) {
 		writerDB, _ := newMockDB(t)
-		defer writerDB.Close()
+		defer func() { _ = writerDB.Close() }()
 
 		readerDB, _ := newMockDB(t)
-		defer readerDB.Close()
+		defer func() { _ = readerDB.Close() }()
 
 		cluster := &DBCluster{writer: writerDB, reader: readerDB}
 
@@ -117,7 +117,7 @@ func TestDBCluster_Reader(t *testing.T) {
 func TestDBCluster_HasSeparateReader(t *testing.T) {
 	t.Run("returns false when reader is nil", func(t *testing.T) {
 		db, _ := newMockDB(t)
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 
 		cluster := NewDBClusterFromDB(db)
 
@@ -126,10 +126,10 @@ func TestDBCluster_HasSeparateReader(t *testing.T) {
 
 	t.Run("returns true when separate reader is configured", func(t *testing.T) {
 		writerDB, _ := newMockDB(t)
-		defer writerDB.Close()
+		defer func() { _ = writerDB.Close() }()
 
 		readerDB, _ := newMockDB(t)
-		defer readerDB.Close()
+		defer func() { _ = readerDB.Close() }()
 
 		cluster := &DBCluster{writer: writerDB, reader: readerDB}
 
@@ -188,7 +188,7 @@ func TestNewConnection(t *testing.T) {
 func TestDBCluster_PingAll(t *testing.T) {
 	t.Run("success writer only", func(t *testing.T) {
 		writerDB, writerMock := newMockDBWithPing(t)
-		defer writerDB.Close()
+		defer func() { _ = writerDB.Close() }()
 		writerMock.ExpectPing()
 
 		cluster := NewDBClusterFromDB(writerDB)
@@ -200,11 +200,11 @@ func TestDBCluster_PingAll(t *testing.T) {
 
 	t.Run("success with reader", func(t *testing.T) {
 		writerDB, writerMock := newMockDBWithPing(t)
-		defer writerDB.Close()
+		defer func() { _ = writerDB.Close() }()
 		writerMock.ExpectPing()
 
 		readerDB, readerMock := newMockDBWithPing(t)
-		defer readerDB.Close()
+		defer func() { _ = readerDB.Close() }()
 		readerMock.ExpectPing()
 
 		cluster := &DBCluster{writer: writerDB, reader: readerDB}
@@ -217,7 +217,7 @@ func TestDBCluster_PingAll(t *testing.T) {
 
 	t.Run("writer ping fails", func(t *testing.T) {
 		writerDB, writerMock := newMockDBWithPing(t)
-		defer writerDB.Close()
+		defer func() { _ = writerDB.Close() }()
 		writerMock.ExpectPing().WillReturnError(fmt.Errorf("writer connection lost"))
 
 		cluster := NewDBClusterFromDB(writerDB)
@@ -229,11 +229,11 @@ func TestDBCluster_PingAll(t *testing.T) {
 
 	t.Run("reader ping fails", func(t *testing.T) {
 		writerDB, writerMock := newMockDBWithPing(t)
-		defer writerDB.Close()
+		defer func() { _ = writerDB.Close() }()
 		writerMock.ExpectPing()
 
 		readerDB, readerMock := newMockDBWithPing(t)
-		defer readerDB.Close()
+		defer func() { _ = readerDB.Close() }()
 		readerMock.ExpectPing().WillReturnError(fmt.Errorf("reader connection lost"))
 
 		cluster := &DBCluster{writer: writerDB, reader: readerDB}

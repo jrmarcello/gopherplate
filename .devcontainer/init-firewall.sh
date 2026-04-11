@@ -79,10 +79,6 @@ REQUIRED_DOMAINS=(
     "proxy.golang.org"
     "sum.golang.org"
     "storage.googleapis.com"
-    # Bitbucket (Appmax)
-    "bitbucket.org"
-    "api.bitbucket.org"
-    "altssh.bitbucket.org"
     # Kibana (Appmax)
     "appmax-aws-max.kb.us-east-1.aws.found.io"
     # Docker Hub (for docker-compose: postgres, redis)

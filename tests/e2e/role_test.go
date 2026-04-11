@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/db/postgres/repository"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/web/handler"
-	roleuc "bitbucket.org/appmax-space/go-boilerplate/internal/usecases/role"
+	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/db/postgres/repository"
+	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/web/handler"
+	roleuc "github.com/jrmarcello/go-boilerplate/internal/usecases/role"
 )
 
 // setupRoleTestRouter configura o router com rotas de role para testes e2e

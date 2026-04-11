@@ -3,11 +3,11 @@ package handler
 import (
 	"net/http"
 
-	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/telemetry"
-	useruc "bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user/dto"
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/httputil/httpgin"
 	"github.com/gin-gonic/gin"
+	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/telemetry"
+	useruc "github.com/jrmarcello/go-boilerplate/internal/usecases/user"
+	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/dto"
+	"github.com/jrmarcello/go-boilerplate/pkg/httputil/httpgin"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"

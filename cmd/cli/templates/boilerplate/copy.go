@@ -37,7 +37,7 @@ func CopyProject(srcDir, dstDir string) error {
 		targetPath := filepath.Join(dstDir, relPath)
 
 		if info.IsDir() {
-			mkdirErr := os.MkdirAll(targetPath, 0o755)
+			mkdirErr := os.MkdirAll(targetPath, 0o750) //nolint:gosec // CLI scaffold creates project directories
 			if mkdirErr != nil {
 				return fmt.Errorf("creating directory %s: %w", targetPath, mkdirErr)
 			}
@@ -73,21 +73,21 @@ func shouldExclude(relPath string) bool {
 
 // copyFile copies a single file preserving the given mode.
 func copyFile(src, dst string, mode fs.FileMode) error {
-	if mkdirErr := os.MkdirAll(filepath.Dir(dst), 0o755); mkdirErr != nil {
+	if mkdirErr := os.MkdirAll(filepath.Dir(dst), 0o750); mkdirErr != nil { //nolint:gosec // CLI scaffold creates project directories
 		return fmt.Errorf("creating parent directory for %s: %w", dst, mkdirErr)
 	}
 
-	srcFile, openErr := os.Open(src)
+	srcFile, openErr := os.Open(src) //nolint:gosec // CLI tool copies user-specified project files
 	if openErr != nil {
 		return fmt.Errorf("opening source %s: %w", src, openErr)
 	}
-	defer srcFile.Close()
+	defer func() { _ = srcFile.Close() }()
 
-	dstFile, createErr := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, mode)
+	dstFile, createErr := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, mode) //nolint:gosec // CLI tool writes to user-specified project directory
 	if createErr != nil {
 		return fmt.Errorf("creating destination %s: %w", dst, createErr)
 	}
-	defer dstFile.Close()
+	defer func() { _ = dstFile.Close() }()
 
 	if _, copyErr := io.Copy(dstFile, srcFile); copyErr != nil {
 		return fmt.Errorf("copying %s to %s: %w", src, dst, copyErr)

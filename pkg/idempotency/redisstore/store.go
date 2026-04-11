@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/idempotency"
+	"github.com/jrmarcello/go-boilerplate/pkg/idempotency"
 	"github.com/redis/go-redis/v9"
 )
 

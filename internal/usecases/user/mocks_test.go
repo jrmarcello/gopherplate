@@ -3,9 +3,9 @@ package user
 import (
 	"context"
 
-	userdomain "bitbucket.org/appmax-space/go-boilerplate/internal/domain/user"
+	userdomain "github.com/jrmarcello/go-boilerplate/internal/domain/user"
 
-	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
+	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
 	"github.com/stretchr/testify/mock"
 )
 

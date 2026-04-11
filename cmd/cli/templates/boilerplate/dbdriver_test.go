@@ -14,7 +14,7 @@ func TestSwitchDBDriver_Postgres(t *testing.T) {
 
 	goFile := filepath.Join(projectDir, "main.go")
 	original := "package main\n\nimport (\n\t_ \"github.com/lib/pq\"\n)\n"
-	require.NoError(t, os.WriteFile(goFile, []byte(original), 0o644))
+	require.NoError(t, os.WriteFile(goFile, []byte(original), 0o600))
 
 	// Postgres is the default -- no changes expected.
 	switchErr := SwitchDBDriver(projectDir, "postgres")
@@ -30,7 +30,7 @@ func TestSwitchDBDriver_MySQL(t *testing.T) {
 
 	goFile := filepath.Join(projectDir, "main.go")
 	original := "package main\n\nimport (\n\t_ \"github.com/lib/pq\"\n)\n"
-	require.NoError(t, os.WriteFile(goFile, []byte(original), 0o644))
+	require.NoError(t, os.WriteFile(goFile, []byte(original), 0o600))
 
 	switchErr := SwitchDBDriver(projectDir, "mysql")
 	require.NoError(t, switchErr)
@@ -46,7 +46,7 @@ func TestSwitchDBDriver_SQLite(t *testing.T) {
 
 	goFile := filepath.Join(projectDir, "main.go")
 	original := "package main\n\nimport (\n\t_ \"github.com/lib/pq\"\n)\n"
-	require.NoError(t, os.WriteFile(goFile, []byte(original), 0o644))
+	require.NoError(t, os.WriteFile(goFile, []byte(original), 0o600))
 
 	switchErr := SwitchDBDriver(projectDir, "sqlite")
 	require.NoError(t, switchErr)
@@ -62,7 +62,7 @@ func TestSwitchDBDriver_UnknownDriver(t *testing.T) {
 
 	goFile := filepath.Join(projectDir, "main.go")
 	original := "package main\n\nimport (\n\t_ \"github.com/lib/pq\"\n)\n"
-	require.NoError(t, os.WriteFile(goFile, []byte(original), 0o644))
+	require.NoError(t, os.WriteFile(goFile, []byte(original), 0o600))
 
 	// Unknown driver should be a no-op.
 	switchErr := SwitchDBDriver(projectDir, "cockroachdb")

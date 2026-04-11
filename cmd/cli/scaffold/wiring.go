@@ -9,7 +9,7 @@ import (
 )
 
 // TemplateModulePath is the original module path of the template project.
-const TemplateModulePath = "bitbucket.org/appmax-space/go-boilerplate"
+const TemplateModulePath = "github.com/jrmarcello/go-boilerplate"
 
 // CleanupWiring regenerates server.go and router.go based on the scaffold config,
 // removing references to disabled features. Must run AFTER RemoveDisabledFeatures.
@@ -73,7 +73,7 @@ func (d wiringData) DBDriverName() string {
 
 func detectModulePath(projectDir string) string {
 	modPath := filepath.Join(projectDir, "go.mod")
-	content, readErr := os.ReadFile(modPath)
+	content, readErr := os.ReadFile(modPath) //nolint:gosec // CLI tool reads user-specified paths
 	if readErr != nil {
 		return TemplateModulePath
 	}
@@ -96,11 +96,11 @@ func generateServerGo(projectDir string, data wiringData) error {
 	}
 
 	outPath := filepath.Join(projectDir, "cmd", "api", "server.go")
-	f, createErr := os.Create(outPath)
+	f, createErr := os.Create(outPath) //nolint:gosec // CLI tool writes to user-specified project directory
 	if createErr != nil {
 		return fmt.Errorf("creating file: %w", createErr)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	execErr := tmpl.Execute(f, data)
 	if execErr != nil {
@@ -121,7 +121,7 @@ func generateRouterGo(projectDir string, data wiringData) error {
 	if createErr != nil {
 		return fmt.Errorf("creating file: %w", createErr)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	execErr := tmpl.Execute(f, data)
 	if execErr != nil {

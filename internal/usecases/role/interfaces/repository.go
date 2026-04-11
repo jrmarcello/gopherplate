@@ -3,8 +3,8 @@ package interfaces
 import (
 	"context"
 
-	roledomain "bitbucket.org/appmax-space/go-boilerplate/internal/domain/role"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
+	roledomain "github.com/jrmarcello/go-boilerplate/internal/domain/role"
+	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
 )
 
 // Repository define o CONTRATO para persistencia de Role.

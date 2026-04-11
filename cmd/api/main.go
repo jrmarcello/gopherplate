@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	"bitbucket.org/appmax-space/go-boilerplate/config"
+	"github.com/jrmarcello/go-boilerplate/config"
 )
 
 func main() {

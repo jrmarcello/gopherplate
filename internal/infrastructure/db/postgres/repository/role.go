@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"time"
 
-	roledomain "bitbucket.org/appmax-space/go-boilerplate/internal/domain/role"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
 	"github.com/jmoiron/sqlx"
+	roledomain "github.com/jrmarcello/go-boilerplate/internal/domain/role"
+	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
 )
 
 // roleDB é o modelo de banco de dados (Data Model) para Role.

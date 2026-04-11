@@ -69,7 +69,7 @@ func RenderTemplateFile(tmplContent string, data TemplateData, outputPath string
 	}
 
 	dirPath := filepath.Dir(outputPath)
-	if mkdirErr := os.MkdirAll(dirPath, 0o755); mkdirErr != nil {
+	if mkdirErr := os.MkdirAll(dirPath, 0o750); mkdirErr != nil {
 		return mkdirErr
 	}
 

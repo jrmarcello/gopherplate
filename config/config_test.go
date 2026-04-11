@@ -6,26 +6,27 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoad(t *testing.T) {
 	// Setup env vars for test
-	os.Setenv("SERVER_PORT", "9090")
-	os.Setenv("DB_HOST", "testhost")
-	os.Setenv("DB_PORT", "5433")
-	os.Setenv("DB_USER", "testuser")
-	os.Setenv("DB_PASSWORD", "testpass")
-	os.Setenv("DB_NAME", "test_db")
-	os.Setenv("DB_SSLMODE", "require")
-	os.Setenv("DB_MAX_OPEN_CONNS", "50")
-	os.Setenv("DB_MAX_IDLE_CONNS", "15")
-	os.Setenv("DB_CONN_MAX_LIFETIME", "10m")
-	os.Setenv("DB_CONN_MAX_IDLE_TIME", "2m")
-	os.Setenv("DB_REPLICA_ENABLED", "true")
-	os.Setenv("DB_REPLICA_HOST", "replicahost")
-	os.Setenv("DB_REPLICA_PORT", "5434")
-	os.Setenv("REDIS_ENABLED", "true")
-	os.Setenv("SWAGGER_ENABLED", "false")
+	require.NoError(t, os.Setenv("SERVER_PORT", "9090"))
+	require.NoError(t, os.Setenv("DB_HOST", "testhost"))
+	require.NoError(t, os.Setenv("DB_PORT", "5433"))
+	require.NoError(t, os.Setenv("DB_USER", "testuser"))
+	require.NoError(t, os.Setenv("DB_PASSWORD", "testpass"))
+	require.NoError(t, os.Setenv("DB_NAME", "test_db"))
+	require.NoError(t, os.Setenv("DB_SSLMODE", "require"))
+	require.NoError(t, os.Setenv("DB_MAX_OPEN_CONNS", "50"))
+	require.NoError(t, os.Setenv("DB_MAX_IDLE_CONNS", "15"))
+	require.NoError(t, os.Setenv("DB_CONN_MAX_LIFETIME", "10m"))
+	require.NoError(t, os.Setenv("DB_CONN_MAX_IDLE_TIME", "2m"))
+	require.NoError(t, os.Setenv("DB_REPLICA_ENABLED", "true"))
+	require.NoError(t, os.Setenv("DB_REPLICA_HOST", "replicahost"))
+	require.NoError(t, os.Setenv("DB_REPLICA_PORT", "5434"))
+	require.NoError(t, os.Setenv("REDIS_ENABLED", "true"))
+	require.NoError(t, os.Setenv("SWAGGER_ENABLED", "false"))
 	defer os.Clearenv()
 
 	cfg, loadErr := Load()

@@ -4,12 +4,12 @@ import (
 	"errors"
 	"net/http"
 
-	roledomain "bitbucket.org/appmax-space/go-boilerplate/internal/domain/role"
-	userdomain "bitbucket.org/appmax-space/go-boilerplate/internal/domain/user"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/apperror"
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/httputil/httpgin"
 	"github.com/gin-gonic/gin"
+	roledomain "github.com/jrmarcello/go-boilerplate/internal/domain/role"
+	userdomain "github.com/jrmarcello/go-boilerplate/internal/domain/user"
+	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
+	"github.com/jrmarcello/go-boilerplate/pkg/apperror"
+	"github.com/jrmarcello/go-boilerplate/pkg/httputil/httpgin"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )

@@ -9,7 +9,7 @@ import (
 // RewriteModulePath replaces all occurrences of oldModule with newModule
 // in all .go files and go.mod within the given directory tree.
 func RewriteModulePath(dir, oldModule, newModule string) error {
-	return filepath.Walk(dir, func(path string, info os.FileInfo, walkErr error) error {
+	return filepath.Walk(dir, func(path string, info os.FileInfo, walkErr error) error { //nolint:gosec // CLI scaffold tool, TOCTOU risk is acceptable
 		if walkErr != nil {
 			return walkErr
 		}
@@ -22,7 +22,7 @@ func RewriteModulePath(dir, oldModule, newModule string) error {
 			return nil
 		}
 
-		content, readErr := os.ReadFile(path)
+		content, readErr := os.ReadFile(path) //nolint:gosec // CLI tool reads user-specified paths
 		if readErr != nil {
 			return readErr
 		}
@@ -34,7 +34,7 @@ func RewriteModulePath(dir, oldModule, newModule string) error {
 			return nil
 		}
 
-		return os.WriteFile(path, []byte(newContent), info.Mode())
+		return os.WriteFile(path, []byte(newContent), info.Mode()) //nolint:gosec // CLI scaffold tool, TOCTOU risk is acceptable
 	})
 }
 

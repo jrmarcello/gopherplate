@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/cache"
+	"github.com/jrmarcello/go-boilerplate/pkg/cache"
 	"github.com/redis/go-redis/v9"
 )
 

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user/dto"
+	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
+	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/dto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

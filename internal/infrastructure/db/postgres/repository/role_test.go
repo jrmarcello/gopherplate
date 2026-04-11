@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	roledomain "bitbucket.org/appmax-space/go-boilerplate/internal/domain/role"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
+	roledomain "github.com/jrmarcello/go-boilerplate/internal/domain/role"
+	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -135,7 +135,7 @@ func buildTestRole() *roledomain.Role {
 func TestRoleRepository_Create(t *testing.T) {
 	db, mock, mockErr := sqlmock.New()
 	require.NoError(t, mockErr)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewRoleRepository(sqlxDB, sqlxDB)
@@ -171,7 +171,7 @@ func TestRoleRepository_Create(t *testing.T) {
 func TestRoleRepository_FindByName(t *testing.T) {
 	db, mock, mockErr := sqlmock.New()
 	require.NoError(t, mockErr)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewRoleRepository(sqlxDB, sqlxDB)
@@ -228,7 +228,7 @@ func TestRoleRepository_FindByName(t *testing.T) {
 func TestRoleRepository_List(t *testing.T) {
 	db, mock, mockErr := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
 	require.NoError(t, mockErr)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewRoleRepository(sqlxDB, sqlxDB)
@@ -390,7 +390,7 @@ func TestRoleRepository_List(t *testing.T) {
 func TestRoleRepository_Delete(t *testing.T) {
 	db, mock, mockErr := sqlmock.New()
 	require.NoError(t, mockErr)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewRoleRepository(sqlxDB, sqlxDB)

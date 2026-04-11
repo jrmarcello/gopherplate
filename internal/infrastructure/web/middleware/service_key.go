@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/httputil/httpgin"
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/logutil"
+	"github.com/jrmarcello/go-boilerplate/pkg/httputil/httpgin"
+	"github.com/jrmarcello/go-boilerplate/pkg/logutil"
 )
 
 // ServiceKeyConfig contém a configuração de autenticação por Service Key.

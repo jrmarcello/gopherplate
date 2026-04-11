@@ -1,8 +1,8 @@
 package httpgin
 
 import (
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/httputil"
 	"github.com/gin-gonic/gin"
+	"github.com/jrmarcello/go-boilerplate/pkg/httputil"
 )
 
 // SendSuccess sends a standardized success response via Gin.

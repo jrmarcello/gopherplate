@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/db/postgres/repository"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/web/handler"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/web/middleware"
-	useruc "bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user"
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/httputil/httpgin"
+	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/db/postgres/repository"
+	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/web/handler"
+	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/web/middleware"
+	useruc "github.com/jrmarcello/go-boilerplate/internal/usecases/user"
+	"github.com/jrmarcello/go-boilerplate/pkg/httputil/httpgin"
 )
 
 // setupTestRouter configura o router para testes e2e

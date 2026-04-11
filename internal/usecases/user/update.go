@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"time"
 
-	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user/dto"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user/interfaces"
+	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
+	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/dto"
+	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/interfaces"
 )
 
 // UpdateUseCase implementa o caso de uso de atualização de user.

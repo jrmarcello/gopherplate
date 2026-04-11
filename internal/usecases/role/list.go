@@ -5,9 +5,9 @@ import (
 	"math"
 	"time"
 
-	roledomain "bitbucket.org/appmax-space/go-boilerplate/internal/domain/role"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/role/dto"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/role/interfaces"
+	roledomain "github.com/jrmarcello/go-boilerplate/internal/domain/role"
+	"github.com/jrmarcello/go-boilerplate/internal/usecases/role/dto"
+	"github.com/jrmarcello/go-boilerplate/internal/usecases/role/interfaces"
 )
 
 // ListUseCase implementa o caso de uso de listar roles.

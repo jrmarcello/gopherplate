@@ -3,7 +3,7 @@ package user
 import (
 	"time"
 
-	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
+	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
 )
 
 // User é a Entidade principal (Aggregate Root) do domínio.

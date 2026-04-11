@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	roledomain "bitbucket.org/appmax-space/go-boilerplate/internal/domain/role"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/role/dto"
+	roledomain "github.com/jrmarcello/go-boilerplate/internal/domain/role"
+	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
+	"github.com/jrmarcello/go-boilerplate/internal/usecases/role/dto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

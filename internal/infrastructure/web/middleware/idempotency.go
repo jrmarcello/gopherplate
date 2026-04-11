@@ -7,10 +7,10 @@ import (
 	"io"
 	"net/http"
 
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/httputil"
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/idempotency"
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/logutil"
 	"github.com/gin-gonic/gin"
+	"github.com/jrmarcello/go-boilerplate/pkg/httputil"
+	"github.com/jrmarcello/go-boilerplate/pkg/idempotency"
+	"github.com/jrmarcello/go-boilerplate/pkg/logutil"
 )
 
 const (

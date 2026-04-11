@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/role/dto"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/role/interfaces"
+	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
+	"github.com/jrmarcello/go-boilerplate/internal/usecases/role/dto"
+	"github.com/jrmarcello/go-boilerplate/internal/usecases/role/interfaces"
 )
 
 // DeleteUseCase implementa o caso de uso de delecao de role.

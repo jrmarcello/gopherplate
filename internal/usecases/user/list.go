@@ -5,9 +5,9 @@ import (
 	"math"
 	"time"
 
-	userdomain "bitbucket.org/appmax-space/go-boilerplate/internal/domain/user"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user/dto"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user/interfaces"
+	userdomain "github.com/jrmarcello/go-boilerplate/internal/domain/user"
+	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/dto"
+	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/interfaces"
 )
 
 // ListUseCase implementa o caso de uso de listar users.

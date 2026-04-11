@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/trace"
 
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/logutil"
+	"github.com/jrmarcello/go-boilerplate/pkg/logutil"
 )
 
 const requestIDMaxLen = 64

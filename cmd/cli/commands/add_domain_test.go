@@ -100,7 +100,7 @@ func TestDetectModulePath(t *testing.T) {
 	t.Run("detects module path from valid go.mod", func(t *testing.T) {
 		dir := t.TempDir()
 		goModContent := "module github.com/test/my-service\n\ngo 1.25.0\n"
-		writeErr := os.WriteFile(filepath.Join(dir, "go.mod"), []byte(goModContent), 0o644)
+		writeErr := os.WriteFile(filepath.Join(dir, "go.mod"), []byte(goModContent), 0o600)
 		require.NoError(t, writeErr)
 
 		// detectModulePath reads from current directory, so we must chdir
@@ -120,7 +120,7 @@ func TestDetectModulePath(t *testing.T) {
 	t.Run("detects module path with extra whitespace", func(t *testing.T) {
 		dir := t.TempDir()
 		goModContent := "  module   github.com/org/svc  \n\ngo 1.25.0\n"
-		writeErr := os.WriteFile(filepath.Join(dir, "go.mod"), []byte(goModContent), 0o644)
+		writeErr := os.WriteFile(filepath.Join(dir, "go.mod"), []byte(goModContent), 0o600)
 		require.NoError(t, writeErr)
 
 		origDir, getErr := os.Getwd()
@@ -154,7 +154,7 @@ func TestDetectModulePath(t *testing.T) {
 	t.Run("returns error when go.mod has no module directive", func(t *testing.T) {
 		dir := t.TempDir()
 		goModContent := "go 1.25.0\n\nrequire (\n)\n"
-		writeErr := os.WriteFile(filepath.Join(dir, "go.mod"), []byte(goModContent), 0o644)
+		writeErr := os.WriteFile(filepath.Join(dir, "go.mod"), []byte(goModContent), 0o600)
 		require.NoError(t, writeErr)
 
 		origDir, getErr := os.Getwd()

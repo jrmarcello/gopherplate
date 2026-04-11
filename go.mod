@@ -1,4 +1,4 @@
-module bitbucket.org/appmax-space/go-boilerplate
+module github.com/jrmarcello/go-boilerplate
 
 go 1.25.0
 

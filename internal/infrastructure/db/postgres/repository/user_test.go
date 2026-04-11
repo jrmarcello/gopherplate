@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	userdomain "bitbucket.org/appmax-space/go-boilerplate/internal/domain/user"
+	userdomain "github.com/jrmarcello/go-boilerplate/internal/domain/user"
 
-	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
+	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -181,7 +181,7 @@ func buildTestUser() *userdomain.User {
 func TestUserRepository_Create(t *testing.T) {
 	db, mock, mockErr := sqlmock.New()
 	require.NoError(t, mockErr)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewUserRepository(sqlxDB, sqlxDB)
@@ -217,7 +217,7 @@ func TestUserRepository_Create(t *testing.T) {
 func TestUserRepository_FindByID(t *testing.T) {
 	db, mock, mockErr := sqlmock.New()
 	require.NoError(t, mockErr)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewUserRepository(sqlxDB, sqlxDB)
@@ -275,7 +275,7 @@ func TestUserRepository_FindByID(t *testing.T) {
 func TestUserRepository_FindByEmail(t *testing.T) {
 	db, mock, mockErr := sqlmock.New()
 	require.NoError(t, mockErr)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewUserRepository(sqlxDB, sqlxDB)
@@ -334,7 +334,7 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 func TestUserRepository_List(t *testing.T) {
 	db, mock, mockErr := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
 	require.NoError(t, mockErr)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewUserRepository(sqlxDB, sqlxDB)
@@ -521,7 +521,7 @@ func TestUserRepository_List(t *testing.T) {
 func TestUserRepository_Update(t *testing.T) {
 	db, mock, mockErr := sqlmock.New()
 	require.NoError(t, mockErr)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewUserRepository(sqlxDB, sqlxDB)
@@ -601,7 +601,7 @@ func TestUserRepository_Update(t *testing.T) {
 func TestUserRepository_Delete(t *testing.T) {
 	db, mock, mockErr := sqlmock.New()
 	require.NoError(t, mockErr)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewUserRepository(sqlxDB, sqlxDB)

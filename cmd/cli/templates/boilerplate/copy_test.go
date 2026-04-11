@@ -30,7 +30,7 @@ func TestCopyProject(t *testing.T) {
 		".specs/.gitkeep":                 "",
 		".devcontainer/devcontainer.json": "{}",
 		"bin/api":                         "binary",
-		"bitbucket-pipelines.yml":         "pipelines:",
+		".github/workflows/ci.yml":        "name: CI",
 		"cliff.toml":                      "[changelog]",
 		"CHANGELOG.md":                    "# Changelog",
 		"CONTRIBUTING.md":                 "# Contributing",
@@ -45,8 +45,8 @@ func TestCopyProject(t *testing.T) {
 
 	for relPath, content := range files {
 		absPath := filepath.Join(srcDir, relPath)
-		require.NoError(t, os.MkdirAll(filepath.Dir(absPath), 0o755))
-		require.NoError(t, os.WriteFile(absPath, []byte(content), 0o644))
+		require.NoError(t, os.MkdirAll(filepath.Dir(absPath), 0o750))
+		require.NoError(t, os.WriteFile(absPath, []byte(content), 0o600))
 	}
 
 	// Run CopyProject.
@@ -78,7 +78,7 @@ func TestCopyProject(t *testing.T) {
 		".specs/.gitkeep",
 		".devcontainer/devcontainer.json",
 		"bin/api",
-		"bitbucket-pipelines.yml",
+		".github/workflows/ci.yml",
 		"cliff.toml",
 		"CHANGELOG.md",
 		"CONTRIBUTING.md",

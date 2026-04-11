@@ -11,8 +11,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"bitbucket.org/appmax-space/go-boilerplate/cmd/cli/scaffold"
-	domaintmpl "bitbucket.org/appmax-space/go-boilerplate/cmd/cli/templates/domain"
+	"github.com/jrmarcello/go-boilerplate/cmd/cli/scaffold"
+	domaintmpl "github.com/jrmarcello/go-boilerplate/cmd/cli/templates/domain"
 )
 
 var addDomainCmd = &cobra.Command{
@@ -81,7 +81,7 @@ func runAddDomain(_ *cobra.Command, args []string) error {
 		}
 
 		dirPath := filepath.Dir(outputPath)
-		if mkdirErr := os.MkdirAll(dirPath, 0o755); mkdirErr != nil {
+		if mkdirErr := os.MkdirAll(dirPath, 0o750); mkdirErr != nil {
 			return fmt.Errorf("creating directory %s: %w", dirPath, mkdirErr)
 		}
 

@@ -24,7 +24,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"
 
-	"bitbucket.org/appmax-space/go-boilerplate/config"
+	"github.com/jrmarcello/go-boilerplate/config"
 )
 
 func main() {
@@ -48,7 +48,7 @@ func run() error {
 	if openErr != nil {
 		return fmt.Errorf("opening database connection: %w", openErr)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	// Verify connection
 	if pingErr := db.Ping(); pingErr != nil {

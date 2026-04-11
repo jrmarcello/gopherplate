@@ -11,7 +11,7 @@ import (
 // "go-boilerplate" appears and must be replaced with the new name.
 //
 // Go files are NOT listed here because they use the full module path
-// (bitbucket.org/appmax-space/go-boilerplate) which is handled separately
+// (github.com/jrmarcello/go-boilerplate) which is handled separately
 // by the module rewriter.
 var serviceNameFiles = []string{
 	// Build
@@ -95,7 +95,7 @@ func ReplaceServiceName(projectDir, newName string) error {
 			return fmt.Errorf("stat %s: %w", relPath, statErr)
 		}
 
-		writeErr := os.WriteFile(absPath, []byte(newContent), info.Mode())
+		writeErr := os.WriteFile(absPath, []byte(newContent), info.Mode()) //nolint:gosec // CLI tool writes to user-specified project directory
 		if writeErr != nil {
 			return fmt.Errorf("writing %s: %w", relPath, writeErr)
 		}

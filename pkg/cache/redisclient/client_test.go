@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/cache"
 	"github.com/alicebob/miniredis/v2"
+	"github.com/jrmarcello/go-boilerplate/pkg/cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -171,7 +171,7 @@ func TestSetAndGet_Success(t *testing.T) {
 func TestGet_InvalidJSON(t *testing.T) {
 	client, mr := newTestClient(t)
 	// Set raw invalid JSON directly in miniredis
-	mr.Set("bad-json", "not-valid-json{{{")
+	_ = mr.Set("bad-json", "not-valid-json{{{")
 	var dest map[string]string
 	getErr := client.Get(context.Background(), "bad-json", &dest)
 	assert.Error(t, getErr)
@@ -267,7 +267,7 @@ func TestUnderlyingClient_ReturnsClient(t *testing.T) {
 
 func TestGet_AfterClose_ReturnsError(t *testing.T) {
 	client, _ := newTestClient(t)
-	client.Close()
+	_ = client.Close()
 
 	var dest string
 	getErr := client.Get(context.Background(), "key", &dest)
@@ -277,7 +277,7 @@ func TestGet_AfterClose_ReturnsError(t *testing.T) {
 
 func TestSet_AfterClose_ReturnsError(t *testing.T) {
 	client, _ := newTestClient(t)
-	client.Close()
+	_ = client.Close()
 
 	setErr := client.Set(context.Background(), "key", "value")
 	assert.Error(t, setErr)
@@ -285,7 +285,7 @@ func TestSet_AfterClose_ReturnsError(t *testing.T) {
 
 func TestDelete_AfterClose_ReturnsError(t *testing.T) {
 	client, _ := newTestClient(t)
-	client.Close()
+	_ = client.Close()
 
 	delErr := client.Delete(context.Background(), "key")
 	assert.Error(t, delErr)
@@ -293,7 +293,7 @@ func TestDelete_AfterClose_ReturnsError(t *testing.T) {
 
 func TestPing_AfterClose_ReturnsError(t *testing.T) {
 	client, _ := newTestClient(t)
-	client.Close()
+	_ = client.Close()
 
 	pingErr := client.Ping(context.Background())
 	assert.Error(t, pingErr)

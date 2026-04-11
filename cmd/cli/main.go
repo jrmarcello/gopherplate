@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"bitbucket.org/appmax-space/go-boilerplate/cmd/cli/commands"
+	"github.com/jrmarcello/go-boilerplate/cmd/cli/commands"
 )
 
 func main() {

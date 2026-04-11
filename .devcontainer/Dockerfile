@@ -87,7 +87,7 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
 # Pre-populate known_hosts (avoids interactive prompt on first git pull)
 USER root
 RUN mkdir -p /home/$USERNAME/.ssh && \
-  ssh-keyscan bitbucket.org github.com >> /home/$USERNAME/.ssh/known_hosts 2>/dev/null && \
+  ssh-keyscan github.com >> /home/$USERNAME/.ssh/known_hosts 2>/dev/null && \
   chown -R $USERNAME:$USERNAME /home/$USERNAME/.ssh && \
   chmod 700 /home/$USERNAME/.ssh && \
   chmod 644 /home/$USERNAME/.ssh/known_hosts

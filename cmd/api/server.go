@@ -11,25 +11,25 @@ import (
 	"syscall"
 	"time"
 
-	"bitbucket.org/appmax-space/go-boilerplate/config"
-	docs "bitbucket.org/appmax-space/go-boilerplate/docs"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/db/postgres/repository"
-	infratelemetry "bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/telemetry"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/web/handler"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/infrastructure/web/router"
-	roleuc "bitbucket.org/appmax-space/go-boilerplate/internal/usecases/role"
-	useruc "bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user"
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/cache"
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/cache/redisclient"
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/database"
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/health"
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/idempotency"
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/idempotency/redisstore"
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/logutil"
-	pkgtelemetry "bitbucket.org/appmax-space/go-boilerplate/pkg/telemetry"
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/telemetry/otelgrpc"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+	"github.com/jrmarcello/go-boilerplate/config"
+	docs "github.com/jrmarcello/go-boilerplate/docs"
+	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/db/postgres/repository"
+	infratelemetry "github.com/jrmarcello/go-boilerplate/internal/infrastructure/telemetry"
+	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/web/handler"
+	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/web/router"
+	roleuc "github.com/jrmarcello/go-boilerplate/internal/usecases/role"
+	useruc "github.com/jrmarcello/go-boilerplate/internal/usecases/user"
+	"github.com/jrmarcello/go-boilerplate/pkg/cache"
+	"github.com/jrmarcello/go-boilerplate/pkg/cache/redisclient"
+	"github.com/jrmarcello/go-boilerplate/pkg/database"
+	"github.com/jrmarcello/go-boilerplate/pkg/health"
+	"github.com/jrmarcello/go-boilerplate/pkg/idempotency"
+	"github.com/jrmarcello/go-boilerplate/pkg/idempotency/redisstore"
+	"github.com/jrmarcello/go-boilerplate/pkg/logutil"
+	pkgtelemetry "github.com/jrmarcello/go-boilerplate/pkg/telemetry"
+	"github.com/jrmarcello/go-boilerplate/pkg/telemetry/otelgrpc"
 	_ "github.com/lib/pq"
 	"go.opentelemetry.io/otel"
 )
@@ -103,7 +103,7 @@ func Start(ctx context.Context, cfg *config.Config) error {
 	if clusterErr != nil {
 		return clusterErr
 	}
-	defer cluster.Close()
+	defer func() { _ = cluster.Close() }()
 
 	// Wrap stdlib connections for sqlx-based repositories
 	sqlxWriter := sqlx.NewDb(cluster.Writer(), "postgres")
@@ -247,10 +247,10 @@ func buildDependencies(cluster *database.DBCluster, sqlxWriter, sqlxReader *sqlx
 	}
 }
 
-func newServer(port string, handler http.Handler) *http.Server {
+func newServer(port string, h http.Handler) *http.Server {
 	return &http.Server{
 		Addr:              ":" + port,
-		Handler:           handler,
+		Handler:           h,
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		WriteTimeout:      30 * time.Second,

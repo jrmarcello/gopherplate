@@ -484,8 +484,8 @@ sandbox-firewall: ## Test sandbox firewall rules
 	@echo "\033[36m-- Allowed (proxy.golang.org) --\033[0m"
 	@docker exec $(SANDBOX_CONTAINER) curl --connect-timeout 5 -s -o /dev/null -w "%{http_code}" https://proxy.golang.org && \
 		echo "\n\033[32mPASS\033[0m" || echo "\033[31mFAIL\033[0m"
-	@echo "\033[36m-- Allowed (bitbucket.org) --\033[0m"
-	@docker exec $(SANDBOX_CONTAINER) curl --connect-timeout 5 -s -o /dev/null -w "%{http_code}" https://bitbucket.org && \
+	@echo "\033[36m-- Allowed (github.com) --\033[0m"
+	@docker exec $(SANDBOX_CONTAINER) curl --connect-timeout 5 -s -o /dev/null -w "%{http_code}" https://github.com && \
 		echo "\n\033[32mPASS\033[0m" || echo "\033[31mFAIL\033[0m"
 
 sandbox-ssh: ## Verify SSH agent in sandbox

@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	userdomain "bitbucket.org/appmax-space/go-boilerplate/internal/domain/user"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user/dto"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user/interfaces"
+	userdomain "github.com/jrmarcello/go-boilerplate/internal/domain/user"
+	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
+	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/dto"
+	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/interfaces"
 )
 
 // CreateUseCase implementa o caso de uso de criação de user.

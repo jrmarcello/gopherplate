@@ -20,7 +20,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/redis"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/cache/redisclient"
+	"github.com/jrmarcello/go-boilerplate/pkg/cache/redisclient"
 )
 
 var testDB *sqlx.DB
@@ -144,18 +144,18 @@ func TestMain(m *testing.M) {
 	}
 
 	// Definir variáveis de ambiente para a aplicação
-	os.Setenv("DB_DSN", pgContainer.ConnectionString)
-	os.Setenv("REDIS_URL", redisConnStr)
-	os.Setenv("REDIS_ENABLED", "true")
+	_ = os.Setenv("DB_DSN", pgContainer.ConnectionString)
+	_ = os.Setenv("REDIS_URL", redisConnStr)
+	_ = os.Setenv("REDIS_ENABLED", "true")
 
 	// Executar testes
 	code := m.Run()
 
 	// Cleanup
 	if testCache != nil {
-		testCache.Close()
+		_ = testCache.Close()
 	}
-	testDB.Close()
+	_ = testDB.Close()
 	if err := redisContainer.Terminate(ctx); err != nil {
 		log.Printf("Failed to terminate redis container: %v", err)
 	}

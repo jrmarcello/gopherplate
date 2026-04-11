@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	userdomain "bitbucket.org/appmax-space/go-boilerplate/internal/domain/user"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
 	"github.com/jmoiron/sqlx"
+	userdomain "github.com/jrmarcello/go-boilerplate/internal/domain/user"
+	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
 )
 
 // userDB é o modelo de banco de dados (Data Model).

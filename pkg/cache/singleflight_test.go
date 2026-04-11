@@ -82,8 +82,8 @@ func TestFlightGroup_Do_DifferentKeysRunIndependently(t *testing.T) {
 		return "result", nil
 	}
 
-	fg.Do("key-a", fn)
-	fg.Do("key-b", fn)
+	_, _, _ = fg.Do("key-a", fn)
+	_, _, _ = fg.Do("key-b", fn)
 
 	assert.Equal(t, int32(2), callCount.Load(), "different keys should execute independently")
 }

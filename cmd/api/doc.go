@@ -5,7 +5,7 @@ package main
 // @description     API para gerenciamento de usuários e roles com Clean Architecture.
 
 // @contact.name   Appmax Engineering
-// @contact.url    https://bitbucket.org/appmax-space/go-boilerplate
+// @contact.url    https://github.com/jrmarcello/go-boilerplate
 
 // @host      localhost:8080
 // @BasePath  /

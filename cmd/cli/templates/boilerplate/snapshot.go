@@ -33,7 +33,7 @@ var ExcludePaths = []string{
 	"tests/load/results/",
 
 	// CI pipeline (template-specific, teams add their own)
-	"bitbucket-pipelines.yml",
+	".github/",
 
 	// Changelog tooling (template-specific)
 	"cliff.toml",

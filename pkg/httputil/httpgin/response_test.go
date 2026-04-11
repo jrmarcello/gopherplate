@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/httputil"
 	"github.com/gin-gonic/gin"
+	"github.com/jrmarcello/go-boilerplate/pkg/httputil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

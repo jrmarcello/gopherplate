@@ -121,7 +121,7 @@ func createFeatureTree(t *testing.T, root string, paths []string) {
 		ext := filepath.Ext(rel)
 		if ext != "" {
 			// It's a file path - create parent dir and file
-			mkdirErr := os.MkdirAll(filepath.Dir(abs), 0o755)
+			mkdirErr := os.MkdirAll(filepath.Dir(abs), 0o750)
 			require.NoError(t, mkdirErr)
 			writeErr := os.WriteFile(abs, []byte("placeholder"), 0o644)
 			require.NoError(t, writeErr)

@@ -3,7 +3,7 @@ package user
 import (
 	"testing"
 
-	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
+	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
 	"github.com/stretchr/testify/assert"
 )
 

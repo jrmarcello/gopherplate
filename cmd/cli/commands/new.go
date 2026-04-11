@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"bitbucket.org/appmax-space/go-boilerplate/cmd/cli/scaffold"
-	boilerplatetmpl "bitbucket.org/appmax-space/go-boilerplate/cmd/cli/templates/boilerplate"
+	"github.com/jrmarcello/go-boilerplate/cmd/cli/scaffold"
+	boilerplatetmpl "github.com/jrmarcello/go-boilerplate/cmd/cli/templates/boilerplate"
 	"github.com/spf13/cobra"
 )
 
@@ -38,7 +38,7 @@ func init() {
 	newCmd.Flags().BoolP("yes", "y", false, "Accept defaults for all unspecified options (non-interactive)")
 }
 
-const templateModulePath = "bitbucket.org/appmax-space/go-boilerplate"
+const templateModulePath = "github.com/jrmarcello/go-boilerplate"
 
 func runNew(cmd *cobra.Command, args []string) error {
 	cfg := scaffold.DefaultConfig()
@@ -241,7 +241,7 @@ func runNew(cmd *cobra.Command, args []string) error {
 		cleanupFiles = append(cleanupFiles, "docs/docs.go")
 	}
 	for _, f := range cleanupFiles {
-		os.Remove(filepath.Join(outputDir, f))
+		_ = os.Remove(filepath.Join(outputDir, f))
 	}
 
 	// 10. Initialize fresh git

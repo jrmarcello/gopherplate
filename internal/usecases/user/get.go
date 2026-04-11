@@ -5,11 +5,11 @@ import (
 	"log/slog"
 	"time"
 
-	userdomain "bitbucket.org/appmax-space/go-boilerplate/internal/domain/user"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/domain/user/vo"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user/dto"
-	"bitbucket.org/appmax-space/go-boilerplate/internal/usecases/user/interfaces"
-	"bitbucket.org/appmax-space/go-boilerplate/pkg/cache"
+	userdomain "github.com/jrmarcello/go-boilerplate/internal/domain/user"
+	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
+	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/dto"
+	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/interfaces"
+	"github.com/jrmarcello/go-boilerplate/pkg/cache"
 )
 
 // GetUseCase implementa o caso de uso de buscar user por ID.
@@ -27,8 +27,8 @@ func NewGetUseCase(repo interfaces.Repository) *GetUseCase {
 }
 
 // WithCache sets an optional cache for the use case (builder pattern).
-func (uc *GetUseCase) WithCache(cache interfaces.Cache) *GetUseCase {
-	uc.Cache = cache
+func (uc *GetUseCase) WithCache(c interfaces.Cache) *GetUseCase {
+	uc.Cache = c
 	return uc
 }
 
