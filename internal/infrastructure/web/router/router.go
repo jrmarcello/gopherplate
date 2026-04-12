@@ -38,8 +38,8 @@ type Dependencies struct {
 func Setup(deps Dependencies) *gin.Engine {
 	r := gin.New()
 
-	// Recovery middleware (panic recovery)
-	r.Use(gin.Recovery())
+	// Recovery middleware (panic recovery — returns JSON 500, not HTML)
+	r.Use(middleware.CustomRecovery())
 
 	// OpenTelemetry (must be before Logger to populate trace_id)
 	r.Use(otelgin.Middleware(deps.Config.ServiceName))

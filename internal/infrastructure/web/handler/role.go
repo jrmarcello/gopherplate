@@ -9,7 +9,6 @@ import (
 	"github.com/jrmarcello/go-boilerplate/pkg/httputil/httpgin"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 )
 
 // RoleHandler agrupa todos os handlers relacionados a Role.
@@ -52,7 +51,6 @@ func (h *RoleHandler) Create(c *gin.Context) {
 
 	var req dto.CreateInput
 	if bindErr := c.ShouldBindJSON(&req); bindErr != nil {
-		span.SetStatus(codes.Error, "invalid request body")
 		httpgin.SendError(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
@@ -63,7 +61,7 @@ func (h *RoleHandler) Create(c *gin.Context) {
 
 	res, execErr := h.CreateUC.Execute(ctx, req)
 	if execErr != nil {
-		HandleError(c, span, execErr)
+		HandleError(c, execErr)
 		return
 	}
 
@@ -92,7 +90,6 @@ func (h *RoleHandler) List(c *gin.Context) {
 
 	var req dto.ListInput
 	if bindErr := c.ShouldBindQuery(&req); bindErr != nil {
-		span.SetStatus(codes.Error, "invalid query parameters")
 		httpgin.SendError(c, http.StatusBadRequest, "invalid query parameters")
 		return
 	}
@@ -104,7 +101,7 @@ func (h *RoleHandler) List(c *gin.Context) {
 
 	res, execErr := h.ListUC.Execute(ctx, req)
 	if execErr != nil {
-		HandleError(c, span, execErr)
+		HandleError(c, execErr)
 		return
 	}
 
@@ -133,7 +130,7 @@ func (h *RoleHandler) Delete(c *gin.Context) {
 
 	res, execErr := h.DeleteUC.Execute(ctx, dto.DeleteInput{ID: id})
 	if execErr != nil {
-		HandleError(c, span, execErr)
+		HandleError(c, execErr)
 		return
 	}
 

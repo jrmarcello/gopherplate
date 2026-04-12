@@ -1,6 +1,6 @@
 # ADR-004: Error Handling Layered Translation
 
-**Status**: Aceito  
+**Status**: Superseded by [ADR-009](009-error-handling.md)  
 **Data**: 2026-01-16  
 **Autor**: Marcelo Jr
 

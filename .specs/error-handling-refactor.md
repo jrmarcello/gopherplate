@@ -1,6 +1,6 @@
 # Spec: Error Handling Refactor
 
-## Status: DRAFT
+## Status: DONE
 
 ## Context
 
@@ -207,21 +207,21 @@ errors.New("...")    ->   toAppError() + ClassifyError()   ->   errors.As() + co
 
 ## Tasks
 
-- [ ] TASK-1: Adicionar CodeUnprocessableEntity ao pkg/apperror
+- [x] TASK-1: Adicionar CodeUnprocessableEntity ao pkg/apperror
   - Adicionar constante `CodeUnprocessableEntity = "UNPROCESSABLE_ENTITY"`
   - Adicionar constructor `UnprocessableEntity(message string) *AppError` (1 param com code hardcoded — diverge dos existentes que usam 2 params `(code, message)`, mas e melhor DX: `apperror.UnprocessableEntity("msg")` e mais claro que `apperror.UnprocessableEntity("UNPROCESSABLE_ENTITY", "msg")`)
   - Nota: `Wrap()` ja existe em `apperror.go` — apenas verificar que preserva chain via `Unwrap()` (TC-U-17 e teste de regressao)
   - files: `pkg/apperror/apperror.go`, `pkg/apperror/apperror_test.go`
   - tests: TC-U-17, TC-U-18
 
-- [ ] TASK-2: Criar FailSpan/WarnSpan em pkg/telemetry/span.go
+- [x] TASK-2: Criar FailSpan/WarnSpan em pkg/telemetry/span.go
   - `FailSpan(span trace.Span, err error, msg string)` — seta status Error, grava erro como evento
   - `WarnSpan(span trace.Span, key, value string)` — adiciona atributo semantico, nao marca erro
   - Ambos sao no-op se span for nil
   - files: `pkg/telemetry/span.go`, `pkg/telemetry/span_test.go`
   - tests: TC-U-01, TC-U-02, TC-U-03
 
-- [ ] TASK-3: Criar ClassifyError em internal/usecases/shared/
+- [x] TASK-3: Criar ClassifyError em internal/usecases/shared/
   - `ClassifyError(span trace.Span, err error, expectedErrors []error, contextMsg string)`
   - Itera `expectedErrors`, usa `errors.Is()` para match (suporta wrapping)
   - Match -> WarnSpan; no match -> FailSpan
@@ -230,13 +230,13 @@ errors.New("...")    ->   toAppError() + ClassifyError()   ->   errors.As() + co
   - tests: TC-U-04, TC-U-05, TC-U-06, TC-U-07, TC-U-08
   - depends: TASK-2
 
-- [ ] TASK-4: Criar CustomRecovery middleware
+- [x] TASK-4: Criar CustomRecovery middleware
   - `CustomRecovery() gin.HandlerFunc` usando `gin.CustomRecovery`
   - Captura panic, loga via slog.Error com stack trace, retorna JSON 500 padronizado
   - files: `internal/infrastructure/web/middleware/recovery.go`, `internal/infrastructure/web/middleware/recovery_test.go`
   - tests: TC-U-09, TC-U-10, TC-U-11
 
-- [ ] TASK-5: Simplificar handler/error.go — remover translateError
+- [x] TASK-5: Simplificar handler/error.go — remover translateError
   - `HandleError(c *gin.Context, err error)` — apenas 2 params (sem span)
   - Nota: `codeToStatus` map ja existe (7 entries) — adicionar entry `CodeUnprocessableEntity: 422` (total: 8 entries)
   - Remover o fallback `translateError()` — apos refatoracao dos use cases (TASK-6/7), todos os erros serao `*apperror.AppError`, tornando o fallback desnecessario
@@ -246,7 +246,7 @@ errors.New("...")    ->   toAppError() + ClassifyError()   ->   errors.As() + co
   - tests: TC-U-12, TC-U-13, TC-U-14, TC-U-15, TC-U-16
   - depends: TASK-1
 
-- [ ] TASK-6: Refatorar user use cases — expectedErrors + toAppError + ClassifyError
+- [x] TASK-6: Refatorar user use cases — expectedErrors + toAppError + ClassifyError
   - Pre-requisito neste task: adicionar `ErrDuplicateEmail = errors.New("email already exists")` em `internal/domain/user/errors.go` (ao lado de `ErrUserNotFound`). O repositorio deve traduzir PG unique constraint violation → `user.ErrDuplicateEmail` (mantendo Clean Architecture: repo devolve domain error, nao PG error)
   - Para cada use case (create, get, update, delete, list):
     - Definir `var xxxExpectedErrors = []error{...}` com erros de dominio esperados
@@ -261,21 +261,21 @@ errors.New("...")    ->   toAppError() + ClassifyError()   ->   errors.As() + co
   - tests: TC-UC-01, TC-UC-02, TC-UC-03, TC-UC-04, TC-UC-05, TC-UC-06, TC-UC-07, TC-UC-08, TC-UC-09, TC-UC-10, TC-UC-11, TC-UC-12, TC-UC-13, TC-UC-14, TC-UC-15
   - depends: TASK-1, TASK-3
 
-- [ ] TASK-7: Refatorar role use cases — expectedErrors + toAppError + ClassifyError
+- [x] TASK-7: Refatorar role use cases — expectedErrors + toAppError + ClassifyError
   - Mesmo padrao de TASK-6 aplicado a role (create, list, delete)
   - Atualizar testes unitarios de role use cases
   - files: `internal/usecases/role/create.go`, `internal/usecases/role/list.go`, `internal/usecases/role/delete.go`, `internal/usecases/role/create_test.go`, `internal/usecases/role/list_test.go`, `internal/usecases/role/delete_test.go`
   - tests: TC-UC-16, TC-UC-17, TC-UC-18, TC-UC-19, TC-UC-20, TC-UC-21, TC-UC-22
   - depends: TASK-1, TASK-3
 
-- [ ] TASK-8: Simplificar handlers — remover span param do HandleError
+- [x] TASK-8: Simplificar handlers — remover span param do HandleError
   - Atualizar `user_handler.go`: todas as chamadas de HandleError passam apenas `(c, err)`, remover imports de OTel span (`go.opentelemetry.io/otel/codes`, `go.opentelemetry.io/otel/trace`) — manter import de `internal/infrastructure/telemetry` (business metrics)
   - Atualizar `role_handler.go`: idem
   - Atualizar router.go: trocar `gin.Recovery()` por `middleware.CustomRecovery()`
   - files: `internal/infrastructure/web/handler/user.go`, `internal/infrastructure/web/handler/role.go`, `internal/infrastructure/web/router/router.go`
   - depends: TASK-3, TASK-4, TASK-5, TASK-6, TASK-7
 
-- [ ] TASK-9: Atualizar E2E tests para verificar error responses
+- [x] TASK-9: Atualizar E2E tests para verificar error responses
   - Verificar que erros retornam JSON padronizado (nao HTML)
   - Verificar status codes corretos (400, 404, 409)
   - Adicionar test de panic recovery (force panic, verify JSON 500)
@@ -283,14 +283,14 @@ errors.New("...")    ->   toAppError() + ClassifyError()   ->   errors.As() + co
   - tests: TC-E2E-01, TC-E2E-02, TC-E2E-03, TC-E2E-04, TC-E2E-05
   - depends: TASK-8
 
-- [ ] TASK-10: Criar ADR-009 + guia de error handling + superseder ADR-004
+- [x] TASK-10: Criar ADR-009 + guia de error handling + superseder ADR-004
   - ADR-009 documenta: problema (4 requisitos conflitantes), alternativas avaliadas, decisao (structured errors no use case), consequencias
   - Referenciar ADR-004 como predecessor: "Supersedes ADR-004 (Error Handling Layered Translation) which established the layered approach. ADR-009 refines it by moving classification to the use case and eliminating the domain-importing translateError."
   - Atualizar `docs/adr/004-error-handling.md` status para "Superseded by ADR-009"
   - Guia pratico: principios, fluxo completo, anatomia do error handling no use case, checklist para adicionar novos erros
   - files: `docs/adr/009-error-handling.md`, `docs/adr/004-error-handling.md`, `docs/guides/error-handling.md`
 
-- [ ] TASK-11: k6 smoke tests para error responses
+- [x] TASK-11: k6 smoke tests para error responses
   - Adicionar smoke groups em `tests/load/scenarios.js` (ou novo arquivo modular se load-tests-modular spec ja foi executada)
   - Testar: invalid email (400), duplicate (409), not found (404), invalid UUID (400), formato de resposta
   - files: `tests/load/scenarios.js`
@@ -302,7 +302,7 @@ errors.New("...")    ->   toAppError() + ClassifyError()   ->   errors.As() + co
 ```
 Batch 1: [TASK-1, TASK-2, TASK-4, TASK-10]  — fundacoes independentes (apperror, telemetry, middleware, docs)
 Batch 2: [TASK-3, TASK-5]                    — depends de TASK-1/TASK-2 (classify, handler)
-Batch 3: [TASK-6, TASK-7]                    — parallel (user vs role use cases, arquivos distintos)
+Batch 3: [TASK-6, TASK-7]                    — parallel (user vs role use cases, arquivos distintos) ✓
 Batch 4: [TASK-8]                            — integracao (handlers + router, depends de todos anteriores)
 Batch 5: [TASK-9, TASK-11]                   — parallel (E2E tests vs k6 smoke, arquivos distintos)
 ```
@@ -337,3 +337,23 @@ File overlap analysis:
 ## Execution Log
 
 <!-- Ralph Loop appends here automatically — do not edit manually -->
+
+### Iteration 1 — Batch 1: TASK-1, TASK-2, TASK-4, TASK-10 (2026-04-11 17:10)
+
+Executed 4 tasks in parallel via worktree agents. TASK-1: added `CodeUnprocessableEntity` constant and `UnprocessableEntity(message)` constructor to `pkg/apperror/apperror.go` + regression tests for Wrap/Unwrap chain. TASK-2: created `pkg/telemetry/span.go` with `FailSpan`/`WarnSpan` helpers + tests using InMemoryExporter. TASK-4: created `internal/infrastructure/web/middleware/recovery.go` with `CustomRecovery()` + tests for string/error panics and passthrough. TASK-10: created ADR-009, updated ADR-004 status to superseded, created `docs/guides/error-handling.md` practical guide. All TDD tasks followed RED->GREEN->REFACTOR cycle.
+
+### Iteration 2 — Batch 2: TASK-3, TASK-5 (2026-04-11 17:20)
+
+Executed 2 tasks in parallel via worktree agents. TASK-3: created `internal/usecases/shared/classify.go` with `ClassifyError()` that routes expected errors to WarnSpan and unexpected to FailSpan via `errors.Is()` + 5 tests. TASK-5: simplified `internal/infrastructure/web/handler/error.go` — removed `translateError()` and all domain imports, changed HandleError to 2 params `(c, err)`, added `CodeUnprocessableEntity` to `codeToStatus` map. Created error_test.go with 6 tests. Fixed handler call sites (user.go, role.go) to use 2-param HandleError.
+
+### Iteration 3 — Batch 3: TASK-6, TASK-7 (2026-04-11 17:35)
+
+Executed 2 tasks in parallel via worktree agents. TASK-6: added `ErrDuplicateEmail` to user domain, PG unique constraint detection in user repo, created `internal/usecases/user/errors.go` with `userToAppError` + expectedErrors, refactored all 5 user use cases with ClassifyError + contextual wrapping, updated all tests to assert AppError codes. TASK-7: created `internal/usecases/role/errors.go` with `roleToAppError` + expectedErrors, refactored all 3 role use cases with same pattern, updated all tests. Build green, all use case tests pass.
+
+### Iteration 4 — Batch 4: TASK-8 (2026-04-11 17:52)
+
+Updated `router.go` to use `middleware.CustomRecovery()` instead of `gin.Recovery()`. Removed all `span.SetStatus(codes.Error, ...)` calls from user.go and role.go handlers (handler no longer touches span status). Removed unused `go.opentelemetry.io/otel/codes` import from both handlers. HandleError call sites already fixed in iteration 2.
+
+### Iteration 5 — Batch 5: TASK-9, TASK-11 (2026-04-12 00:10)
+
+Executed 2 tasks in parallel via worktree agents. TASK-9: updated E2E tests — setupTestRouter now uses `middleware.CustomRecovery()`, added `/panic-test` route, added `extractErrorResponse` helper, added duplicate email test (TC-E2E-02), panic recovery test (TC-E2E-05), updated existing error tests to verify JSON `{"errors":{"message":"..."}}` format. TASK-11: added 4 smoke test groups to `tests/load/scenarios.js` for invalid email (400), duplicate email (409), not found (404), invalid UUID (400) — all verify JSON error format.

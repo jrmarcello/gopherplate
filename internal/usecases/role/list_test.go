@@ -9,6 +9,7 @@ import (
 	roledomain "github.com/jrmarcello/go-boilerplate/internal/domain/role"
 	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/role/dto"
+	"github.com/jrmarcello/go-boilerplate/pkg/apperror"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -136,6 +137,10 @@ func TestListUseCase_Execute_RepositoryError(t *testing.T) {
 	// Assert
 	assert.Error(t, listErr)
 	assert.Nil(t, output)
-	assert.Contains(t, listErr.Error(), "database error")
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(listErr, &appErr))
+	assert.Equal(t, apperror.CodeInternalError, appErr.Code)
+
 	mockRepo.AssertExpectations(t)
 }

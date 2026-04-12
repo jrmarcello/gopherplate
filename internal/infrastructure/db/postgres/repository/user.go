@@ -11,6 +11,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	userdomain "github.com/jrmarcello/go-boilerplate/internal/domain/user"
 	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
+	"github.com/lib/pq"
 )
 
 // userDB é o modelo de banco de dados (Data Model).
@@ -82,7 +83,14 @@ func (r *UserRepository) Create(ctx context.Context, e *userdomain.User) error {
 
 	dbModel := fromDomainUser(e)
 	_, execErr := r.writer.NamedExecContext(ctx, query, dbModel)
-	return execErr
+	if execErr != nil {
+		var pqErr *pq.Error
+		if errors.As(execErr, &pqErr) && pqErr.Code == "23505" {
+			return userdomain.ErrDuplicateEmail
+		}
+		return execErr
+	}
+	return nil
 }
 
 func (r *UserRepository) FindByID(ctx context.Context, id vo.ID) (*userdomain.User, error) {

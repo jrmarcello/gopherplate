@@ -8,6 +8,7 @@ import (
 	roledomain "github.com/jrmarcello/go-boilerplate/internal/domain/role"
 	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/role/dto"
+	"github.com/jrmarcello/go-boilerplate/pkg/apperror"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -48,7 +49,11 @@ func TestDeleteUseCase_Execute_NotFound(t *testing.T) {
 	// Assert
 	assert.Error(t, deleteErr)
 	assert.Nil(t, output)
-	assert.True(t, errors.Is(deleteErr, roledomain.ErrRoleNotFound))
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(deleteErr, &appErr))
+	assert.Equal(t, apperror.CodeNotFound, appErr.Code)
+
 	mockRepo.AssertExpectations(t)
 }
 
@@ -64,6 +69,11 @@ func TestDeleteUseCase_Execute_InvalidID(t *testing.T) {
 	// Assert
 	assert.Error(t, deleteErr)
 	assert.Nil(t, output)
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(deleteErr, &appErr))
+	assert.Equal(t, apperror.CodeInvalidRequest, appErr.Code)
+
 	mockRepo.AssertNotCalled(t, "Delete")
 }
 
@@ -82,6 +92,10 @@ func TestDeleteUseCase_Execute_RepositoryError(t *testing.T) {
 	// Assert
 	assert.Error(t, deleteErr)
 	assert.Nil(t, output)
-	assert.Contains(t, deleteErr.Error(), "database error")
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(deleteErr, &appErr))
+	assert.Equal(t, apperror.CodeInternalError, appErr.Code)
+
 	mockRepo.AssertExpectations(t)
 }

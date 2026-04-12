@@ -4,13 +4,14 @@ import "fmt"
 
 // Common error codes
 const (
-	CodeInternalError   = "INTERNAL_ERROR"
-	CodeInvalidRequest  = "INVALID_REQUEST"
-	CodeValidationError = "VALIDATION_ERROR"
-	CodeNotFound        = "NOT_FOUND"
-	CodeConflict        = "CONFLICT"
-	CodeUnauthorized    = "UNAUTHORIZED"
-	CodeForbidden       = "FORBIDDEN"
+	CodeInternalError       = "INTERNAL_ERROR"
+	CodeInvalidRequest      = "INVALID_REQUEST"
+	CodeValidationError     = "VALIDATION_ERROR"
+	CodeNotFound            = "NOT_FOUND"
+	CodeConflict            = "CONFLICT"
+	CodeUnauthorized        = "UNAUTHORIZED"
+	CodeForbidden           = "FORBIDDEN"
+	CodeUnprocessableEntity = "UNPROCESSABLE_ENTITY"
 )
 
 // AppError is the base application error.
@@ -89,6 +90,13 @@ func Unauthorized(code, message string) *AppError {
 // Forbidden creates a forbidden error.
 func Forbidden(code, message string) *AppError {
 	return New(code, message)
+}
+
+// UnprocessableEntity creates an unprocessable entity error.
+// Unlike other constructors, it takes only a message — the code is hardcoded
+// to CodeUnprocessableEntity for better DX.
+func UnprocessableEntity(message string) *AppError {
+	return New(CodeUnprocessableEntity, message)
 }
 
 // Wrap wraps an existing error into an AppError.

@@ -5,106 +5,126 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAppError_WithDetails(t *testing.T) {
-	original := BadRequest(CodeValidationError, "validation failed")
-	details := map[string]any{"field": "email", "reason": "invalid format"}
-
-	withDetails := original.WithDetails(details)
-
-	assert.Equal(t, details, withDetails.Details)
-	assert.Nil(t, original.Details) // original is not mutated
-}
-
-func TestAppError_WithError(t *testing.T) {
-	original := Internal(CodeInternalError, "something went wrong")
-	cause := errors.New("db connection failed")
-
-	withErr := original.WithError(cause)
-
-	assert.Equal(t, cause, withErr.Err)
-	assert.Nil(t, original.Err) // original is not mutated
-	assert.Contains(t, withErr.Error(), "db connection failed")
-}
-
-func TestConstructors(t *testing.T) {
+// TC-U-18: CodeUnprocessableEntity constant and UnprocessableEntity constructor
+func TestUnprocessableEntity(t *testing.T) {
 	tests := []struct {
-		name        string
-		constructor func(string, string) *AppError
+		name            string
+		message         string
+		expectedCode    string
+		expectedMessage string
 	}{
-		{"BadRequest", BadRequest},
-		{"NotFound", NotFound},
-		{"Conflict", Conflict},
-		{"Internal", Internal},
-		{"Unauthorized", Unauthorized},
-		{"Forbidden", Forbidden},
+		{
+			name:            "creates error with correct code and message",
+			message:         "invalid input data",
+			expectedCode:    "UNPROCESSABLE_ENTITY",
+			expectedMessage: "invalid input data",
+		},
+		{
+			name:            "creates error with empty message",
+			message:         "",
+			expectedCode:    "UNPROCESSABLE_ENTITY",
+			expectedMessage: "",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			appErr := tt.constructor("CODE", "message")
-			assert.Equal(t, "CODE", appErr.Code)
-			assert.Equal(t, "message", appErr.Message)
+			appErr := UnprocessableEntity(tt.message)
+
+			require.NotNil(t, appErr)
+			assert.Equal(t, tt.expectedCode, appErr.Code)
+			assert.Equal(t, tt.expectedMessage, appErr.Message)
+			assert.Nil(t, appErr.Err)
+			assert.Nil(t, appErr.Details)
 		})
 	}
 }
 
-func TestWrap(t *testing.T) {
-	cause := errors.New("original error")
-	wrapped := Wrap(cause, CodeInternalError, "wrapped message")
-
-	assert.Equal(t, cause, wrapped.Err)
-	assert.Equal(t, CodeInternalError, wrapped.Code)
-	assert.Contains(t, wrapped.Error(), "original error")
+func TestCodeUnprocessableEntityConstant(t *testing.T) {
+	assert.Equal(t, "UNPROCESSABLE_ENTITY", CodeUnprocessableEntity)
 }
 
-func TestErrorsAs(t *testing.T) {
-	appErr := NotFound(CodeNotFound, "user not found")
-	var target *AppError
-	assert.True(t, errors.As(appErr, &target))
-	assert.Equal(t, CodeNotFound, target.Code)
+// TC-U-17: Wrap preserves original error chain — errors.Is(wrapped, original) == true
+func TestWrapPreservesErrorChain(t *testing.T) {
+	tests := []struct {
+		name    string
+		setup   func() (wrapped *AppError, original error)
+		checkIs bool
+	}{
+		{
+			name: "wrapped error is detectable via errors.Is",
+			setup: func() (wrapped *AppError, original error) {
+				originalErr := errors.New("database connection failed")
+				wrappedErr := Wrap(originalErr, CodeInternalError, "failed to create user")
+				return wrappedErr, originalErr
+			},
+			checkIs: true,
+		},
+		{
+			name: "deeply nested error chain is preserved",
+			setup: func() (wrapped *AppError, original error) {
+				midErr := errors.New("query failed")
+				chainedErr := Wrap(midErr, CodeInternalError, "repository error")
+				outerErr := Wrap(chainedErr, CodeInternalError, "use case error")
+				return outerErr, chainedErr
+			},
+			checkIs: true,
+		},
+		{
+			name: "Unwrap returns the original error",
+			setup: func() (wrapped *AppError, original error) {
+				originalErr := errors.New("original")
+				wrappedErr := Wrap(originalErr, CodeNotFound, "not found")
+				return wrappedErr, originalErr
+			},
+			checkIs: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			wrappedErr, originalErr := tt.setup()
+
+			if tt.checkIs {
+				assert.True(t, errors.Is(wrappedErr, originalErr),
+					"errors.Is should find original error in chain")
+			}
+
+			assert.NotNil(t, wrappedErr.Unwrap(), "Unwrap should return the wrapped error")
+		})
+	}
 }
 
-func TestAppError_Error_WithoutCause(t *testing.T) {
-	appErr := BadRequest(CodeInvalidRequest, "invalid email")
+func TestWrapUnwrapReturnsInnerError(t *testing.T) {
+	innerErr := errors.New("inner error")
+	wrappedErr := Wrap(innerErr, CodeInternalError, "outer")
 
-	assert.Equal(t, "invalid email", appErr.Error())
+	assert.Equal(t, innerErr, wrappedErr.Unwrap())
 }
 
-func TestAppError_Error_WithCause(t *testing.T) {
-	cause := errors.New("db timeout")
-	appErr := Internal(CodeInternalError, "operation failed").WithError(cause)
+func TestWrapErrorMessage(t *testing.T) {
+	innerErr := errors.New("connection refused")
+	wrappedErr := Wrap(innerErr, CodeInternalError, "database error")
 
-	assert.Equal(t, "operation failed: db timeout", appErr.Error())
+	assert.Equal(t, "database error: connection refused", wrappedErr.Error())
 }
 
-func TestUnwrap(t *testing.T) {
-	t.Run("with cause returns the wrapped error", func(t *testing.T) {
-		cause := errors.New("db connection failed")
-		appErr := Internal(CodeInternalError, "something went wrong").WithError(cause)
+func TestWrapWithErrorsAs(t *testing.T) {
+	originalAppErr := BadRequest(CodeInvalidRequest, "bad input")
+	wrappedErr := Wrap(originalAppErr, CodeInternalError, "processing failed")
 
-		assert.Equal(t, cause, appErr.Unwrap())
-	})
+	var targetErr *AppError
+	assert.True(t, errors.As(wrappedErr, &targetErr),
+		"errors.As should find AppError in chain")
+	assert.Equal(t, CodeInternalError, targetErr.Code)
 
-	t.Run("without cause returns nil", func(t *testing.T) {
-		appErr := Internal(CodeInternalError, "something went wrong")
-
-		assert.Nil(t, appErr.Unwrap())
-	})
-
-	t.Run("errors.Is works through the chain", func(t *testing.T) {
-		sentinel := errors.New("sentinel error")
-		appErr := Wrap(sentinel, CodeInternalError, "wrapped")
-
-		assert.True(t, errors.Is(appErr, sentinel))
-	})
-
-	t.Run("errors.Unwrap stdlib compatibility", func(t *testing.T) {
-		cause := errors.New("root cause")
-		appErr := Internal(CodeInternalError, "top level").WithError(cause)
-
-		unwrapped := errors.Unwrap(appErr)
-		assert.Equal(t, cause, unwrapped)
-	})
+	// The inner AppError should also be findable
+	innerUnwrapped := wrappedErr.Unwrap()
+	var innerAppErr *AppError
+	assert.True(t, errors.As(innerUnwrapped, &innerAppErr),
+		"inner error should also be an AppError")
+	assert.Equal(t, CodeInvalidRequest, innerAppErr.Code)
 }

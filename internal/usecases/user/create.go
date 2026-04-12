@@ -2,12 +2,16 @@ package user
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	userdomain "github.com/jrmarcello/go-boilerplate/internal/domain/user"
 	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/dto"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/interfaces"
+
+	ucshared "github.com/jrmarcello/go-boilerplate/internal/usecases/shared"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // CreateUseCase implementa o caso de uso de criação de user.
@@ -28,18 +32,23 @@ func NewCreateUseCase(repo interfaces.Repository) *CreateUseCase {
 //  3. Persiste no banco via Repository
 //  4. Retorna DTO com ID e timestamp
 func (uc *CreateUseCase) Execute(ctx context.Context, input dto.CreateInput) (*dto.CreateOutput, error) {
+	span := trace.SpanFromContext(ctx)
+
 	// PASSO 1: Converter primitivos para Value Objects
-	emailVO, err := vo.NewEmail(input.Email)
-	if err != nil {
-		return nil, err
+	emailVO, emailErr := vo.NewEmail(input.Email)
+	if emailErr != nil {
+		ucshared.ClassifyError(span, emailErr, createExpectedErrors, "creating user: invalid email")
+		return nil, userToAppError(emailErr)
 	}
 
 	// PASSO 2: Criar Entidade usando a Factory
 	e := userdomain.NewUser(input.Name, emailVO)
 
 	// PASSO 3: Persistir no banco via Repository
-	if err := uc.Repo.Create(ctx, e); err != nil {
-		return nil, err
+	if saveErr := uc.Repo.Create(ctx, e); saveErr != nil {
+		wrappedErr := fmt.Errorf("creating user: %w", saveErr)
+		ucshared.ClassifyError(span, saveErr, createExpectedErrors, wrappedErr.Error())
+		return nil, userToAppError(saveErr)
 	}
 
 	// PASSO 4: Retornar Output DTO

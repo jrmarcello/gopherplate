@@ -2,12 +2,16 @@ package user
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/dto"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/interfaces"
+
+	ucshared "github.com/jrmarcello/go-boilerplate/internal/usecases/shared"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // DeleteUseCase implementa o caso de uso de deleção (soft delete) de user.
@@ -36,22 +40,27 @@ func (uc *DeleteUseCase) WithCache(cache interfaces.Cache) *DeleteUseCase {
 //  2. Realizar soft delete (active=false)
 //  3. Invalidar cache
 func (uc *DeleteUseCase) Execute(ctx context.Context, input dto.DeleteInput) (*dto.DeleteOutput, error) {
+	span := trace.SpanFromContext(ctx)
+
 	// Validar e converter ID
-	id, err := vo.ParseID(input.ID)
-	if err != nil {
-		return nil, err
+	id, parseErr := vo.ParseID(input.ID)
+	if parseErr != nil {
+		ucshared.ClassifyError(span, parseErr, deleteExpectedErrors, "deleting user: invalid ID")
+		return nil, userToAppError(parseErr)
 	}
 
 	// 2. Realizar soft delete
-	if err := uc.Repo.Delete(ctx, id); err != nil {
-		return nil, err
+	if deleteErr := uc.Repo.Delete(ctx, id); deleteErr != nil {
+		wrappedErr := fmt.Errorf("deleting user: %w", deleteErr)
+		ucshared.ClassifyError(span, deleteErr, deleteExpectedErrors, wrappedErr.Error())
+		return nil, userToAppError(deleteErr)
 	}
 
 	// 3. Invalidar cache
 	if uc.Cache != nil {
 		cacheKey := "user:" + input.ID
-		if err := uc.Cache.Delete(ctx, cacheKey); err != nil {
-			slog.Warn("failed to invalidate cache", "key", cacheKey, "error", err)
+		if deleteCacheErr := uc.Cache.Delete(ctx, cacheKey); deleteCacheErr != nil {
+			slog.Warn("failed to invalidate cache", "key", cacheKey, "error", deleteCacheErr)
 		}
 	}
 

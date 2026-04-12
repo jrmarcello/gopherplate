@@ -2,11 +2,15 @@ package role
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/role/dto"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/role/interfaces"
+	ucshared "github.com/jrmarcello/go-boilerplate/internal/usecases/shared"
+	"github.com/jrmarcello/go-boilerplate/pkg/apperror"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // DeleteUseCase implementa o caso de uso de delecao de role.
@@ -27,15 +31,20 @@ func NewDeleteUseCase(repo interfaces.Repository) *DeleteUseCase {
 //  1. Validar ID
 //  2. Deletar role
 func (uc *DeleteUseCase) Execute(ctx context.Context, input dto.DeleteInput) (*dto.DeleteOutput, error) {
+	span := trace.SpanFromContext(ctx)
+
 	// Validar e converter ID
 	id, parseErr := vo.ParseID(input.ID)
 	if parseErr != nil {
-		return nil, parseErr
+		ucshared.ClassifyError(span, parseErr, deleteExpectedErrors, "deleting role")
+		return nil, apperror.New(apperror.CodeInvalidRequest, "invalid role ID")
 	}
 
 	// Deletar role
 	if deleteErr := uc.Repo.Delete(ctx, id); deleteErr != nil {
-		return nil, deleteErr
+		wrappedErr := fmt.Errorf("deleting role: %w", deleteErr)
+		ucshared.ClassifyError(span, deleteErr, deleteExpectedErrors, "deleting role")
+		return nil, roleToAppError(wrappedErr)
 	}
 
 	return &dto.DeleteOutput{

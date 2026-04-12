@@ -7,6 +7,7 @@ import (
 
 	roledomain "github.com/jrmarcello/go-boilerplate/internal/domain/role"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/role/dto"
+	"github.com/jrmarcello/go-boilerplate/pkg/apperror"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -52,7 +53,11 @@ func TestCreateUseCase_Execute_DuplicateName(t *testing.T) {
 	// Assert
 	assert.Error(t, executeErr)
 	assert.Nil(t, output)
-	assert.True(t, errors.Is(executeErr, roledomain.ErrDuplicateRoleName))
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(executeErr, &appErr))
+	assert.Equal(t, apperror.CodeConflict, appErr.Code)
+
 	mockRepo.AssertNotCalled(t, "Create")
 }
 
@@ -74,7 +79,11 @@ func TestCreateUseCase_Execute_FindByNameError(t *testing.T) {
 	// Assert
 	assert.Error(t, executeErr)
 	assert.Nil(t, output)
-	assert.Contains(t, executeErr.Error(), "database connection lost")
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(executeErr, &appErr))
+	assert.Equal(t, apperror.CodeInternalError, appErr.Code)
+
 	mockRepo.AssertNotCalled(t, "Create")
 }
 
@@ -97,6 +106,10 @@ func TestCreateUseCase_Execute_RepositoryError(t *testing.T) {
 	// Assert
 	assert.Error(t, executeErr)
 	assert.Nil(t, output)
-	assert.Contains(t, executeErr.Error(), "database connection failed")
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(executeErr, &appErr))
+	assert.Equal(t, apperror.CodeInternalError, appErr.Code)
+
 	mockRepo.AssertExpectations(t)
 }

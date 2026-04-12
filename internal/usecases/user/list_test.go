@@ -7,9 +7,9 @@ import (
 	"time"
 
 	userdomain "github.com/jrmarcello/go-boilerplate/internal/domain/user"
-
 	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/dto"
+	"github.com/jrmarcello/go-boilerplate/pkg/apperror"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -51,10 +51,10 @@ func TestListUseCase_Execute_Success(t *testing.T) {
 	input := dto.ListInput{Page: 1, Limit: 20}
 
 	// Act
-	output, err := uc.Execute(context.Background(), input)
+	output, executeErr := uc.Execute(context.Background(), input)
 
 	// Assert
-	assert.NoError(t, err)
+	assert.NoError(t, executeErr)
 	assert.NotNil(t, output)
 	assert.Len(t, output.Data, 2)
 	assert.Equal(t, 2, output.Pagination.Total)
@@ -94,10 +94,10 @@ func TestListUseCase_Execute_WithFilters(t *testing.T) {
 	}
 
 	// Act
-	output, err := uc.Execute(context.Background(), input)
+	output, executeErr := uc.Execute(context.Background(), input)
 
 	// Assert
-	assert.NoError(t, err)
+	assert.NoError(t, executeErr)
 	assert.Len(t, output.Data, 1)
 	assert.Equal(t, "Maria Santos", output.Data[0].Name)
 	mockRepo.AssertExpectations(t)
@@ -113,12 +113,16 @@ func TestListUseCase_Execute_RepositoryError(t *testing.T) {
 	input := dto.ListInput{Page: 1, Limit: 20}
 
 	// Act
-	output, err := uc.Execute(context.Background(), input)
+	output, executeErr := uc.Execute(context.Background(), input)
 
 	// Assert
-	assert.Error(t, err)
+	assert.Error(t, executeErr)
 	assert.Nil(t, output)
-	assert.Contains(t, err.Error(), "database error")
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(executeErr, &appErr), "expected *apperror.AppError")
+	assert.Equal(t, apperror.CodeInternalError, appErr.Code)
+	assert.Equal(t, "internal server error", appErr.Message)
 	mockRepo.AssertExpectations(t)
 }
 
@@ -139,10 +143,10 @@ func TestListUseCase_Execute_EmptyResult(t *testing.T) {
 	input := dto.ListInput{Page: 1, Limit: 20}
 
 	// Act
-	output, err := uc.Execute(context.Background(), input)
+	output, executeErr := uc.Execute(context.Background(), input)
 
 	// Assert
-	assert.NoError(t, err)
+	assert.NoError(t, executeErr)
 	assert.NotNil(t, output)
 	assert.Len(t, output.Data, 0)
 	assert.Equal(t, 0, output.Pagination.Total)

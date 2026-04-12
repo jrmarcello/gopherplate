@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	userdomain "github.com/jrmarcello/go-boilerplate/internal/domain/user"
-
 	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/dto"
+	"github.com/jrmarcello/go-boilerplate/pkg/apperror"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -24,10 +24,10 @@ func TestDeleteUseCase_Execute_Success(t *testing.T) {
 	input := dto.DeleteInput{ID: id.String()}
 
 	// Act
-	output, err := uc.Execute(context.Background(), input)
+	output, executeErr := uc.Execute(context.Background(), input)
 
 	// Assert
-	assert.NoError(t, err)
+	assert.NoError(t, executeErr)
 	assert.NotNil(t, output)
 	assert.Equal(t, id.String(), output.ID)
 	assert.NotEmpty(t, output.DeletedAt)
@@ -44,12 +44,16 @@ func TestDeleteUseCase_Execute_NotFound(t *testing.T) {
 	input := dto.DeleteInput{ID: "018e4a2c-6b4d-7000-9410-abcdef123456"}
 
 	// Act
-	output, err := uc.Execute(context.Background(), input)
+	output, executeErr := uc.Execute(context.Background(), input)
 
 	// Assert
-	assert.Error(t, err)
+	assert.Error(t, executeErr)
 	assert.Nil(t, output)
-	assert.True(t, errors.Is(err, userdomain.ErrUserNotFound))
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(executeErr, &appErr), "expected *apperror.AppError")
+	assert.Equal(t, apperror.CodeNotFound, appErr.Code)
+	assert.Equal(t, "user not found", appErr.Message)
 	mockRepo.AssertExpectations(t)
 }
 
@@ -60,11 +64,16 @@ func TestDeleteUseCase_Execute_InvalidID(t *testing.T) {
 	input := dto.DeleteInput{ID: "invalid-id"}
 
 	// Act
-	output, err := uc.Execute(context.Background(), input)
+	output, executeErr := uc.Execute(context.Background(), input)
 
 	// Assert
-	assert.Error(t, err)
+	assert.Error(t, executeErr)
 	assert.Nil(t, output)
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(executeErr, &appErr), "expected *apperror.AppError")
+	assert.Equal(t, apperror.CodeInvalidRequest, appErr.Code)
+	assert.Equal(t, "invalid ID", appErr.Message)
 	mockRepo.AssertNotCalled(t, "Delete")
 }
 
@@ -105,10 +114,10 @@ func TestDeleteUseCase_Execute_CacheInvalidation(t *testing.T) {
 	input := dto.DeleteInput{ID: id.String()}
 
 	// Act
-	output, err := uc.Execute(context.Background(), input)
+	output, executeErr := uc.Execute(context.Background(), input)
 
 	// Assert
-	assert.NoError(t, err)
+	assert.NoError(t, executeErr)
 	assert.NotNil(t, output)
 	mockCache.AssertCalled(t, "Delete", mock.Anything, cacheKey)
 	mockRepo.AssertExpectations(t)
@@ -125,11 +134,15 @@ func TestDeleteUseCase_Execute_RepositoryError(t *testing.T) {
 	input := dto.DeleteInput{ID: "018e4a2c-6b4d-7000-9410-abcdef123456"}
 
 	// Act
-	output, err := uc.Execute(context.Background(), input)
+	output, executeErr := uc.Execute(context.Background(), input)
 
 	// Assert
-	assert.Error(t, err)
+	assert.Error(t, executeErr)
 	assert.Nil(t, output)
-	assert.Contains(t, err.Error(), "database error")
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(executeErr, &appErr), "expected *apperror.AppError")
+	assert.Equal(t, apperror.CodeInternalError, appErr.Code)
+	assert.Equal(t, "internal server error", appErr.Message)
 	mockRepo.AssertExpectations(t)
 }

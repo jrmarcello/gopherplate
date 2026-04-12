@@ -2,12 +2,16 @@ package user
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"time"
 
 	userdomain "github.com/jrmarcello/go-boilerplate/internal/domain/user"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/dto"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/interfaces"
+
+	ucshared "github.com/jrmarcello/go-boilerplate/internal/usecases/shared"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // ListUseCase implementa o caso de uso de listar users.
@@ -22,6 +26,8 @@ func NewListUseCase(repo interfaces.Repository) *ListUseCase {
 
 // Execute retorna uma lista paginada de users.
 func (uc *ListUseCase) Execute(ctx context.Context, input dto.ListInput) (*dto.ListOutput, error) {
+	span := trace.SpanFromContext(ctx)
+
 	// Converter input para filtro de domínio
 	filter := userdomain.ListFilter{
 		Page:       input.Page,
@@ -32,9 +38,11 @@ func (uc *ListUseCase) Execute(ctx context.Context, input dto.ListInput) (*dto.L
 	}
 
 	// Buscar no repositório
-	result, err := uc.Repo.List(ctx, filter)
-	if err != nil {
-		return nil, err
+	result, listErr := uc.Repo.List(ctx, filter)
+	if listErr != nil {
+		wrappedErr := fmt.Errorf("listing users: %w", listErr)
+		ucshared.ClassifyError(span, listErr, nil, wrappedErr.Error())
+		return nil, userToAppError(listErr)
 	}
 
 	// Converter para DTOs de saída

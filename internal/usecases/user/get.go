@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -10,6 +11,9 @@ import (
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/dto"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/interfaces"
 	"github.com/jrmarcello/go-boilerplate/pkg/cache"
+
+	ucshared "github.com/jrmarcello/go-boilerplate/internal/usecases/shared"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // GetUseCase implementa o caso de uso de buscar user por ID.
@@ -45,10 +49,13 @@ func (uc *GetUseCase) WithFlight(fg *cache.FlightGroup) *GetUseCase {
 //  2. Se cache miss, busca no DB
 //  3. Armazena no cache para próximas requisições
 func (uc *GetUseCase) Execute(ctx context.Context, input dto.GetInput) (*dto.GetOutput, error) {
+	span := trace.SpanFromContext(ctx)
+
 	// Validar e converter ID
-	id, err := vo.ParseID(input.ID)
-	if err != nil {
-		return nil, err
+	id, parseErr := vo.ParseID(input.ID)
+	if parseErr != nil {
+		ucshared.ClassifyError(span, parseErr, getExpectedErrors, "getting user: invalid ID")
+		return nil, userToAppError(parseErr)
 	}
 
 	cacheKey := "user:" + input.ID
@@ -70,14 +77,18 @@ func (uc *GetUseCase) Execute(ctx context.Context, input dto.GetInput) (*dto.Get
 			return uc.Repo.FindByID(ctx, id)
 		})
 		if flightErr != nil {
-			return nil, flightErr
+			wrappedErr := fmt.Errorf("getting user: %w", flightErr)
+			ucshared.ClassifyError(span, flightErr, getExpectedErrors, wrappedErr.Error())
+			return nil, userToAppError(flightErr)
 		}
 		e = val.(*userdomain.User)
 	} else {
 		var findErr error
 		e, findErr = uc.Repo.FindByID(ctx, id)
 		if findErr != nil {
-			return nil, findErr
+			wrappedErr := fmt.Errorf("getting user: %w", findErr)
+			ucshared.ClassifyError(span, findErr, getExpectedErrors, wrappedErr.Error())
+			return nil, userToAppError(findErr)
 		}
 	}
 
@@ -93,8 +104,8 @@ func (uc *GetUseCase) Execute(ctx context.Context, input dto.GetInput) (*dto.Get
 
 	// 4. Armazenar no cache
 	if uc.Cache != nil {
-		if err := uc.Cache.Set(ctx, cacheKey, output); err != nil {
-			slog.Warn("failed to cache user", "key", cacheKey, "error", err)
+		if setCacheErr := uc.Cache.Set(ctx, cacheKey, output); setCacheErr != nil {
+			slog.Warn("failed to cache user", "key", cacheKey, "error", setCacheErr)
 		}
 	}
 

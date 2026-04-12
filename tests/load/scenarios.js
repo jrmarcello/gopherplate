@@ -229,6 +229,90 @@ export function smokeTest() {
       getUser(id);
     }
   });
+
+  // Error response validation (TC-S-01 through TC-S-05)
+  group('Error: invalid email', () => {
+    const res = http.post(`${BASE_URL}/users`, JSON.stringify({
+      name: 'Test User',
+      email: 'not-an-email',
+    }), { headers });
+
+    check(res, {
+      'invalid email returns 400': (r) => r.status === 400,
+      'invalid email has JSON error format': (r) => {
+        try {
+          const body = JSON.parse(r.body);
+          return body.errors !== undefined && body.errors.message !== undefined;
+        } catch (e) { return false; }
+      },
+    });
+  });
+
+  sleep(0.3);
+
+  group('Error: duplicate email', () => {
+    const email = randomEmail();
+    const createRes = http.post(`${BASE_URL}/users`, JSON.stringify({
+      name: 'First User',
+      email: email,
+    }), { headers });
+
+    check(createRes, {
+      'duplicate setup: first user created': (r) => r.status === 201,
+    });
+
+    sleep(0.2);
+
+    const dupRes = http.post(`${BASE_URL}/users`, JSON.stringify({
+      name: 'Second User',
+      email: email,
+    }), { headers });
+
+    check(dupRes, {
+      'duplicate email returns 409': (r) => r.status === 409,
+      'duplicate email has JSON error format': (r) => {
+        try {
+          const body = JSON.parse(r.body);
+          return body.errors !== undefined && body.errors.message !== undefined;
+        } catch (e) { return false; }
+      },
+    });
+  });
+
+  sleep(0.3);
+
+  group('Error: user not found', () => {
+    // Valid UUID v7 format that does not exist
+    const fakeId = '01929d6e-a88c-7def-b5f6-3a3b1c1d1e1f';
+    const res = http.get(`${BASE_URL}/users/${fakeId}`, { headers });
+
+    check(res, {
+      'not found returns 404': (r) => r.status === 404,
+      'not found has JSON error format': (r) => {
+        try {
+          const body = JSON.parse(r.body);
+          return body.errors !== undefined && body.errors.message !== undefined;
+        } catch (e) { return false; }
+      },
+    });
+  });
+
+  sleep(0.3);
+
+  group('Error: invalid UUID', () => {
+    const res = http.get(`${BASE_URL}/users/invalid-uuid-format`, { headers });
+
+    check(res, {
+      'invalid UUID returns 400': (r) => r.status === 400,
+      'invalid UUID has JSON error format': (r) => {
+        try {
+          const body = JSON.parse(r.body);
+          return body.errors !== undefined && body.errors.message !== undefined;
+        } catch (e) { return false; }
+      },
+    });
+  });
+
   sleep(1);
 }
 

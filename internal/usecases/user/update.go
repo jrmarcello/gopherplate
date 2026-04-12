@@ -2,12 +2,16 @@ package user
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/dto"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/interfaces"
+
+	ucshared "github.com/jrmarcello/go-boilerplate/internal/usecases/shared"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // UpdateUseCase implementa o caso de uso de atualização de user.
@@ -37,16 +41,21 @@ func (uc *UpdateUseCase) WithCache(cache interfaces.Cache) *UpdateUseCase {
 //  3. Persistir alterações
 //  4. Invalidar cache
 func (uc *UpdateUseCase) Execute(ctx context.Context, input dto.UpdateInput) (*dto.UpdateOutput, error) {
+	span := trace.SpanFromContext(ctx)
+
 	// Validar e converter ID
-	id, err := vo.ParseID(input.ID)
-	if err != nil {
-		return nil, err
+	id, parseErr := vo.ParseID(input.ID)
+	if parseErr != nil {
+		ucshared.ClassifyError(span, parseErr, updateExpectedErrors, "updating user: invalid ID")
+		return nil, userToAppError(parseErr)
 	}
 
 	// 1. Buscar user existente
-	e, err := uc.Repo.FindByID(ctx, id)
-	if err != nil {
-		return nil, err
+	e, findErr := uc.Repo.FindByID(ctx, id)
+	if findErr != nil {
+		wrappedErr := fmt.Errorf("updating user: %w", findErr)
+		ucshared.ClassifyError(span, findErr, updateExpectedErrors, wrappedErr.Error())
+		return nil, userToAppError(findErr)
 	}
 
 	// 2. Aplicar atualizações parciais
@@ -55,23 +64,26 @@ func (uc *UpdateUseCase) Execute(ctx context.Context, input dto.UpdateInput) (*d
 	}
 
 	if input.Email != nil {
-		emailVO, err := vo.NewEmail(*input.Email)
-		if err != nil {
-			return nil, err
+		emailVO, emailErr := vo.NewEmail(*input.Email)
+		if emailErr != nil {
+			ucshared.ClassifyError(span, emailErr, updateExpectedErrors, "updating user: invalid email")
+			return nil, userToAppError(emailErr)
 		}
 		e.UpdateEmail(emailVO)
 	}
 
 	// 3. Persistir alterações
-	if err := uc.Repo.Update(ctx, e); err != nil {
-		return nil, err
+	if saveErr := uc.Repo.Update(ctx, e); saveErr != nil {
+		wrappedErr := fmt.Errorf("updating user: %w", saveErr)
+		ucshared.ClassifyError(span, saveErr, updateExpectedErrors, wrappedErr.Error())
+		return nil, userToAppError(saveErr)
 	}
 
 	// 4. Invalidar cache
 	if uc.Cache != nil {
 		cacheKey := "user:" + input.ID
-		if err := uc.Cache.Delete(ctx, cacheKey); err != nil {
-			slog.Warn("failed to invalidate cache", "key", cacheKey, "error", err)
+		if deleteCacheErr := uc.Cache.Delete(ctx, cacheKey); deleteCacheErr != nil {
+			slog.Warn("failed to invalidate cache", "key", cacheKey, "error", deleteCacheErr)
 		}
 	}
 

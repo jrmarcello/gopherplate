@@ -2,12 +2,15 @@ package role
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"time"
 
 	roledomain "github.com/jrmarcello/go-boilerplate/internal/domain/role"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/role/dto"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/role/interfaces"
+	ucshared "github.com/jrmarcello/go-boilerplate/internal/usecases/shared"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // ListUseCase implementa o caso de uso de listar roles.
@@ -22,6 +25,8 @@ func NewListUseCase(repo interfaces.Repository) *ListUseCase {
 
 // Execute retorna uma lista paginada de roles.
 func (uc *ListUseCase) Execute(ctx context.Context, input dto.ListInput) (*dto.ListOutput, error) {
+	span := trace.SpanFromContext(ctx)
+
 	// Converter input para filtro de dominio
 	filter := roledomain.ListFilter{
 		Page:  input.Page,
@@ -32,7 +37,9 @@ func (uc *ListUseCase) Execute(ctx context.Context, input dto.ListInput) (*dto.L
 	// Buscar no repositorio
 	result, listErr := uc.Repo.List(ctx, filter)
 	if listErr != nil {
-		return nil, listErr
+		wrappedErr := fmt.Errorf("listing roles: %w", listErr)
+		ucshared.ClassifyError(span, wrappedErr, nil, "listing roles")
+		return nil, roleToAppError(wrappedErr)
 	}
 
 	// Converter para DTOs de saida

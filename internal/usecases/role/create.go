@@ -3,11 +3,14 @@ package role
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	roledomain "github.com/jrmarcello/go-boilerplate/internal/domain/role"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/role/dto"
 	"github.com/jrmarcello/go-boilerplate/internal/usecases/role/interfaces"
+	ucshared "github.com/jrmarcello/go-boilerplate/internal/usecases/shared"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // CreateUseCase implementa o caso de uso de criacao de role.
@@ -28,13 +31,18 @@ func NewCreateUseCase(repo interfaces.Repository) *CreateUseCase {
 //  3. Persiste no banco via Repository
 //  4. Retorna DTO com ID e timestamp
 func (uc *CreateUseCase) Execute(ctx context.Context, input dto.CreateInput) (*dto.CreateOutput, error) {
+	span := trace.SpanFromContext(ctx)
+
 	// PASSO 1: Verificar duplicidade de nome
 	existingRole, findErr := uc.Repo.FindByName(ctx, input.Name)
 	if findErr != nil && !errors.Is(findErr, roledomain.ErrRoleNotFound) {
-		return nil, findErr
+		wrappedErr := fmt.Errorf("creating role: %w", findErr)
+		ucshared.ClassifyError(span, wrappedErr, createExpectedErrors, "creating role")
+		return nil, roleToAppError(wrappedErr)
 	}
 	if existingRole != nil {
-		return nil, roledomain.ErrDuplicateRoleName
+		ucshared.ClassifyError(span, roledomain.ErrDuplicateRoleName, createExpectedErrors, "creating role")
+		return nil, roleToAppError(roledomain.ErrDuplicateRoleName)
 	}
 
 	// PASSO 2: Criar Entidade usando a Factory
@@ -42,7 +50,9 @@ func (uc *CreateUseCase) Execute(ctx context.Context, input dto.CreateInput) (*d
 
 	// PASSO 3: Persistir no banco via Repository
 	if createErr := uc.Repo.Create(ctx, r); createErr != nil {
-		return nil, createErr
+		wrappedErr := fmt.Errorf("creating role: %w", createErr)
+		ucshared.ClassifyError(span, wrappedErr, createExpectedErrors, "creating role")
+		return nil, roleToAppError(wrappedErr)
 	}
 
 	// PASSO 4: Retornar Output DTO

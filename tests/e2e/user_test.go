@@ -16,6 +16,7 @@ import (
 	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/web/handler"
 	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/web/middleware"
 	useruc "github.com/jrmarcello/go-boilerplate/internal/usecases/user"
+	"github.com/jrmarcello/go-boilerplate/pkg/httputil"
 	"github.com/jrmarcello/go-boilerplate/pkg/httputil/httpgin"
 )
 
@@ -37,7 +38,7 @@ func setupTestRouter() *gin.Engine {
 	h := handler.NewUserHandler(createUC, getUC, listUC, updateUC, deleteUC, nil)
 
 	r := gin.New()
-	r.Use(gin.Recovery())
+	r.Use(middleware.CustomRecovery())
 
 	// Public routes
 	r.GET("/health", func(c *gin.Context) {
@@ -50,6 +51,11 @@ func setupTestRouter() *gin.Engine {
 			return
 		}
 		httpgin.SendSuccess(c, http.StatusOK, gin.H{"status": "ready"})
+	})
+
+	// Panic test route (only for E2E testing)
+	r.GET("/panic-test", func(_ *gin.Context) {
+		panic("test panic for recovery middleware")
 	})
 
 	// CRUD Routes (without auth for backward compatibility)
@@ -79,7 +85,7 @@ func setupTestRouterWithAuth() *gin.Engine {
 	h := handler.NewUserHandler(createUC, getUC, listUC, updateUC, deleteUC, nil)
 
 	r := gin.New()
-	r.Use(gin.Recovery())
+	r.Use(middleware.CustomRecovery())
 
 	// Service Key Auth middleware com chaves de teste
 	authConfig := middleware.ServiceKeyConfig{
@@ -122,6 +128,17 @@ func extractData(t *testing.T, body []byte) map[string]interface{} {
 	data, ok := envelope["data"].(map[string]interface{})
 	require.True(t, ok, "expected 'data' key with object value, got: %s", string(body))
 	return data
+}
+
+// extractErrorResponse parses the standard error response {"errors":{"message":"..."}}
+// and returns the parsed ErrorResponse struct.
+func extractErrorResponse(t *testing.T, body []byte) httputil.ErrorResponse {
+	t.Helper()
+	var errResp httputil.ErrorResponse
+	parseErr := json.Unmarshal(body, &errResp)
+	require.NoError(t, parseErr, "response body should be valid JSON: %s", string(body))
+	require.NotEmpty(t, errResp.Errors.Message, "error message should not be empty: %s", string(body))
+	return errResp
 }
 
 // =============================================================================
@@ -232,6 +249,7 @@ func TestE2E_UserFullCycle(t *testing.T) {
 // ERROR SCENARIOS
 // =============================================================================
 
+// TC-E2E-01: POST /users invalid email returns JSON 400
 func TestE2E_CreateUser_InvalidEmail(t *testing.T) {
 	router := setupTestRouter()
 
@@ -247,7 +265,10 @@ func TestE2E_CreateUser_InvalidEmail(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Contains(t, w.Body.String(), "invalid request body")
+
+	// Verify JSON error format {"errors":{"message":"..."}}
+	errResp := extractErrorResponse(t, w.Body.Bytes())
+	assert.Contains(t, errResp.Errors.Message, "invalid")
 }
 
 func TestE2E_CreateUser_EmptyRequest(t *testing.T) {
@@ -263,8 +284,47 @@ func TestE2E_CreateUser_EmptyRequest(t *testing.T) {
 
 	// With binding:"required" on Name and Email, empty body should return 400
 	assert.Equal(t, http.StatusBadRequest, w.Code)
+
+	// Verify JSON error format
+	errResp := extractErrorResponse(t, w.Body.Bytes())
+	assert.NotEmpty(t, errResp.Errors.Message)
 }
 
+// TC-E2E-02: POST /users duplicate email returns JSON 409
+func TestE2E_CreateUser_DuplicateEmail(t *testing.T) {
+	require.NoError(t, CleanupUsers())
+	router := setupTestRouter()
+
+	body := `{
+		"name": "First User",
+		"email": "duplicate@example.com"
+	}`
+
+	// First create - should succeed
+	req := httptest.NewRequest(http.MethodPost, "/users", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	require.Equal(t, http.StatusCreated, w.Code)
+
+	// Second create with same email - should conflict
+	body = `{
+		"name": "Second User",
+		"email": "duplicate@example.com"
+	}`
+	req = httptest.NewRequest(http.MethodPost, "/users", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusConflict, w.Code)
+
+	// Verify JSON error format {"errors":{"message":"..."}}
+	errResp := extractErrorResponse(t, w.Body.Bytes())
+	assert.NotEmpty(t, errResp.Errors.Message)
+}
+
+// TC-E2E-03: GET /users/:id not found returns JSON 404
 func TestE2E_GetUser_NotFound(t *testing.T) {
 	router := setupTestRouter()
 
@@ -275,8 +335,13 @@ func TestE2E_GetUser_NotFound(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
+
+	// Verify JSON error format {"errors":{"message":"..."}}
+	errResp := extractErrorResponse(t, w.Body.Bytes())
+	assert.NotEmpty(t, errResp.Errors.Message)
 }
 
+// TC-E2E-04: GET /users/:id invalid UUID returns JSON 400
 func TestE2E_GetUser_InvalidID(t *testing.T) {
 	router := setupTestRouter()
 
@@ -286,6 +351,10 @@ func TestE2E_GetUser_InvalidID(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
+
+	// Verify JSON error format {"errors":{"message":"..."}}
+	errResp := extractErrorResponse(t, w.Body.Bytes())
+	assert.NotEmpty(t, errResp.Errors.Message)
 }
 
 func TestE2E_UpdateUser_NotFound(t *testing.T) {
@@ -301,6 +370,10 @@ func TestE2E_UpdateUser_NotFound(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
+
+	// Verify JSON error format
+	errResp := extractErrorResponse(t, w.Body.Bytes())
+	assert.NotEmpty(t, errResp.Errors.Message)
 }
 
 func TestE2E_UpdateUser_InvalidEmail(t *testing.T) {
@@ -316,8 +389,8 @@ func TestE2E_UpdateUser_InvalidEmail(t *testing.T) {
 	require.Equal(t, http.StatusCreated, w.Code)
 
 	var created map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &created)
-	require.NoError(t, err)
+	unmarshalErr := json.Unmarshal(w.Body.Bytes(), &created)
+	require.NoError(t, unmarshalErr)
 	createdData := created["data"].(map[string]interface{})
 	id := createdData["id"].(string)
 
@@ -331,6 +404,10 @@ func TestE2E_UpdateUser_InvalidEmail(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
+
+	// Verify JSON error format
+	errResp := extractErrorResponse(t, w.Body.Bytes())
+	assert.NotEmpty(t, errResp.Errors.Message)
 }
 
 func TestE2E_DeleteUser_NotFound(t *testing.T) {
@@ -342,6 +419,35 @@ func TestE2E_DeleteUser_NotFound(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
+
+	// Verify JSON error format
+	errResp := extractErrorResponse(t, w.Body.Bytes())
+	assert.NotEmpty(t, errResp.Errors.Message)
+}
+
+// =============================================================================
+// PANIC RECOVERY
+// =============================================================================
+
+// TC-E2E-05: Panic recovery returns JSON 500 (not HTML)
+func TestE2E_PanicRecovery_ReturnsJSON500(t *testing.T) {
+	router := setupTestRouter()
+
+	req := httptest.NewRequest("GET", "/panic-test", nil)
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	// Verify HTTP 500 status code
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+	// Verify response is JSON, not HTML
+	contentType := w.Header().Get("Content-Type")
+	assert.Contains(t, contentType, "application/json")
+
+	// Verify standard error format {"errors":{"message":"internal server error"}}
+	errResp := extractErrorResponse(t, w.Body.Bytes())
+	assert.Equal(t, "internal server error", errResp.Errors.Message)
 }
 
 // =============================================================================
@@ -464,8 +570,8 @@ func TestE2E_ListUsers_Pagination(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	require.NoError(t, err)
+	parseErr := json.Unmarshal(w.Body.Bytes(), &response)
+	require.NoError(t, parseErr)
 
 	data := response["data"].([]interface{})
 	pagination := response["meta"].(map[string]interface{})
@@ -497,8 +603,8 @@ func TestE2E_CacheBehavior(t *testing.T) {
 	require.Equal(t, http.StatusCreated, w.Code)
 
 	var created map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &created)
-	require.NoError(t, err)
+	unmarshalErr := json.Unmarshal(w.Body.Bytes(), &created)
+	require.NoError(t, unmarshalErr)
 	createdData := created["data"].(map[string]interface{})
 	id := createdData["id"].(string)
 
