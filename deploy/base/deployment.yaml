@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: go-boilerplate
+  name: gopherplate
   labels:
-    app: go-boilerplate
+    app: gopherplate
 spec:
   replicas: 3
   revisionHistoryLimit: 5
@@ -14,13 +14,13 @@ spec:
       maxUnavailable: 1
   selector:
     matchLabels:
-      app: go-boilerplate
+      app: gopherplate
   template:
     metadata:
       labels:
-        app: go-boilerplate
+        app: gopherplate
     spec:
-      serviceAccountName: go-boilerplate-sa
+      serviceAccountName: gopherplate-sa
       terminationGracePeriodSeconds: 20
       securityContext:
         runAsNonRoot: true
@@ -41,7 +41,7 @@ spec:
                   - key: app
                     operator: In
                     values:
-                      - go-boilerplate
+                      - gopherplate
               topologyKey: "kubernetes.io/hostname"
       topologySpreadConstraints:
         - maxSkew: 1
@@ -49,14 +49,14 @@ spec:
           whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
-              app: go-boilerplate
+              app: gopherplate
       tolerations:
         - key: "karpenter.sh/provisioner-name"
           operator: "Exists"
           effect: "NoSchedule"
       containers:
-        - name: go-boilerplate
-          image: 650155821999.dkr.ecr.sa-east-1.amazonaws.com/go-boilerplate:latest
+        - name: gopherplate
+          image: 650155821999.dkr.ecr.sa-east-1.amazonaws.com/gopherplate:latest
           securityContext:
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
@@ -66,9 +66,9 @@ spec:
             - containerPort: 8080
           envFrom:
             - configMapRef:
-                name: go-boilerplate-config
+                name: gopherplate-config
             - secretRef:
-                name: go-boilerplate-secrets
+                name: gopherplate-secrets
           resources:
             requests:
               cpu: "250m"

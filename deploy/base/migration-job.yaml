@@ -1,9 +1,9 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: go-boilerplate-migrate
+  name: gopherplate-migrate
   labels:
-    app: go-boilerplate
+    app: gopherplate
     component: migrate
   annotations:
     # ArgoCD PreSync Hook: runs BEFORE the main Sync
@@ -18,20 +18,20 @@ spec:
   template:
     metadata:
       labels:
-        app: go-boilerplate
+        app: gopherplate
         component: migrate
     spec:
       restartPolicy: Never
-      serviceAccountName: go-boilerplate-sa
+      serviceAccountName: gopherplate-sa
       containers:
         - name: migrate
-          image: go-boilerplate:latest
+          image: gopherplate:latest
           command: ["./migrate"]
           env:
             - name: DB_DSN
               valueFrom:
                 secretKeyRef:
-                  name: go-boilerplate-secrets
+                  name: gopherplate-secrets
                   key: DB_DSN
           resources:
             requests:

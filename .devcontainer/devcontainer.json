@@ -1,5 +1,5 @@
 {
-  "name": "Go Boilerplate",
+  "name": "Gopherplate",
   "build": {
     "dockerfile": "Dockerfile",
     "args": {

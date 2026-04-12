@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/jrmarcello/go-boilerplate/pkg/telemetry"
+	"github.com/jrmarcello/gopherplate/pkg/telemetry"
 )
 
 func TestMetrics_NilMetrics_GracefulNoOp(t *testing.T) {

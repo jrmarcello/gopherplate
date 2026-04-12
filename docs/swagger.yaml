@@ -1,5 +1,5 @@
 definitions:
-  github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.CreateInput:
+  github_com_jrmarcello_gopherplate_internal_usecases_role_dto.CreateInput:
     properties:
       description:
         description: Descricao da role
@@ -12,7 +12,7 @@ definitions:
     required:
     - name
     type: object
-  github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.CreateOutput:
+  github_com_jrmarcello_gopherplate_internal_usecases_role_dto.CreateOutput:
     properties:
       created_at:
         description: Timestamp no formato RFC3339
@@ -21,7 +21,7 @@ definitions:
         description: ID gerado (UUID v7)
         type: string
     type: object
-  github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.DeleteOutput:
+  github_com_jrmarcello_gopherplate_internal_usecases_role_dto.DeleteOutput:
     properties:
       deleted_at:
         description: Timestamp da delecao
@@ -29,16 +29,16 @@ definitions:
       id:
         type: string
     type: object
-  github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.ListOutput:
+  github_com_jrmarcello_gopherplate_internal_usecases_role_dto.ListOutput:
     properties:
       data:
         items:
-          $ref: '#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.RoleOutput'
+          $ref: '#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_role_dto.RoleOutput'
         type: array
       pagination:
-        $ref: '#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.PaginationOutput'
+        $ref: '#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_role_dto.PaginationOutput'
     type: object
-  github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.PaginationOutput:
+  github_com_jrmarcello_gopherplate_internal_usecases_role_dto.PaginationOutput:
     properties:
       limit:
         type: integer
@@ -49,7 +49,7 @@ definitions:
       total_pages:
         type: integer
     type: object
-  github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.RoleOutput:
+  github_com_jrmarcello_gopherplate_internal_usecases_role_dto.RoleOutput:
     properties:
       created_at:
         type: string
@@ -62,7 +62,7 @@ definitions:
       updated_at:
         type: string
     type: object
-  github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.CreateInput:
+  github_com_jrmarcello_gopherplate_internal_usecases_user_dto.CreateInput:
     properties:
       email:
         description: Email (validado via binding + UseCase)
@@ -76,7 +76,7 @@ definitions:
     - email
     - name
     type: object
-  github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.CreateOutput:
+  github_com_jrmarcello_gopherplate_internal_usecases_user_dto.CreateOutput:
     properties:
       created_at:
         description: Timestamp no formato RFC3339
@@ -85,7 +85,7 @@ definitions:
         description: ID gerado (UUID v7)
         type: string
     type: object
-  github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.DeleteOutput:
+  github_com_jrmarcello_gopherplate_internal_usecases_user_dto.DeleteOutput:
     properties:
       deleted_at:
         description: Timestamp da deleção
@@ -93,7 +93,7 @@ definitions:
       id:
         type: string
     type: object
-  github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.GetOutput:
+  github_com_jrmarcello_gopherplate_internal_usecases_user_dto.GetOutput:
     properties:
       active:
         type: boolean
@@ -108,16 +108,16 @@ definitions:
       updated_at:
         type: string
     type: object
-  github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.ListOutput:
+  github_com_jrmarcello_gopherplate_internal_usecases_user_dto.ListOutput:
     properties:
       data:
         items:
-          $ref: '#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.GetOutput'
+          $ref: '#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_user_dto.GetOutput'
         type: array
       pagination:
-        $ref: '#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.PaginationOutput'
+        $ref: '#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_user_dto.PaginationOutput'
     type: object
-  github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.PaginationOutput:
+  github_com_jrmarcello_gopherplate_internal_usecases_user_dto.PaginationOutput:
     properties:
       limit:
         type: integer
@@ -128,7 +128,7 @@ definitions:
       total_pages:
         type: integer
     type: object
-  github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.UpdateInput:
+  github_com_jrmarcello_gopherplate_internal_usecases_user_dto.UpdateInput:
     properties:
       email:
         description: Email (opcional)
@@ -139,7 +139,7 @@ definitions:
         maxLength: 255
         type: string
     type: object
-  github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.UpdateOutput:
+  github_com_jrmarcello_gopherplate_internal_usecases_user_dto.UpdateOutput:
     properties:
       active:
         type: boolean
@@ -186,7 +186,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.ListOutput'
+            $ref: '#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_role_dto.ListOutput'
         "400":
           description: Bad Request
           schema:
@@ -211,14 +211,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.CreateInput'
+          $ref: '#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_role_dto.CreateInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.CreateOutput'
+            $ref: '#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_role_dto.CreateOutput'
         "400":
           description: Bad Request
           schema:
@@ -248,7 +248,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.DeleteOutput'
+            $ref: '#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_role_dto.DeleteOutput'
         "404":
           description: Not Found
           schema:
@@ -293,7 +293,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.ListOutput'
+            $ref: '#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_user_dto.ListOutput'
         "500":
           description: Internal Server Error
           schema:
@@ -314,14 +314,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.CreateInput'
+          $ref: '#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_user_dto.CreateInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.CreateOutput'
+            $ref: '#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_user_dto.CreateOutput'
         "400":
           description: Bad Request
           schema:
@@ -351,7 +351,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.DeleteOutput'
+            $ref: '#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_user_dto.DeleteOutput'
         "404":
           description: Not Found
           schema:
@@ -380,7 +380,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.GetOutput'
+            $ref: '#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_user_dto.GetOutput'
         "404":
           description: Not Found
           schema:
@@ -410,14 +410,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.UpdateInput'
+          $ref: '#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_user_dto.UpdateInput'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.UpdateOutput'
+            $ref: '#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_user_dto.UpdateOutput'
         "400":
           description: Bad Request
           schema:

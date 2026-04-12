@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/jrmarcello/go-boilerplate/pkg/cache"
+	"github.com/jrmarcello/gopherplate/pkg/cache"
 	"github.com/redis/go-redis/v9"
 )
 

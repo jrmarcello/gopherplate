@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	roleuc "github.com/jrmarcello/go-boilerplate/internal/usecases/role"
-	"github.com/jrmarcello/go-boilerplate/internal/usecases/role/dto"
-	"github.com/jrmarcello/go-boilerplate/pkg/httputil/httpgin"
+	roleuc "github.com/jrmarcello/gopherplate/internal/usecases/role"
+	"github.com/jrmarcello/gopherplate/internal/usecases/role/dto"
+	"github.com/jrmarcello/gopherplate/pkg/httputil/httpgin"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 )

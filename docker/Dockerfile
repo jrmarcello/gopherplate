@@ -45,10 +45,10 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 FROM gcr.io/distroless/static-debian12:nonroot
 
 # Labels for container metadata
-LABEL org.opencontainers.image.title="go-boilerplate" \
-    org.opencontainers.image.description="Go Boilerplate API - Clean Architecture" \
+LABEL org.opencontainers.image.title="gopherplate" \
+    org.opencontainers.image.description="Gopherplate API - Clean Architecture" \
     org.opencontainers.image.vendor="Appmax" \
-    org.opencontainers.image.source="https://github.com/jrmarcello/go-boilerplate"
+    org.opencontainers.image.source="https://github.com/jrmarcello/gopherplate"
 
 WORKDIR /app
 

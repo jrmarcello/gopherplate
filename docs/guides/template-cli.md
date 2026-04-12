@@ -1,6 +1,6 @@
 # Template CLI
 
-O **boilerplate CLI** é uma ferramenta de linha de comando que gera novos microsserviços a partir deste template. Em vez de clonar o repositório e fazer find-replace manual, um único comando cria um projeto configurado com a arquitetura correta, dependências selecionadas e código pronto para rodar.
+O **gopherplate CLI** é uma ferramenta de linha de comando que gera novos microsserviços a partir deste template. Em vez de clonar o repositório e fazer find-replace manual, um único comando cria um projeto configurado com a arquitetura correta, dependências selecionadas e código pronto para rodar.
 
 ---
 
@@ -9,9 +9,9 @@ O **boilerplate CLI** é uma ferramenta de linha de comando que gera novos micro
 - [Instalação](#instalação)
 - [Quick Start](#quick-start)
 - [Comandos](#comandos)
-  - [`boilerplate new`](#boilerplate-new-service-name)
-  - [`boilerplate add domain`](#boilerplate-add-domain-name)
-  - [`boilerplate version`](#boilerplate-version)
+  - [`gopherplate new`](#boilerplate-new-service-name)
+  - [`gopherplate add domain`](#boilerplate-add-domain-name)
+  - [`gopherplate version`](#boilerplate-version)
 - [Flags (modo não-interativo)](#flags-modo-não-interativo)
 - [O que cada opção faz](#o-que-cada-opção-faz)
 - [Customização dos templates](#customização-dos-templates)
@@ -31,14 +31,14 @@ O **boilerplate CLI** é uma ferramenta de linha de comando que gera novos micro
 ### Instalando
 
 ```bash
-go install github.com/jrmarcello/go-boilerplate/cmd/cli@latest
+go install github.com/jrmarcello/gopherplate/cmd/cli@latest
 ```
 
 ### Verificando
 
 ```bash
-boilerplate version
-# boilerplate dev
+gopherplate version
+# gopherplate dev
 ```
 
 > A versão mostra `dev` quando compilado localmente. Releases futuras terão versionamento via ldflags.
@@ -50,7 +50,7 @@ boilerplate version
 O fluxo mais comum: criar um novo serviço, responder aos prompts e começar a desenvolver.
 
 ```bash
-boilerplate new payment-service
+gopherplate new payment-service
 # Responda aos prompts interativos...
 
 cd payment-service
@@ -64,13 +64,13 @@ Em poucos minutos você tem um microsserviço rodando com Clean Architecture, ob
 
 ## Comandos
 
-### `boilerplate new [service-name]`
+### `gopherplate new [service-name]`
 
 Cria um novo projeto completo a partir do template. O comando gera toda a estrutura de diretórios, configura dependências e deixa o projeto pronto para `make setup && make dev`.
 
 #### Prompts interativos
 
-Ao executar `boilerplate new`, o CLI guia você por uma série de perguntas:
+Ao executar `gopherplate new`, o CLI guia você por uma série de perguntas:
 
 | # | Prompt | Opções | Descrição |
 |---|--------|--------|-----------|
@@ -87,7 +87,7 @@ Ao executar `boilerplate new`, o CLI guia você por uma série de perguntas:
 #### Exemplo completo
 
 ```bash
-$ boilerplate new payment-service
+$ gopherplate new payment-service
 
   Nome do serviço []: payment-service
   Module path [github.com/appmax/payment-service]: github.com/yourorg/payment-service
@@ -182,7 +182,7 @@ payment-service/
 
 ---
 
-### `boilerplate add domain [name]`
+### `gopherplate add domain [name]`
 
 Adiciona um novo domínio a um projeto existente. Gera todas as camadas da Clean Architecture para o domínio especificado: entity, use cases, repository, handler, router e migration.
 
@@ -190,7 +190,7 @@ Adiciona um novo domínio a um projeto existente. Gera todas as camadas da Clean
 
 ```bash
 cd payment-service
-boilerplate add domain order
+gopherplate add domain order
 ```
 
 #### Arquivos gerados
@@ -252,13 +252,13 @@ orderHandler := handler.NewOrderHandler(orderCreateUC, orderGetUC, orderListUC, 
 
 ---
 
-### `boilerplate version`
+### `gopherplate version`
 
 Exibe a versão instalada do CLI.
 
 ```bash
-boilerplate version
-# boilerplate dev
+gopherplate version
+# gopherplate dev
 ```
 
 ---
@@ -267,7 +267,7 @@ boilerplate version
 
 Para uso em CI/CD ou scripts, todas as opções podem ser passadas como flags, eliminando os prompts interativos. Use `-y` para aceitar os defaults sem prompts.
 
-### Referência de flags para `boilerplate new`
+### Referência de flags para `gopherplate new`
 
 | Flag | Tipo | Default | Descrição |
 |------|------|---------|-----------|
@@ -287,7 +287,7 @@ Para uso em CI/CD ou scripts, todas as opções podem ser passadas como flags, e
 
 ```bash
 # Projeto minimal: sem Redis, sem auth, sem exemplos
-boilerplate new my-svc \
+gopherplate new my-svc \
   --module github.com/yourorg/my-svc \
   --db postgres \
   --no-redis \
@@ -296,7 +296,7 @@ boilerplate new my-svc \
   -y
 
 # Projeto com todos os defaults (Redis, auth, idempotência, exemplos)
-boilerplate new my-svc \
+gopherplate new my-svc \
   --module github.com/yourorg/my-svc \
   -y
 ```
@@ -342,7 +342,7 @@ boilerplate new my-svc \
 | Estado | O que inclui | Quando usar |
 |--------|-------------|-------------|
 | **Mantidos** (padrão) | Domínios `user` (CRUD completo com cache, singleflight, idempotência) e `role` (exemplo simples de multi-domain DI). Incluem testes unitários e E2E. | Primeiro contato com o template. Use como referência para entender os padrões. |
-| **Removidos** (`--no-examples`) | Remove `internal/domain/user/`, `internal/domain/role/`, use cases, handlers, routers, repositories e migrations dos domínios de exemplo. | Projetos reais. Crie seus próprios domínios com `boilerplate add domain`. |
+| **Removidos** (`--no-examples`) | Remove `internal/domain/user/`, `internal/domain/role/`, use cases, handlers, routers, repositories e migrations dos domínios de exemplo. | Projetos reais. Crie seus próprios domínios com `gopherplate add domain`. |
 
 ---
 
@@ -358,12 +358,12 @@ cmd/cli/
 ├── commands/                    # Cobra commands (new, add domain, version)
 ├── scaffold/                    # Engine de scaffold (config, helpers, renderer, rewriter, remover, wiring)
 └── templates/
-    ├── boilerplate/             # Lógica de copy + transform para `boilerplate new`
+    ├── boilerplate/             # Lógica de copy + transform para `gopherplate new`
     │   ├── copy.go              # Copia o projeto excluindo paths irrelevantes
     │   ├── snapshot.go          # Lista de exclusões (ExcludePaths)
     │   ├── servicename.go       # Substituição do nome do serviço em configs
     │   └── dbdriver.go          # Troca de driver de banco nos imports
-    └── domain/                  # Templates .tmpl para `boilerplate add domain`
+    └── domain/                  # Templates .tmpl para `gopherplate add domain`
         ├── entity.go.tmpl
         ├── errors.go.tmpl
         ├── create_usecase.go.tmpl
@@ -373,7 +373,7 @@ cmd/cli/
         └── ...                  # (18 templates no total)
 ```
 
-> **Nota sobre `boilerplate new`:** O comando não usa templates `.tmpl` para o projeto inteiro. Ele copia a árvore real do template, depois aplica transformações: reescrita de module path, substituição do nome do serviço, troca de driver DB, remoção de features desabilitadas, e regeneração do wiring (`server.go`/`router.go`). Isso garante que o projeto gerado sempre reflete a versão mais atual do template.
+> **Nota sobre `gopherplate new`:** O comando não usa templates `.tmpl` para o projeto inteiro. Ele copia a árvore real do template, depois aplica transformações: reescrita de module path, substituição do nome do serviço, troca de driver DB, remoção de features desabilitadas, e regeneração do wiring (`server.go`/`router.go`). Isso garante que o projeto gerado sempre reflete a versão mais atual do template.
 
 ### Como customizar
 
@@ -462,7 +462,7 @@ ls -la .
 O CLI não sobrescreve domínios existentes para evitar perda de código. Se você precisa recriá-lo:
 
 1. Remova manualmente os diretórios do domínio (`domain/`, `usecases/`, `infrastructure/` do domínio)
-2. Execute `boilerplate add domain` novamente
+2. Execute `gopherplate add domain` novamente
 
 ---
 
@@ -470,12 +470,12 @@ O CLI não sobrescreve domínios existentes para evitar perda de código. Se voc
 
 ### Posso usar em projetos existentes?
 
-O comando `boilerplate add domain` funciona em projetos existentes que seguem a estrutura deste template. Já o comando `boilerplate new` cria um projeto do zero -- não é indicado para projetos já iniciados.
+O comando `gopherplate add domain` funciona em projetos existentes que seguem a estrutura deste template. Já o comando `gopherplate new` cria um projeto do zero -- não é indicado para projetos já iniciados.
 
 ### Como atualizo o CLI?
 
 ```bash
-go install github.com/jrmarcello/go-boilerplate/cmd/cli@latest
+go install github.com/jrmarcello/gopherplate/cmd/cli@latest
 ```
 
 ### Funciona no Windows?
@@ -495,7 +495,7 @@ Não para gerar o projeto. Os templates estão embarcados no binário. Porém, a
 Sim. O modo mais enxuto possível:
 
 ```bash
-boilerplate new minimal-svc \
+gopherplate new minimal-svc \
   --module github.com/yourorg/minimal-svc \
   --db postgres \
   --no-redis \

@@ -119,7 +119,7 @@ func TestScaffold_Validate(t *testing.T) {
 func TestDefaultConfig(t *testing.T) {
 	cfg := DefaultConfig()
 
-	assert.Equal(t, "github.com/jrmarcello/go-boilerplate", cfg.TemplateModulePath)
+	assert.Equal(t, "github.com/jrmarcello/gopherplate", cfg.TemplateModulePath)
 	assert.Equal(t, DBPostgres, cfg.DB)
 	assert.Equal(t, ProtocolHTTP, cfg.Protocol)
 	assert.Equal(t, DIManual, cfg.DI)

@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jrmarcello/go-boilerplate/cmd/cli/scaffold"
-	boilerplatetmpl "github.com/jrmarcello/go-boilerplate/cmd/cli/templates/boilerplate"
+	"github.com/jrmarcello/gopherplate/cmd/cli/scaffold"
+	boilerplatetmpl "github.com/jrmarcello/gopherplate/cmd/cli/templates/boilerplate"
 	"github.com/spf13/cobra"
 )
 
@@ -19,9 +19,9 @@ var newCmd = &cobra.Command{
 	Long: `Cria um novo microserviço Go com Clean Architecture a partir do template.
 
 Exemplos:
-  boilerplate new my-service
-  boilerplate new my-service --module github.com/org/my-service --db postgres
-  boilerplate new my-service --module github.com/org/my-service --no-redis --no-auth`,
+  gopherplate new my-service
+  gopherplate new my-service --module github.com/org/my-service --db postgres
+  gopherplate new my-service --module github.com/org/my-service --no-redis --no-auth`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runNew,
 }
@@ -38,7 +38,7 @@ func init() {
 	newCmd.Flags().BoolP("yes", "y", false, "Accept defaults for all unspecified options (non-interactive)")
 }
 
-const templateModulePath = "github.com/jrmarcello/go-boilerplate"
+const templateModulePath = "github.com/jrmarcello/gopherplate"
 
 func runNew(cmd *cobra.Command, args []string) error {
 	cfg := scaffold.DefaultConfig()

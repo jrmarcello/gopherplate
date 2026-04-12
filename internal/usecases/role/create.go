@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	roledomain "github.com/jrmarcello/go-boilerplate/internal/domain/role"
-	"github.com/jrmarcello/go-boilerplate/internal/usecases/role/dto"
-	"github.com/jrmarcello/go-boilerplate/internal/usecases/role/interfaces"
-	ucshared "github.com/jrmarcello/go-boilerplate/internal/usecases/shared"
+	roledomain "github.com/jrmarcello/gopherplate/internal/domain/role"
+	"github.com/jrmarcello/gopherplate/internal/usecases/role/dto"
+	"github.com/jrmarcello/gopherplate/internal/usecases/role/interfaces"
+	ucshared "github.com/jrmarcello/gopherplate/internal/usecases/shared"
 	"go.opentelemetry.io/otel/trace"
 )
 

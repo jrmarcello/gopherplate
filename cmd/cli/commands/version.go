@@ -10,6 +10,6 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Show CLI version",
 	Run: func(_ *cobra.Command, _ []string) {
-		fmt.Printf("boilerplate %s\n", version)
+		fmt.Printf("gopherplate %s\n", version)
 	},
 }

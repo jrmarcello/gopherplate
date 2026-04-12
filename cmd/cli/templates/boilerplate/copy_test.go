@@ -19,7 +19,7 @@ func TestCopyProject(t *testing.T) {
 		"cmd/api/main.go":                 "package main\n",
 		"internal/domain/user/entity.go":  "package user\n",
 		"pkg/cache/cache.go":              "package cache\n",
-		"Makefile":                        "APP_NAME := go-boilerplate\n",
+		"Makefile":                        "APP_NAME := gopherplate\n",
 		".gitignore":                      ".env\nbin/\n",
 		".git/config":                     "[core]\n",
 		"cmd/cli/main.go":                 "package main\n",
@@ -40,7 +40,7 @@ func TestCopyProject(t *testing.T) {
 		"tests/coverage/cover.html":       "<html>",
 		"tests/load/results/run1.json":    "{}",
 		"tests/e2e/user_test.go":          "package e2e\n",
-		"deploy/base/deployment.yaml":     "name: go-boilerplate\n",
+		"deploy/base/deployment.yaml":     "name: gopherplate\n",
 	}
 
 	for relPath, content := range files {
@@ -96,7 +96,7 @@ func TestCopyProject(t *testing.T) {
 	// Verify content is preserved.
 	content, readErr := os.ReadFile(filepath.Join(dstDir, "Makefile"))
 	require.NoError(t, readErr)
-	assert.Equal(t, "APP_NAME := go-boilerplate\n", string(content))
+	assert.Equal(t, "APP_NAME := gopherplate\n", string(content))
 }
 
 func TestShouldExclude(t *testing.T) {

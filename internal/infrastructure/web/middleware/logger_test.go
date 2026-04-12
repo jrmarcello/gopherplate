@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/jrmarcello/go-boilerplate/pkg/logutil"
+	"github.com/jrmarcello/gopherplate/pkg/logutil"
 )
 
 func TestLogger_GeneratesUUID_WhenNoRequestIDHeader(t *testing.T) {

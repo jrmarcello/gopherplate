@@ -3,7 +3,7 @@
 # ============================================
 # Customize estas variáveis para seu projeto
 
-APP_NAME := go-boilerplate
+APP_NAME := gopherplate
 IMAGE_NAME := $(APP_NAME)-api
 DB_NAME := entities
 
@@ -298,7 +298,7 @@ kind-deploy: kind-check docker-build ## Build e deploy no Kind (simula ArgoCD Pr
 	@kubectl apply -n $(KIND_NAMESPACE) -f deploy/overlays/develop/configmap.yaml
 	@kubectl apply -n $(KIND_NAMESPACE) -f deploy/overlays/develop/secret.yaml
 	@kubectl delete job $(APP_NAME)-migrate -n $(KIND_NAMESPACE) --ignore-not-found
-	@cat deploy/base/migration-job.yaml | sed 's|go-boilerplate:latest|go-boilerplate:dev|g' | kubectl apply -n $(KIND_NAMESPACE) -f -
+	@cat deploy/base/migration-job.yaml | sed 's|gopherplate:latest|gopherplate:dev|g' | kubectl apply -n $(KIND_NAMESPACE) -f -
 	@echo "Waiting for migration Job to complete..."
 	@kubectl wait --namespace $(KIND_NAMESPACE) --for=condition=complete job/$(APP_NAME)-migrate --timeout=120s
 	@echo "Migrations completed!"

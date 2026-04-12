@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/jrmarcello/go-boilerplate/internal/bootstrap"
-	"github.com/jrmarcello/go-boilerplate/pkg/httputil"
+	"github.com/jrmarcello/gopherplate/internal/bootstrap"
+	"github.com/jrmarcello/gopherplate/pkg/httputil"
 )
 
 // addAuthHeaders adiciona os headers de autenticação para testes

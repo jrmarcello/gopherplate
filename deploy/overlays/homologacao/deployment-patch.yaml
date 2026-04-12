@@ -1,13 +1,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: go-boilerplate
+  name: gopherplate
 spec:
   replicas: 1
   template:
     spec:
       containers:
-        - name: go-boilerplate
+        - name: gopherplate
           resources:
             requests:
               cpu: "200m"

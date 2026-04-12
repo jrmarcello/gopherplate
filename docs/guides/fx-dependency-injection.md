@@ -55,8 +55,8 @@ package db
 import (
     "go.uber.org/fx"
 
-    "github.com/jrmarcello/go-boilerplate/config"
-    "github.com/jrmarcello/go-boilerplate/pkg/database"
+    "github.com/jrmarcello/gopherplate/config"
+    "github.com/jrmarcello/gopherplate/pkg/database"
 )
 
 var Module = fx.Module("database",
@@ -92,8 +92,8 @@ package cache
 import (
     "go.uber.org/fx"
 
-    "github.com/jrmarcello/go-boilerplate/config"
-    pkgcache "github.com/jrmarcello/go-boilerplate/pkg/cache"
+    "github.com/jrmarcello/gopherplate/config"
+    pkgcache "github.com/jrmarcello/gopherplate/pkg/cache"
 )
 
 var Module = fx.Module("cache",
@@ -121,9 +121,9 @@ package usecases
 import (
     "go.uber.org/fx"
 
-    useruc "github.com/jrmarcello/go-boilerplate/internal/usecases/user"
-    "github.com/jrmarcello/go-boilerplate/internal/usecases/user/interfaces"
-    pkgcache "github.com/jrmarcello/go-boilerplate/pkg/cache"
+    useruc "github.com/jrmarcello/gopherplate/internal/usecases/user"
+    "github.com/jrmarcello/gopherplate/internal/usecases/user/interfaces"
+    pkgcache "github.com/jrmarcello/gopherplate/pkg/cache"
 )
 
 var Module = fx.Module("usecases",
@@ -163,8 +163,8 @@ import (
 
     "go.uber.org/fx"
 
-    "github.com/jrmarcello/go-boilerplate/config"
-    "github.com/jrmarcello/go-boilerplate/internal/infrastructure/web/router"
+    "github.com/jrmarcello/gopherplate/config"
+    "github.com/jrmarcello/gopherplate/internal/infrastructure/web/router"
 )
 
 var Module = fx.Module("http",
@@ -206,11 +206,11 @@ package main
 import (
     "go.uber.org/fx"
 
-    "github.com/jrmarcello/go-boilerplate/config"
-    dbmodule "github.com/jrmarcello/go-boilerplate/internal/infrastructure/db"
-    cachemodule "github.com/jrmarcello/go-boilerplate/pkg/cache"
-    webmodule "github.com/jrmarcello/go-boilerplate/internal/infrastructure/web"
-    ucmodule "github.com/jrmarcello/go-boilerplate/internal/usecases"
+    "github.com/jrmarcello/gopherplate/config"
+    dbmodule "github.com/jrmarcello/gopherplate/internal/infrastructure/db"
+    cachemodule "github.com/jrmarcello/gopherplate/pkg/cache"
+    webmodule "github.com/jrmarcello/gopherplate/internal/infrastructure/web"
+    ucmodule "github.com/jrmarcello/gopherplate/internal/usecases"
 )
 
 func main() {

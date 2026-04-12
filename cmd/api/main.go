@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/jrmarcello/go-boilerplate/config"
+	"github.com/jrmarcello/gopherplate/config"
 )
 
 func main() {

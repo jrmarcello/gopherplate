@@ -1,5 +1,5 @@
 // Package boilerplate provides the project snapshot and copy logic for the
-// `boilerplate new` command. Instead of maintaining Go templates for every file,
+// `gopherplate new` command. Instead of maintaining Go templates for every file,
 // we copy the actual project tree and run post-processing (module rewrite,
 // service name replacement, feature removal, DB driver switch).
 package boilerplate

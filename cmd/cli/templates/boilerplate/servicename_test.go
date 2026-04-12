@@ -14,13 +14,13 @@ func TestReplaceServiceName(t *testing.T) {
 
 	// Create a Makefile with the default service name.
 	makefilePath := filepath.Join(projectDir, "Makefile")
-	require.NoError(t, os.WriteFile(makefilePath, []byte("APP_NAME := go-boilerplate\nIMAGE := go-boilerplate-api\n"), 0o644))
+	require.NoError(t, os.WriteFile(makefilePath, []byte("APP_NAME := gopherplate\nIMAGE := gopherplate-api\n"), 0o644))
 
 	// Create a deploy file.
 	deployDir := filepath.Join(projectDir, "deploy", "base")
 	require.NoError(t, os.MkdirAll(deployDir, 0o755))
 	deployPath := filepath.Join(deployDir, "deployment.yaml")
-	require.NoError(t, os.WriteFile(deployPath, []byte("name: go-boilerplate\n"), 0o644))
+	require.NoError(t, os.WriteFile(deployPath, []byte("name: gopherplate\n"), 0o644))
 
 	// Create a file that does NOT contain the service name.
 	require.NoError(t, os.WriteFile(filepath.Join(projectDir, "README.md"), []byte("# My Project\n"), 0o644))

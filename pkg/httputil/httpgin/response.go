@@ -2,7 +2,7 @@ package httpgin
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/jrmarcello/go-boilerplate/pkg/httputil"
+	"github.com/jrmarcello/gopherplate/pkg/httputil"
 )
 
 // SendSuccess sends a standardized success response via Gin.

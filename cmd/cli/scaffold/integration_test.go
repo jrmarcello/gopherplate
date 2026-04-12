@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	domaintmpl "github.com/jrmarcello/go-boilerplate/cmd/cli/templates/domain"
+	domaintmpl "github.com/jrmarcello/gopherplate/cmd/cli/templates/domain"
 )
 
 func TestAddDomainIntegration(t *testing.T) {

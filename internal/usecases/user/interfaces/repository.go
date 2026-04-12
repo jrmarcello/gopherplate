@@ -3,8 +3,8 @@ package interfaces
 import (
 	"context"
 
-	userdomain "github.com/jrmarcello/go-boilerplate/internal/domain/user"
-	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
+	userdomain "github.com/jrmarcello/gopherplate/internal/domain/user"
+	"github.com/jrmarcello/gopherplate/internal/domain/user/vo"
 )
 
 // Repository define o CONTRATO para persistência de User.

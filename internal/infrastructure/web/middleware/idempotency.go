@@ -8,9 +8,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jrmarcello/go-boilerplate/pkg/httputil"
-	"github.com/jrmarcello/go-boilerplate/pkg/idempotency"
-	"github.com/jrmarcello/go-boilerplate/pkg/logutil"
+	"github.com/jrmarcello/gopherplate/pkg/httputil"
+	"github.com/jrmarcello/gopherplate/pkg/idempotency"
+	"github.com/jrmarcello/gopherplate/pkg/logutil"
 )
 
 const (

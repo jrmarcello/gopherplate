@@ -9,7 +9,7 @@ import (
 )
 
 // TemplateModulePath is the original module path of the template project.
-const TemplateModulePath = "github.com/jrmarcello/go-boilerplate"
+const TemplateModulePath = "github.com/jrmarcello/gopherplate"
 
 // CleanupWiring regenerates server.go and router.go based on the scaffold config,
 // removing references to disabled features. Must run AFTER RemoveDisabledFeatures.

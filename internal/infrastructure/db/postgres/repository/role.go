@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	roledomain "github.com/jrmarcello/go-boilerplate/internal/domain/role"
-	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
+	roledomain "github.com/jrmarcello/gopherplate/internal/domain/role"
+	"github.com/jrmarcello/gopherplate/internal/domain/user/vo"
 )
 
 // roleDB é o modelo de banco de dados (Data Model) para Role.

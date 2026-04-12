@@ -1,4 +1,4 @@
-module github.com/jrmarcello/go-boilerplate
+module github.com/jrmarcello/gopherplate
 
 go 1.25.0
 

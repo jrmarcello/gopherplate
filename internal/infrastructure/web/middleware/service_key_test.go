@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/jrmarcello/go-boilerplate/pkg/logutil"
+	"github.com/jrmarcello/gopherplate/pkg/logutil"
 )
 
 func init() {

@@ -57,7 +57,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.ListOutput"
+                            "$ref": "#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_role_dto.ListOutput"
                         }
                     },
                     "400": {
@@ -101,7 +101,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.CreateInput"
+                            "$ref": "#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_role_dto.CreateInput"
                         }
                     }
                 ],
@@ -109,7 +109,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.CreateOutput"
+                            "$ref": "#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_role_dto.CreateOutput"
                         }
                     },
                     "400": {
@@ -158,7 +158,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.DeleteOutput"
+                            "$ref": "#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_role_dto.DeleteOutput"
                         }
                     },
                     "404": {
@@ -230,7 +230,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.ListOutput"
+                            "$ref": "#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_user_dto.ListOutput"
                         }
                     },
                     "500": {
@@ -268,7 +268,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.CreateInput"
+                            "$ref": "#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_user_dto.CreateInput"
                         }
                     }
                 ],
@@ -276,7 +276,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.CreateOutput"
+                            "$ref": "#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_user_dto.CreateOutput"
                         }
                     },
                     "400": {
@@ -325,7 +325,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.GetOutput"
+                            "$ref": "#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_user_dto.GetOutput"
                         }
                     },
                     "404": {
@@ -376,7 +376,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.UpdateInput"
+                            "$ref": "#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_user_dto.UpdateInput"
                         }
                     }
                 ],
@@ -384,7 +384,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.UpdateOutput"
+                            "$ref": "#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_user_dto.UpdateOutput"
                         }
                     },
                     "400": {
@@ -437,7 +437,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.DeleteOutput"
+                            "$ref": "#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_user_dto.DeleteOutput"
                         }
                     },
                     "404": {
@@ -457,7 +457,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.CreateInput": {
+        "github_com_jrmarcello_gopherplate_internal_usecases_role_dto.CreateInput": {
             "type": "object",
             "required": [
                 "name"
@@ -475,7 +475,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.CreateOutput": {
+        "github_com_jrmarcello_gopherplate_internal_usecases_role_dto.CreateOutput": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -488,7 +488,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.DeleteOutput": {
+        "github_com_jrmarcello_gopherplate_internal_usecases_role_dto.DeleteOutput": {
             "type": "object",
             "properties": {
                 "deleted_at": {
@@ -500,21 +500,21 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.ListOutput": {
+        "github_com_jrmarcello_gopherplate_internal_usecases_role_dto.ListOutput": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.RoleOutput"
+                        "$ref": "#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_role_dto.RoleOutput"
                     }
                 },
                 "pagination": {
-                    "$ref": "#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.PaginationOutput"
+                    "$ref": "#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_role_dto.PaginationOutput"
                 }
             }
         },
-        "github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.PaginationOutput": {
+        "github_com_jrmarcello_gopherplate_internal_usecases_role_dto.PaginationOutput": {
             "type": "object",
             "properties": {
                 "limit": {
@@ -531,7 +531,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jrmarcello_go-boilerplate_internal_usecases_role_dto.RoleOutput": {
+        "github_com_jrmarcello_gopherplate_internal_usecases_role_dto.RoleOutput": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -551,7 +551,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.CreateInput": {
+        "github_com_jrmarcello_gopherplate_internal_usecases_user_dto.CreateInput": {
             "type": "object",
             "required": [
                 "email",
@@ -570,7 +570,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.CreateOutput": {
+        "github_com_jrmarcello_gopherplate_internal_usecases_user_dto.CreateOutput": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -583,7 +583,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.DeleteOutput": {
+        "github_com_jrmarcello_gopherplate_internal_usecases_user_dto.DeleteOutput": {
             "type": "object",
             "properties": {
                 "deleted_at": {
@@ -595,7 +595,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.GetOutput": {
+        "github_com_jrmarcello_gopherplate_internal_usecases_user_dto.GetOutput": {
             "type": "object",
             "properties": {
                 "active": {
@@ -618,21 +618,21 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.ListOutput": {
+        "github_com_jrmarcello_gopherplate_internal_usecases_user_dto.ListOutput": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.GetOutput"
+                        "$ref": "#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_user_dto.GetOutput"
                     }
                 },
                 "pagination": {
-                    "$ref": "#/definitions/github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.PaginationOutput"
+                    "$ref": "#/definitions/github_com_jrmarcello_gopherplate_internal_usecases_user_dto.PaginationOutput"
                 }
             }
         },
-        "github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.PaginationOutput": {
+        "github_com_jrmarcello_gopherplate_internal_usecases_user_dto.PaginationOutput": {
             "type": "object",
             "properties": {
                 "limit": {
@@ -649,7 +649,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.UpdateInput": {
+        "github_com_jrmarcello_gopherplate_internal_usecases_user_dto.UpdateInput": {
             "type": "object",
             "properties": {
                 "email": {
@@ -664,7 +664,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jrmarcello_go-boilerplate_internal_usecases_user_dto.UpdateOutput": {
+        "github_com_jrmarcello_gopherplate_internal_usecases_user_dto.UpdateOutput": {
             "type": "object",
             "properties": {
                 "active": {

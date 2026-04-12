@@ -3,7 +3,7 @@ package shared
 import (
 	"errors"
 
-	"github.com/jrmarcello/go-boilerplate/pkg/telemetry"
+	"github.com/jrmarcello/gopherplate/pkg/telemetry"
 	"go.opentelemetry.io/otel/trace"
 )
 

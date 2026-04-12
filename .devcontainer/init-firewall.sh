@@ -2,7 +2,7 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-# ── Go Boilerplate — Work Firewall ──────────────────────────────
+# ── Gopherplate — Work Firewall ──────────────────────────────
 # Based on: https://github.com/anthropics/claude-code/blob/main/.devcontainer
 # ────────────────────────────────────────────────────────────────
 
@@ -105,7 +105,7 @@ done
 
 # ── Optional domains (VPN/internal) ──────────────────────────────
 OPTIONAL_DOMAINS=(
-    "go-boilerplate.sandboxappmax.internal"
+    "gopherplate.sandboxappmax.internal"
 )
 
 for domain in "${OPTIONAL_DOMAINS[@]}"; do
@@ -154,7 +154,7 @@ iptables -A OUTPUT -j REJECT --reject-with icmp-admin-prohibited
 
 # ── Verification ──────────────────────────────────────────────────
 echo ""
-echo "Firewall configuration complete [go-boilerplate]"
+echo "Firewall configuration complete [gopherplate]"
 echo "Verifying..."
 
 if curl --connect-timeout 5 https://example.com >/dev/null 2>&1; then

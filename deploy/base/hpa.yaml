@@ -1,14 +1,14 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: go-boilerplate
+  name: gopherplate
   labels:
-    app: go-boilerplate
+    app: gopherplate
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: go-boilerplate
+    name: gopherplate
   minReplicas: 3
   maxReplicas: 9
   behavior:

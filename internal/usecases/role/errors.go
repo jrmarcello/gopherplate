@@ -3,8 +3,8 @@ package role
 import (
 	"errors"
 
-	roledomain "github.com/jrmarcello/go-boilerplate/internal/domain/role"
-	"github.com/jrmarcello/go-boilerplate/pkg/apperror"
+	roledomain "github.com/jrmarcello/gopherplate/internal/domain/role"
+	"github.com/jrmarcello/gopherplate/pkg/apperror"
 )
 
 // Expected errors per use case — used by ClassifyError to distinguish

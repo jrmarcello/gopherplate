@@ -5,10 +5,10 @@ import (
 	"errors"
 	"testing"
 
-	roledomain "github.com/jrmarcello/go-boilerplate/internal/domain/role"
-	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
-	"github.com/jrmarcello/go-boilerplate/internal/usecases/role/dto"
-	"github.com/jrmarcello/go-boilerplate/pkg/apperror"
+	roledomain "github.com/jrmarcello/gopherplate/internal/domain/role"
+	"github.com/jrmarcello/gopherplate/internal/domain/user/vo"
+	"github.com/jrmarcello/gopherplate/internal/usecases/role/dto"
+	"github.com/jrmarcello/gopherplate/pkg/apperror"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

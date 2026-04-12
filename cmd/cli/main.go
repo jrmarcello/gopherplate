@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jrmarcello/go-boilerplate/cmd/cli/commands"
+	"github.com/jrmarcello/gopherplate/cmd/cli/commands"
 )
 
 func main() {

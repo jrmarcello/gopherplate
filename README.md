@@ -1,4 +1,4 @@
-# Go Microservice Boilerplate
+# Gopherplate
 
 [![Go](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go)](https://go.dev/)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean-blueviolet)](docs/adr/001-clean-architecture.md)
@@ -7,7 +7,7 @@
 
 **Padronização e Developer Experience como padrão.** Template production-ready para microsserviços Go — de zero a produção em minutos, não semanas.
 
-Rode `boilerplate new my-service` e tenha um serviço configurado em segundos — com prompts interativos para escolher banco de dados, cache, autenticação e mais. O template vem com dois domínios de exemplo: `user` (CRUD completo com cache, singleflight, idempotência) e `role` (multi-domain DI). Use `boilerplate add domain` para criar novos domínios seguindo Clean Architecture automaticamente. A infraestrutura já está pronta: PostgreSQL com Writer/Reader split, Redis cache com singleflight, OpenTelemetry, idempotência, autenticação service-to-service, 291+ testes unitários e 22 E2E (75%+ de cobertura), CI/CD com notificações Slack, Kubernetes com Kustomize, e observabilidade completa com dashboard e alertas.
+Rode `gopherplate new my-service` e tenha um serviço configurado em segundos — com prompts interativos para escolher banco de dados, cache, autenticação e mais. O template vem com dois domínios de exemplo: `user` (CRUD completo com cache, singleflight, idempotência) e `role` (multi-domain DI). Use `gopherplate add domain` para criar novos domínios seguindo Clean Architecture automaticamente. A infraestrutura já está pronta: PostgreSQL com Writer/Reader split, Redis cache com singleflight, OpenTelemetry, idempotência, autenticação service-to-service, 291+ testes unitários e 22 E2E (75%+ de cobertura), CI/CD com notificações Slack, Kubernetes com Kustomize, e observabilidade completa com dashboard e alertas.
 
 DX pensado para produtividade: 40+ comandos make com verificação automática de pré-requisitos, hot reload, Lefthook com 3 camadas de verificação de qualidade (pre-commit, commit-msg, pre-push), e integração nativa com Claude Code — 14 skills (incluindo SDD + Ralph Loop para execução autônoma), 7 hooks de qualidade, 3 agentes especializados com memória persistente e 4 rules auto-aplicadas que atuam como um code reviewer contínuo enquanto você desenvolve.
 
@@ -22,8 +22,8 @@ O template é **pouco opinativo e fortemente extensível**: serve como base para
 **Opção A — CLI (recomendado):**
 
 ```bash
-go install github.com/jrmarcello/go-boilerplate/cmd/cli@latest
-boilerplate new my-service
+go install github.com/jrmarcello/gopherplate/cmd/cli@latest
+gopherplate new my-service
 # Prompts interativos guiam a configuração: banco, cache, auth, etc.
 cd my-service
 ```
@@ -31,13 +31,13 @@ cd my-service
 **Opção B — Manual:**
 
 ```bash
-git clone https://github.com/jrmarcello/go-boilerplate my-service
+git clone https://github.com/jrmarcello/gopherplate my-service
 cd my-service
 rm -rf .git && git init
 # Renomeie o module path e referências ao template (find+replace em todo o projeto)
 ```
 
-> O template vem com dois domínios de exemplo (`user` e `role`). A CLI permite escolher se quer mantê-los como referência ou removê-los. Para adicionar novos domínios: `boilerplate add domain <nome>`. Veja o [guia completo do Template CLI](docs/guides/template-cli.md).
+> O template vem com dois domínios de exemplo (`user` e `role`). A CLI permite escolher se quer mantê-los como referência ou removê-los. Para adicionar novos domínios: `gopherplate add domain <nome>`. Veja o [guia completo do Template CLI](docs/guides/template-cli.md).
 
 ### 2. Configure
 
@@ -101,7 +101,7 @@ make load-test         # Carga progressiva (até 50 VUs)
 make load-stress       # Encontrar limites (até 200 VUs)
 
 # Template CLI
-make build-cli         # Compila CLI para bin/boilerplate
+make build-cli         # Compila CLI para bin/gopherplate
 make install-cli       # Instala CLI no $GOBIN
 ```
 
@@ -147,7 +147,7 @@ Ver `.env.example` para a lista completa e [ADR-003](docs/adr/003-config-strateg
 
 | Feature | O que faz | Por que importa |
 | ------- | --------- | --------------- |
-| **Template CLI** | `boilerplate new` + `boilerplate add domain` | Scaffold de serviços e domínios em segundos |
+| **Template CLI** | `gopherplate new` + `gopherplate add domain` | Scaffold de serviços e domínios em segundos |
 | **CRUD completo** | Create, Get, List, Update, Delete | Endpoint funcional de exemplo para copiar |
 | **PostgreSQL** | Writer/Reader split, pool tunado | Escala com read replicas sem mudar código |
 | **Redis Cache** | Cache-aside + singleflight + pool config | Performance com proteção contra cache stampede |
@@ -207,7 +207,7 @@ curl -X GET http://localhost:8080/users \
 
 ### Comparativo: sem template vs com template
 
-| Tarefa | Sem template | Com Go Boilerplate |
+| Tarefa | Sem template | Com Gopherplate |
 | ------ | ------------ | ------------------ |
 | Setup do projeto | 1-2 dias | `make setup` (2 min) |
 | Primeiro endpoint | 1 dia | Já vem pronto (CRUD completo) |
@@ -455,9 +455,9 @@ O template está em evolução contínua. Próximos passos planejados:
 - [ ] Suporte a gRPC como alternativa ao REST
 - [ ] Feature flags com LaunchDarkly/Unleash
 - [ ] Uber Fx como opção de DI (guia já documentado)
-- [x] CLI para scaffold automático (`boilerplate new my-service`)
+- [x] CLI para scaffold automático (`gopherplate new my-service`)
 
-Sugestões são bem-vindas via [Issues](https://github.com/jrmarcello/go-boilerplate/issues).
+Sugestões são bem-vindas via [Issues](https://github.com/jrmarcello/gopherplate/issues).
 
 ---
 

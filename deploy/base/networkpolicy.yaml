@@ -1,13 +1,13 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: go-boilerplate
+  name: gopherplate
   labels:
-    app: go-boilerplate
+    app: gopherplate
 spec:
   podSelector:
     matchLabels:
-      app: go-boilerplate
+      app: gopherplate
   policyTypes:
     - Ingress
     - Egress

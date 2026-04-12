@@ -86,7 +86,7 @@ Commits seguem [Conventional Commits](https://www.conventionalcommits.org/).
 - **readme**: Add project intro with quick start and presentation link
 - Move presentation.md to docs/guides/
 - **presentation**: Fix Portuguese accents and punctuation throughout
-- Add presentation guide for go-boilerplate showcase
+- Add presentation guide for gopherplate showcase
 - Add missing guide references, fix env example, document coverage threshold
 - Fix stale lint-full references and cache import paths
 - **claude**: Remove rate limiting reference from middleware list

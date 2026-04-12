@@ -66,7 +66,7 @@ type Config struct {
 // DefaultConfig returns a Config with sensible defaults.
 func DefaultConfig() Config {
 	return Config{
-		TemplateModulePath: "github.com/jrmarcello/go-boilerplate",
+		TemplateModulePath: "github.com/jrmarcello/gopherplate",
 		DB:                 DBPostgres,
 		Protocol:           ProtocolHTTP,
 		DI:                 DIManual,

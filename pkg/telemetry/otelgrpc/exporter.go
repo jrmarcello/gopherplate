@@ -3,7 +3,7 @@ package otelgrpc
 import (
 	"context"
 
-	"github.com/jrmarcello/go-boilerplate/pkg/telemetry"
+	"github.com/jrmarcello/gopherplate/pkg/telemetry"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 )

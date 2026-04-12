@@ -1,10 +1,10 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: go-boilerplate
-  namespace: go-boilerplate
+  name: gopherplate
+  namespace: gopherplate
   labels:
-    app.kubernetes.io/name: go-boilerplate
+    app.kubernetes.io/name: gopherplate
     app.kubernetes.io/managed-by: argocd
   annotations:
     alb.ingress.kubernetes.io/certificate-arn: "<CERTIFICATE_ARN>"
@@ -20,13 +20,13 @@ metadata:
 spec:
   ingressClassName: alb
   rules:
-    - host: go-boilerplate.internal.appmax.com.br
+    - host: gopherplate.internal.appmax.com.br
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: go-boilerplate
+                name: gopherplate
                 port:
                   number: 80

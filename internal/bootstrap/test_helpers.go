@@ -7,10 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 
-	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/web/middleware"
-	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/web/router"
-	"github.com/jrmarcello/go-boilerplate/pkg/cache"
-	"github.com/jrmarcello/go-boilerplate/pkg/httputil/httpgin"
+	"github.com/jrmarcello/gopherplate/internal/infrastructure/web/middleware"
+	"github.com/jrmarcello/gopherplate/internal/infrastructure/web/router"
+	"github.com/jrmarcello/gopherplate/pkg/cache"
+	"github.com/jrmarcello/gopherplate/pkg/httputil/httpgin"
 )
 
 // NewForTest creates a Container suitable for testing. It uses the same DB

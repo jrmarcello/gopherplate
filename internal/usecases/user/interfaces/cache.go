@@ -1,6 +1,6 @@
 package interfaces
 
-import pkgcache "github.com/jrmarcello/go-boilerplate/pkg/cache"
+import pkgcache "github.com/jrmarcello/gopherplate/pkg/cache"
 
 // Cache is an alias for the reusable cache interface from pkg/cache.
 type Cache = pkgcache.Cache

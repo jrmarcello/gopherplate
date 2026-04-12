@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jrmarcello/go-boilerplate/pkg/apperror"
+	"github.com/jrmarcello/gopherplate/pkg/apperror"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

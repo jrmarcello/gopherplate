@@ -8,12 +8,12 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
-	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/web/handler"
-	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/web/middleware"
-	"github.com/jrmarcello/go-boilerplate/pkg/health"
-	"github.com/jrmarcello/go-boilerplate/pkg/httputil/httpgin"
-	"github.com/jrmarcello/go-boilerplate/pkg/idempotency"
-	"github.com/jrmarcello/go-boilerplate/pkg/telemetry"
+	"github.com/jrmarcello/gopherplate/internal/infrastructure/web/handler"
+	"github.com/jrmarcello/gopherplate/internal/infrastructure/web/middleware"
+	"github.com/jrmarcello/gopherplate/pkg/health"
+	"github.com/jrmarcello/gopherplate/pkg/httputil/httpgin"
+	"github.com/jrmarcello/gopherplate/pkg/idempotency"
+	"github.com/jrmarcello/gopherplate/pkg/telemetry"
 )
 
 // Config contém configurações do router

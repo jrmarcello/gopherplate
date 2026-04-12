@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: go-boilerplate-config
+  name: gopherplate-config
   labels:
-    app: go-boilerplate
+    app: gopherplate
 data:
   APP_ENV: "homologacao"
   SERVER_PORT: "8080"
@@ -18,7 +18,7 @@ data:
   DB_CONN_MAX_IDLE_TIME: "90s"
   # Database - Replica (not configured yet)
   DB_REPLICA_ENABLED: "false"
-  OTEL_SERVICE_NAME: "go-boilerplate"
+  OTEL_SERVICE_NAME: "gopherplate"
   OTEL_COLLECTOR_URL: "http://otel-collector.sandboxappmax.internal:4317"
   REDIS_URL: "redis://redis-service:6379"
   REDIS_TTL: "5m"

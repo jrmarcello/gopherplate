@@ -5,7 +5,7 @@ import "github.com/spf13/cobra"
 var version = "dev" // set via ldflags at build time
 
 var rootCmd = &cobra.Command{
-	Use:   "boilerplate",
+	Use:   "gopherplate",
 	Short: "Go microservice template scaffolding tool",
 	Long: `Boilerplate CLI scaffolds new Go microservices and domains
 following Clean Architecture patterns.

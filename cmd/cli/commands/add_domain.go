@@ -11,8 +11,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/jrmarcello/go-boilerplate/cmd/cli/scaffold"
-	domaintmpl "github.com/jrmarcello/go-boilerplate/cmd/cli/templates/domain"
+	"github.com/jrmarcello/gopherplate/cmd/cli/scaffold"
+	domaintmpl "github.com/jrmarcello/gopherplate/cmd/cli/templates/domain"
 )
 
 var addDomainCmd = &cobra.Command{

@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	userdomain "github.com/jrmarcello/go-boilerplate/internal/domain/user"
-	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
+	userdomain "github.com/jrmarcello/gopherplate/internal/domain/user"
+	"github.com/jrmarcello/gopherplate/internal/domain/user/vo"
 	"github.com/lib/pq"
 )
 

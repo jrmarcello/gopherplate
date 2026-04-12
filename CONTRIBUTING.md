@@ -1,10 +1,10 @@
 # Guia de Contribuicao
 
-Obrigado pelo interesse em contribuir com o **Go Boilerplate**!
+Obrigado pelo interesse em contribuir com o **Gopherplate**!
 
 ## Como comecar
 
-1. Clone o projeto: `git clone https://github.com/jrmarcello/go-boilerplate`
+1. Clone o projeto: `git clone https://github.com/jrmarcello/gopherplate`
 2. Crie uma branch: `git checkout -b feat/minha-feature`
 3. Setup: `make setup` (instala tools, sobe Docker, roda migrations)
 
@@ -12,7 +12,7 @@ Obrigado pelo interesse em contribuir com o **Go Boilerplate**!
 
 Use o **Issues** do GitHub para sugerir melhorias ou reportar problemas:
 
-1. Acesse [Issues](https://github.com/jrmarcello/go-boilerplate/issues)
+1. Acesse [Issues](https://github.com/jrmarcello/gopherplate/issues)
 2. Verifique se ja existe uma issue similar
 3. Crie uma nova issue com o tipo adequado:
    - **Bug**: algo nao funciona como esperado (inclua steps to reproduce)

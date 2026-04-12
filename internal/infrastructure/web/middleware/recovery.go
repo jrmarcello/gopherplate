@@ -6,7 +6,7 @@ import (
 	"runtime/debug"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jrmarcello/go-boilerplate/pkg/httputil/httpgin"
+	"github.com/jrmarcello/gopherplate/pkg/httputil/httpgin"
 )
 
 // CustomRecovery returns a middleware that recovers from panics, logs the error

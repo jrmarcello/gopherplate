@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Kibana Setup Script — Go Boilerplate
+# Kibana Setup Script — Gopherplate
 #
 # Creates Data Views and imports the dashboard with all visualizations.
 # Run after Elasticsearch and Kibana are healthy.

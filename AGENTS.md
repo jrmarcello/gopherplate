@@ -175,10 +175,10 @@ O diretório `pkg/` contém pacotes **reutilizáveis entre serviços**:
 
 ```go
 // Correto — usar pkg/ para código reutilizável
-import "github.com/jrmarcello/go-boilerplate/pkg/apperror"
+import "github.com/jrmarcello/gopherplate/pkg/apperror"
 
 // Errado — usar internal para código que deveria ser reutilizável
-import "github.com/jrmarcello/go-boilerplate/internal/something"
+import "github.com/jrmarcello/gopherplate/internal/something"
 ```
 
 ---

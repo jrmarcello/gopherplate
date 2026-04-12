@@ -3,7 +3,7 @@ package role
 import (
 	"time"
 
-	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
+	"github.com/jrmarcello/gopherplate/internal/domain/user/vo"
 )
 
 // Role é a Entidade principal (Aggregate Root) do domínio de roles.

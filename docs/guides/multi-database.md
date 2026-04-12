@@ -215,9 +215,9 @@ import (
     "strings"
     "time"
 
-    user "github.com/jrmarcello/go-boilerplate/internal/domain/user"
-    "github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
-    "github.com/jrmarcello/go-boilerplate/pkg/database"
+    user "github.com/jrmarcello/gopherplate/internal/domain/user"
+    "github.com/jrmarcello/gopherplate/internal/domain/user/vo"
+    "github.com/jrmarcello/gopherplate/pkg/database"
     "github.com/jmoiron/sqlx"
 )
 
@@ -313,9 +313,9 @@ Alterar `buildDependencies` para escolher a implementacao baseada em configuraca
 
 ```go
 import (
-    pgrepository "github.com/jrmarcello/go-boilerplate/internal/infrastructure/db/postgres/repository"
-    sqliterepository "github.com/jrmarcello/go-boilerplate/internal/infrastructure/db/sqlite/repository"
-    "github.com/jrmarcello/go-boilerplate/internal/usecases/user/interfaces"
+    pgrepository "github.com/jrmarcello/gopherplate/internal/infrastructure/db/postgres/repository"
+    sqliterepository "github.com/jrmarcello/gopherplate/internal/infrastructure/db/sqlite/repository"
+    "github.com/jrmarcello/gopherplate/internal/usecases/user/interfaces"
 )
 
 func buildDependencies(cluster *database.DBCluster, cfg *config.Config, ...) router.Dependencies {

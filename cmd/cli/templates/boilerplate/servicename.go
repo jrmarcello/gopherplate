@@ -8,10 +8,10 @@ import (
 )
 
 // serviceNameFiles lists non-Go files where the literal service name
-// "go-boilerplate" appears and must be replaced with the new name.
+// "gopherplate" appears and must be replaced with the new name.
 //
 // Go files are NOT listed here because they use the full module path
-// (github.com/jrmarcello/go-boilerplate) which is handled separately
+// (github.com/jrmarcello/gopherplate) which is handled separately
 // by the module rewriter.
 var serviceNameFiles = []string{
 	// Build
@@ -66,9 +66,9 @@ var serviceNameFiles = []string{
 	"docs/swagger.json",
 }
 
-const defaultServiceName = "go-boilerplate"
+const defaultServiceName = "gopherplate"
 
-// ReplaceServiceName replaces all occurrences of "go-boilerplate" with
+// ReplaceServiceName replaces all occurrences of "gopherplate" with
 // newName in the known config and deploy files within projectDir.
 // Files that were removed by feature toggles are silently skipped.
 func ReplaceServiceName(projectDir, newName string) error {

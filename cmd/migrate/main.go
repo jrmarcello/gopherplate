@@ -24,7 +24,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"
 
-	"github.com/jrmarcello/go-boilerplate/config"
+	"github.com/jrmarcello/gopherplate/config"
 )
 
 func main() {

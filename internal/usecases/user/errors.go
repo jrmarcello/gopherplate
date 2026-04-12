@@ -3,9 +3,9 @@ package user
 import (
 	"errors"
 
-	userdomain "github.com/jrmarcello/go-boilerplate/internal/domain/user"
-	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
-	"github.com/jrmarcello/go-boilerplate/pkg/apperror"
+	userdomain "github.com/jrmarcello/gopherplate/internal/domain/user"
+	"github.com/jrmarcello/gopherplate/internal/domain/user/vo"
+	"github.com/jrmarcello/gopherplate/pkg/apperror"
 )
 
 // expectedErrors per use case — used by ClassifyError to distinguish

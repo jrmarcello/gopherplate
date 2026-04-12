@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	userdomain "github.com/jrmarcello/go-boilerplate/internal/domain/user"
+	userdomain "github.com/jrmarcello/gopherplate/internal/domain/user"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
-	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
+	"github.com/jrmarcello/gopherplate/internal/domain/user/vo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

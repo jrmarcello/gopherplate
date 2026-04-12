@@ -3,7 +3,7 @@ package user
 import (
 	"testing"
 
-	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
+	"github.com/jrmarcello/gopherplate/internal/domain/user/vo"
 	"github.com/stretchr/testify/assert"
 )
 

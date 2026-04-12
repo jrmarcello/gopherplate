@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/telemetry"
-	useruc "github.com/jrmarcello/go-boilerplate/internal/usecases/user"
-	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/dto"
-	"github.com/jrmarcello/go-boilerplate/pkg/httputil/httpgin"
+	"github.com/jrmarcello/gopherplate/internal/infrastructure/telemetry"
+	useruc "github.com/jrmarcello/gopherplate/internal/usecases/user"
+	"github.com/jrmarcello/gopherplate/internal/usecases/user/dto"
+	"github.com/jrmarcello/gopherplate/pkg/httputil/httpgin"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 )

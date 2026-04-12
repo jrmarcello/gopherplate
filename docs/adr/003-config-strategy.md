@@ -182,7 +182,7 @@ Variáveis de replica fazem fallback para os valores do writer quando não defin
 
 | Struct Field | Env Var | Default |
 | ------------ | ------- | ------- |
-| `Otel.ServiceName` | `OTEL_SERVICE_NAME` | `go-boilerplate` |
+| `Otel.ServiceName` | `OTEL_SERVICE_NAME` | `gopherplate` |
 | `Otel.CollectorURL` | `OTEL_COLLECTOR_URL` | *(vazio)* |
 | `Otel.Insecure` | `OTEL_INSECURE` | `true` |
 | `Auth.Enabled` | `SERVICE_KEYS_ENABLED` | `false` |
@@ -197,7 +197,7 @@ Variáveis de replica fazem fallback para os valores do writer quando não defin
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: go-boilerplate-config
+  name: gopherplate-config
 data:
   APP_ENV: "development"
   SERVER_PORT: "8080"
@@ -210,7 +210,7 @@ data:
   DB_CONN_MAX_LIFETIME: "5m"
   DB_CONN_MAX_IDLE_TIME: "90s"
   DB_REPLICA_ENABLED: "false"
-  OTEL_SERVICE_NAME: "go-boilerplate"
+  OTEL_SERVICE_NAME: "gopherplate"
   REDIS_URL: "redis://redis-service:6379"
   REDIS_TTL: "5m"
   REDIS_ENABLED: "true"
@@ -222,7 +222,7 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: go-boilerplate-secrets
+  name: gopherplate-secrets
 stringData:
   DB_USER: "user"
   DB_PASSWORD: "password"

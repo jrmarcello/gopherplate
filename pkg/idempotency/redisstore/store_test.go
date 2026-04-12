@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
-	"github.com/jrmarcello/go-boilerplate/pkg/idempotency"
+	"github.com/jrmarcello/gopherplate/pkg/idempotency"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

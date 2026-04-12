@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jrmarcello/go-boilerplate/pkg/apperror"
-	"github.com/jrmarcello/go-boilerplate/pkg/httputil/httpgin"
+	"github.com/jrmarcello/gopherplate/pkg/apperror"
+	"github.com/jrmarcello/gopherplate/pkg/httputil/httpgin"
 )
 
 // ErrorResponse represents the standard error response for Swagger documentation.

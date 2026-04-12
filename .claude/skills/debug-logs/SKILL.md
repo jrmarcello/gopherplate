@@ -11,7 +11,7 @@ Analyzes application logs from Kind cluster or Docker environment.
 ## Execution
 
 ### 1. Detect Environment
-- Kind cluster running? → `kubectl logs -n go-boilerplate-dev -l app=go-boilerplate --tail=200`
+- Kind cluster running? → `kubectl logs -n gopherplate-dev -l app=gopherplate --tail=200`
 - Docker Compose? → `docker compose -f docker/docker-compose.yml logs --tail=200`
 - Local dev (air)? → Check `tmp/` directory for air logs
 

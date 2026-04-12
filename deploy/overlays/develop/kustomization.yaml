@@ -7,23 +7,23 @@ resources:
   - secret.yaml
   - kind-redis.yaml
 
-namespace: go-boilerplate-dev
+namespace: gopherplate-dev
 
 images:
-  - name: 650155821999.dkr.ecr.sa-east-1.amazonaws.com/go-boilerplate
-    newName: go-boilerplate # Imagem local
+  - name: 650155821999.dkr.ecr.sa-east-1.amazonaws.com/gopherplate
+    newName: gopherplate # Imagem local
     newTag: dev
 
 patches:
   - path: deployment-patch.yaml
     target:
       kind: Deployment
-      name: go-boilerplate
+      name: gopherplate
   - path: ingress-patch.yaml
     target:
       kind: Ingress
-      name: go-boilerplate
+      name: gopherplate
   - path: hpa-patch.yaml
     target:
       kind: HorizontalPodAutoscaler
-      name: go-boilerplate
+      name: gopherplate

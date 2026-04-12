@@ -1,11 +1,11 @@
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: go-boilerplate-pdb
+  name: gopherplate-pdb
   labels:
-    app: go-boilerplate
+    app: gopherplate
 spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app: go-boilerplate
+      app: gopherplate

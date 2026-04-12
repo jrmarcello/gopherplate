@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/jrmarcello/go-boilerplate/pkg/httputil"
-	"github.com/jrmarcello/go-boilerplate/pkg/idempotency"
+	"github.com/jrmarcello/gopherplate/pkg/httputil"
+	"github.com/jrmarcello/gopherplate/pkg/idempotency"
 )
 
 // --- Mock Store ---

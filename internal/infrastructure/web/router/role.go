@@ -3,7 +3,7 @@ package router
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/web/handler"
+	"github.com/jrmarcello/gopherplate/internal/infrastructure/web/handler"
 )
 
 // RegisterRoleRoutes registra todas as rotas relacionadas a Role

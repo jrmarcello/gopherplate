@@ -15,33 +15,33 @@ func TestRewriteModulePath(t *testing.T) {
 		goFile := filepath.Join(dir, "main.go")
 		content := `package main
 
-import "github.com/jrmarcello/go-boilerplate/internal/domain"
+import "github.com/jrmarcello/gopherplate/internal/domain"
 
 func main() {}
 `
 		writeErr := os.WriteFile(goFile, []byte(content), 0o644)
 		require.NoError(t, writeErr)
 
-		rewriteErr := RewriteModulePath(dir, "github.com/jrmarcello/go-boilerplate", "github.com/org/my-service")
+		rewriteErr := RewriteModulePath(dir, "github.com/jrmarcello/gopherplate", "github.com/org/my-service")
 		require.NoError(t, rewriteErr)
 
 		result, readErr := os.ReadFile(goFile)
 		require.NoError(t, readErr)
 		assert.Contains(t, string(result), "github.com/org/my-service/internal/domain")
-		assert.NotContains(t, string(result), "github.com/jrmarcello/go-boilerplate")
+		assert.NotContains(t, string(result), "github.com/jrmarcello/gopherplate")
 	})
 
 	t.Run("replaces module path in go.mod", func(t *testing.T) {
 		dir := t.TempDir()
 		goMod := filepath.Join(dir, "go.mod")
-		content := `module github.com/jrmarcello/go-boilerplate
+		content := `module github.com/jrmarcello/gopherplate
 
 go 1.25.0
 `
 		writeErr := os.WriteFile(goMod, []byte(content), 0o644)
 		require.NoError(t, writeErr)
 
-		rewriteErr := RewriteModulePath(dir, "github.com/jrmarcello/go-boilerplate", "github.com/org/my-service")
+		rewriteErr := RewriteModulePath(dir, "github.com/jrmarcello/gopherplate", "github.com/org/my-service")
 		require.NoError(t, rewriteErr)
 
 		result, readErr := os.ReadFile(goMod)
@@ -52,12 +52,12 @@ go 1.25.0
 	t.Run("replaces in YAML files", func(t *testing.T) {
 		dir := t.TempDir()
 		yamlFile := filepath.Join(dir, "config.yaml")
-		content := `image: github.com/jrmarcello/go-boilerplate:latest
+		content := `image: github.com/jrmarcello/gopherplate:latest
 `
 		writeErr := os.WriteFile(yamlFile, []byte(content), 0o644)
 		require.NoError(t, writeErr)
 
-		rewriteErr := RewriteModulePath(dir, "github.com/jrmarcello/go-boilerplate", "github.com/org/my-service")
+		rewriteErr := RewriteModulePath(dir, "github.com/jrmarcello/gopherplate", "github.com/org/my-service")
 		require.NoError(t, rewriteErr)
 
 		result, readErr := os.ReadFile(yamlFile)
@@ -68,12 +68,12 @@ go 1.25.0
 	t.Run("replaces in Makefile", func(t *testing.T) {
 		dir := t.TempDir()
 		makefile := filepath.Join(dir, "Makefile")
-		content := `MODULE = github.com/jrmarcello/go-boilerplate
+		content := `MODULE = github.com/jrmarcello/gopherplate
 `
 		writeErr := os.WriteFile(makefile, []byte(content), 0o644)
 		require.NoError(t, writeErr)
 
-		rewriteErr := RewriteModulePath(dir, "github.com/jrmarcello/go-boilerplate", "github.com/org/my-service")
+		rewriteErr := RewriteModulePath(dir, "github.com/jrmarcello/gopherplate", "github.com/org/my-service")
 		require.NoError(t, rewriteErr)
 
 		result, readErr := os.ReadFile(makefile)
@@ -84,11 +84,11 @@ go 1.25.0
 	t.Run("skips non-matching file types", func(t *testing.T) {
 		dir := t.TempDir()
 		binFile := filepath.Join(dir, "binary.dat")
-		content := "github.com/jrmarcello/go-boilerplate"
+		content := "github.com/jrmarcello/gopherplate"
 		writeErr := os.WriteFile(binFile, []byte(content), 0o644)
 		require.NoError(t, writeErr)
 
-		rewriteErr := RewriteModulePath(dir, "github.com/jrmarcello/go-boilerplate", "github.com/org/my-service")
+		rewriteErr := RewriteModulePath(dir, "github.com/jrmarcello/gopherplate", "github.com/org/my-service")
 		require.NoError(t, rewriteErr)
 
 		result, readErr := os.ReadFile(binFile)
@@ -106,7 +106,7 @@ func hello() {}
 		writeErr := os.WriteFile(goFile, []byte(content), 0o644)
 		require.NoError(t, writeErr)
 
-		rewriteErr := RewriteModulePath(dir, "github.com/jrmarcello/go-boilerplate", "github.com/org/my-service")
+		rewriteErr := RewriteModulePath(dir, "github.com/jrmarcello/gopherplate", "github.com/org/my-service")
 		require.NoError(t, rewriteErr)
 
 		result, readErr := os.ReadFile(goFile)
@@ -123,12 +123,12 @@ func hello() {}
 		goFile := filepath.Join(nested, "entity.go")
 		content := `package domain
 
-import "github.com/jrmarcello/go-boilerplate/pkg/apperror"
+import "github.com/jrmarcello/gopherplate/pkg/apperror"
 `
 		writeErr := os.WriteFile(goFile, []byte(content), 0o644)
 		require.NoError(t, writeErr)
 
-		rewriteErr := RewriteModulePath(dir, "github.com/jrmarcello/go-boilerplate", "github.com/org/my-service")
+		rewriteErr := RewriteModulePath(dir, "github.com/jrmarcello/gopherplate", "github.com/org/my-service")
 		require.NoError(t, rewriteErr)
 
 		result, readErr := os.ReadFile(goFile)

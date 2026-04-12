@@ -20,7 +20,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/redis"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	"github.com/jrmarcello/go-boilerplate/pkg/cache/redisclient"
+	"github.com/jrmarcello/gopherplate/pkg/cache/redisclient"
 )
 
 var testDB *sqlx.DB

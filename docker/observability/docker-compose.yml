@@ -1,8 +1,8 @@
 # ELK Stack + OpenTelemetry Collector para observabilidade
-# Requer: make docker-up (cria a rede go-boilerplate-network)
+# Requer: make docker-up (cria a rede gopherplate-network)
 # Uso: docker compose -f docker/observability/docker-compose.yml up -d
 
-name: go-boilerplate
+name: gopherplate
 
 services:
   # ============================================
@@ -28,7 +28,7 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - go-boilerplate-network
+      - gopherplate-network
     restart: unless-stopped
     deploy:
       resources:
@@ -54,7 +54,7 @@ services:
       elasticsearch:
         condition: service_healthy
     networks:
-      - go-boilerplate-network
+      - gopherplate-network
     restart: unless-stopped
     deploy:
       resources:
@@ -80,7 +80,7 @@ services:
       elasticsearch:
         condition: service_healthy
     networks:
-      - go-boilerplate-network
+      - gopherplate-network
     restart: unless-stopped
     deploy:
       resources:
@@ -93,5 +93,5 @@ volumes:
 
 
 networks:
-  go-boilerplate-network:
+  gopherplate-network:
     external: true

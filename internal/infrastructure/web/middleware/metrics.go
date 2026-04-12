@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jrmarcello/go-boilerplate/pkg/telemetry"
+	"github.com/jrmarcello/gopherplate/pkg/telemetry"
 )
 
 // Metrics returns a middleware that records HTTP request metrics (count, duration, Apdex).

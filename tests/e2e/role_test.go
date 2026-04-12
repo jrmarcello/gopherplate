@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/jrmarcello/go-boilerplate/internal/bootstrap"
+	"github.com/jrmarcello/gopherplate/internal/bootstrap"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

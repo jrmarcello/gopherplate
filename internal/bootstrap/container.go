@@ -6,12 +6,12 @@ package bootstrap
 import (
 	"github.com/jmoiron/sqlx"
 
-	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/db/postgres/repository"
-	infratelemetry "github.com/jrmarcello/go-boilerplate/internal/infrastructure/telemetry"
-	"github.com/jrmarcello/go-boilerplate/internal/infrastructure/web/handler"
-	roleuc "github.com/jrmarcello/go-boilerplate/internal/usecases/role"
-	useruc "github.com/jrmarcello/go-boilerplate/internal/usecases/user"
-	"github.com/jrmarcello/go-boilerplate/pkg/cache"
+	"github.com/jrmarcello/gopherplate/internal/infrastructure/db/postgres/repository"
+	infratelemetry "github.com/jrmarcello/gopherplate/internal/infrastructure/telemetry"
+	"github.com/jrmarcello/gopherplate/internal/infrastructure/web/handler"
+	roleuc "github.com/jrmarcello/gopherplate/internal/usecases/role"
+	useruc "github.com/jrmarcello/gopherplate/internal/usecases/user"
+	"github.com/jrmarcello/gopherplate/pkg/cache"
 )
 
 // Container holds all application dependencies grouped by layer.

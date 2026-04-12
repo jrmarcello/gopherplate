@@ -1,6 +1,6 @@
 # Kubernetes Deploy - Explicação dos Arquivos
 
-Este documento explica a estrutura de deploy do `go-boilerplate` no EKS.
+Este documento explica a estrutura de deploy do `gopherplate` no EKS.
 
 ## Estrutura de Diretórios
 
@@ -139,7 +139,7 @@ make kind-down       # Remove cluster Kind
 
 Sobrescreve valores para ambiente de homologação AWS:
 
-- Namespace: `go-boilerplate-homologacao`
+- Namespace: `gopherplate-homologacao`
 - Host: `*.max-homolog.internal`
 - ExternalSecret do AWS Secrets Manager
 
@@ -147,7 +147,7 @@ Sobrescreve valores para ambiente de homologação AWS:
 
 Sobrescreve valores para ambiente de produção AWS:
 
-- Namespace: `go-boilerplate-producao`
+- Namespace: `gopherplate-producao`
 - SSL: `DB_SSLMODE: "require"`
 - OpenTelemetry: Collector URL configurado
 - ExternalSecret do AWS Secrets Manager

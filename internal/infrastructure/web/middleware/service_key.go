@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/jrmarcello/go-boilerplate/pkg/httputil/httpgin"
-	"github.com/jrmarcello/go-boilerplate/pkg/logutil"
+	"github.com/jrmarcello/gopherplate/pkg/httputil/httpgin"
+	"github.com/jrmarcello/gopherplate/pkg/logutil"
 )
 
 // ServiceKeyConfig contém a configuração de autenticação por Service Key.

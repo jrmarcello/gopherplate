@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Go boilerplate/template for microservices, part of the Appmax ecosystem. Uses Clean Architecture with PostgreSQL, Redis cache, and OpenTelemetry observability. Hosted on GitHub, deployed to AWS EKS via ArgoCD with Kustomize overlays.
+Gopherplate/template for microservices, part of the Appmax ecosystem. Uses Clean Architecture with PostgreSQL, Redis cache, and OpenTelemetry observability. Hosted on GitHub, deployed to AWS EKS via ArgoCD with Kustomize overlays.
 
 This project serves as a **starter template** with two example domains: `user` (full CRUD with cache, singleflight, idempotency) and `role` (simpler multi-domain DI example). Clone it, use them as reference, and rename to your domain.
 
@@ -65,7 +65,7 @@ swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal
   - `idempotency/` - Idempotency Store interface and Redis implementation
 - **`config/`** - Configuration loading (godotenv + env vars)
 - **`cmd/api/`** - Application entrypoint and manual DI wiring in `server.go`
-- **`cmd/cli/`** - Template CLI (`boilerplate`) for scaffolding new services and domains. Contains Cobra commands, scaffold engine, and embedded templates. See `docs/guides/template-cli.md`.
+- **`cmd/cli/`** - Template CLI (`gopherplate`) for scaffolding new services and domains. Contains Cobra commands, scaffold engine, and embedded templates. See `docs/guides/template-cli.md`.
 
 ### Key Patterns
 

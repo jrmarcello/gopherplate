@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	userdomain "github.com/jrmarcello/go-boilerplate/internal/domain/user"
-	"github.com/jrmarcello/go-boilerplate/internal/domain/user/vo"
-	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/dto"
-	"github.com/jrmarcello/go-boilerplate/internal/usecases/user/interfaces"
+	userdomain "github.com/jrmarcello/gopherplate/internal/domain/user"
+	"github.com/jrmarcello/gopherplate/internal/domain/user/vo"
+	"github.com/jrmarcello/gopherplate/internal/usecases/user/dto"
+	"github.com/jrmarcello/gopherplate/internal/usecases/user/interfaces"
 
-	ucshared "github.com/jrmarcello/go-boilerplate/internal/usecases/shared"
+	ucshared "github.com/jrmarcello/gopherplate/internal/usecases/shared"
 	"go.opentelemetry.io/otel/trace"
 )
 

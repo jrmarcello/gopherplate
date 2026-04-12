@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// CopyProject copies the boilerplate project from srcDir to dstDir,
+// CopyProject copies the template project from srcDir to dstDir,
 // skipping all paths listed in ExcludePaths.
 func CopyProject(srcDir, dstDir string) error {
 	return filepath.Walk(srcDir, func(path string, info fs.FileInfo, walkErr error) error {
