@@ -72,16 +72,53 @@ Coverage atual: ~89%. Use `make test-coverage` para verificar localmente.
 
 Novas funcionalidades devem incluir:
 
-- **Testes unitarios** para domain e usecases (hand-written mocks em `mock_test.go`)
+- **Testes unitarios** para domain e usecases (hand-written mocks em `mocks_test.go`)
 - **Testes de repositorio** com go-sqlmock
 - **Testes de pkg/** com miniredis (cache, idempotency) ou sqlmock (database)
 - **Testes E2E** com TestContainers para mudancas criticas
+- **Smoke tests** com k6 (`make load-smoke`) para validacao funcional de endpoints
 - Cobrir tanto **happy path** quanto **todos os error paths** possiveis
+
+## SDD Workflow (features complexas)
+
+Para features nao-triviais, use o fluxo Specification-Driven Development:
+
+1. **Spec**: crie uma especificacao com `/spec "descricao"` — gera requisitos, test plan, tasks e analise de paralelismo em `.specs/`
+2. **Review**: revise a spec, ajuste o que precisar, aprove (status APPROVED)
+3. **Execute**: rode `/ralph-loop .specs/<nome>.md` para execucao autonoma task-by-task com TDD
+4. **Validate**: `/spec-review .specs/<nome>.md` para revisao formal contra os requisitos
+
+Detalhes em `docs/guides/sdd-ralph-loop.md` e `.claude/rules/sdd.md`.
+
+## Error Handling
+
+Erros seguem o padrao de 3 camadas (ADR-009):
+
+- **Domain**: sentinels puros (`user.ErrNotFound`, `role.ErrDuplicateRoleName`)
+- **Use Case**: mapeia via `toAppError()` + classifica span via `ClassifyError()`
+- **Handler**: resolve generico via `errors.As()` + `codeToStatus` map — zero imports de dominio
+
+Guia pratico: `docs/guides/error-handling.md`.
+
+## Load Tests
+
+Estrutura modular em `tests/load/`:
+
+- `helpers.js` — HTTP client, assertions, UUID, headers
+- `users.js` / `roles.js` — operacoes e smoke groups por dominio
+- `main.js` — orquestrador de cenarios (smoke, load, stress, spike)
+
+```bash
+make load-smoke   # Smoke: 1 VU, 1 iteracao, validacao funcional
+make load-test    # Load: ramping ate 50 VUs
+make load-stress  # Stress: ate 200 VUs
+make load-spike   # Spike: burst de 100 VUs
+```
 
 ## Arquitetura
 
 Antes de criar ou modificar arquivos, consulte:
 
 - `CLAUDE.md` — visao geral da arquitetura e padroes
-- `AGENTS.md` — regras e convencoes detalhadas
 - `docs/adr/` — decisoes arquiteturais (Clean Architecture, IDs, config, errors, auth, migrations, pkg/)
+- `docs/guides/error-handling.md` — guia pratico de error handling
