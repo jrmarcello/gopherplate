@@ -1,166 +1,235 @@
 # Changelog
 
-All notable changes to this project are documented in this file.
+Todas as mudanças notáveis deste projeto estão documentadas aqui.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Conventional Commits](https://www.conventionalcommits.org/).
+Formato baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+Commits seguem [Conventional Commits](https://www.conventionalcommits.org/).
+
+---
+## [0.10.0] - 2026-04-12
+
+### Documentação
+
+- Update CONTRIBUTING.md with SDD workflow, error handling, and load tests
+
+### Funcionalidades
+
+- **load-tests**: Modularize k6 load tests into helpers/users/roles/main
+
+### Manutenção
+
+- **release**: V0.10.0 [skip ci]
+
+### Refatoração
+
+- Remove error-handling specification and modularize load tests
+
+## [0.9.0] - 2026-04-12
+
+### Funcionalidades
+
+- **dx**: Enhance review process, coverage rules, and parallelism from yield
+
+### Refatoração
+
+- **di**: Extract DI wiring into typed bootstrap container
+
+## [0.8.0] - 2026-04-12
+
+### Refatoração
+
+- **error-handling**: Structured errors in use cases with span classification
+
+## [0.7.0] - 2026-04-12
+
+### Correções
+
+- **deps**: Upgrade docker/docker v28.5.1 → v28.5.2 (2 HIGH vulnerabilities)
+- Consolidate migrations, fix /entities → /users routes
+- **sandbox**: Guard git config against empty GIT_AUTHOR_EMAIL
+- **sandbox**: Ignore non-zero exit code from interactive shell and claude
+- **hooks**: Inherit git identity in worktree-create (host → global → env → warn)
+- **sandbox**: Pass host git identity to container for commits
+- **deploy**: Enable service key auth in Kind cluster (develop overlay)
+- **hooks**: Use -show verbose in pre-push vulncheck
+- **vulncheck**: Use -show verbose to catch package-level vulnerabilities
+- **deps**: Upgrade grpc v1.78.0 → v1.79.3 to fix GO-2026-4762 (auth bypass)
+- **settings**: Comment out sensitive file read permissions in settings.json
+- **config**: Enable pool settings by default in .env.example
+- **observability**: Use same compose project name for Docker Desktop grouping
+- **observability**: Disable ES disk watermarks for local dev
+- **load**: Rewrite k6 scenarios for boilerplate entity model
+- **dev**: Fix make run and air build to compile all cmd/api files
+- Resolve Priority 3+4 findings (MEDIUM/LOW) from full review
+- Resolve Priority 2 findings (HIGH/SHOULD FIX) from full review
+- Resolve Priority 1 findings from full review
+- **deps**: Upgrade otel/sdk to v1.40.0 to fix GO-2026-4394 vulnerability
+
+### Documentação
+
+- Migrate all references from Bitbucket to GitHub
+- **cli**: Fix template-cli guide to match actual implementation
+- **readme**: Update Quick Start and features to highlight Template CLI
+- Add gRPC guide and update documentation index
+- Add parallelism and merge strategy references to CLAUDE.md and README
+- **readme**: Add AI DX tools section with SDD + Ralph Loop references
+- Add complementary modules section and recommended libraries guide
+- **readme**: Reorganize sections by developer journey
+- Replace all entity/entity_example references with user/role across project
+- Add make changelog to help, README commands and CONTRIBUTING PR checklist
+- **adr-003**: Add SERVICE_KEYS_ENABLED, OTEL_INSECURE, SWAGGER_HOST and fix ConfigMap example
+- **readme**: Add Sandbox (DevContainer) section with usage, tools and firewall docs
+- **readme**: Replace PII acronym with clear Portuguese description and LGPD context
+- **readme**: Remove stale presentation.md reference from guides table
+- **readme**: Consolidate README with presentation, add FAQ, roadmap and project structure
+- **readme**: Add DX and AI integration highlights to intro
+- **readme**: Add project intro with quick start and presentation link
+- Move presentation.md to docs/guides/
+- **presentation**: Fix Portuguese accents and punctuation throughout
+- Add presentation guide for go-boilerplate showcase
+- Add missing guide references, fix env example, document coverage threshold
+- Fix stale lint-full references and cache import paths
+- **claude**: Remove rate limiting reference from middleware list
+- **contributing**: Rewrite with issue tracker, dev workflow, and architecture refs
+- Add CHANGELOG.md with full project history
+- **guides**: Add multi-database strategy guide
+- **guides**: Add Uber Fx dependency injection guide
+- Comprehensive documentation update to match current codebase
+- **agents**: Add .agent/ toolkit references to CLAUDE.md and AGENTS.md
+- **readme**: Update with pkg/, new ADRs, commands and features
+- Fix markdown lint errors
+- Fix broken links to renamed ADRs
+- Rename ADRs to use numeric prefixes (001-006)
+- Standardize ADRs format (001-006)
+- Update README and AGENTS guidelines
+- Add cache strategy guide with cache-aside pattern explanation
+- Reorganize documentation structure
+- Update roadmap with future improvements
+- Rewrite README as reusable boilerplate template
+- Comprehensive rewrite of AGENTS.md with AI guidelines
+- Add documentation references to AGENTS.md
+- Reorganize - move guides to dedicated folder, remove empty app/
+- Standardize all ADRs with consistent format
+- Improve clean architecture ADR with pillars and implementation
+- Refine clean arch adr with implementation details
+- Refactor arch docs to ADRs
+- Rename decisions to ADRs and add config strategy
+- Fix markdown table format in README
+- Update architecture diagram and description for entity domain
+- Remove MIT license references and regenerate swagger
+- Add uuid v7 comparison to ulid adr
+- Complete roadmap items
+- Update README and regenerate Swagger for entity domain
+- Add project documentation and tooling
+- Add Swagger API documentation
+
+### Funcionalidades
+
+- **dx**: Add TDD, Test Plan, parallel execution, and span classification to SDD workflow
+- **cli**: Add boilerplate CLI for scaffolding services and domains
+- **dx**: Add parallelism detection and hybrid B+C merge strategy to SDD
+- **dx**: Add SDD + Ralph Loop workflow for AI-assisted development
+- **wiring**: Integrate role domain into server and router
+- **domain**: Add role entity as second domain (multi-domain DI example)
+- **sandbox**: Add Docker socket mount for make commands inside container
+- **server**: Add Swagger descriptions, MaxHeaderBytes and telemetry graceful degradation
+- **pkg**: Wire PII masking into slog pipeline via MaskingHandler
+- **config**: Add IdempotencyConfig, GinMode, MaxBodySize and Validate()
+- **deploy**: Add PodDisruptionBudget and startup probe
+- **auth**: Add fail-closed service key auth (SERVICE_KEYS_ENABLED)
+- **health**: Merge health checker package branch
+- **health**: Add reusable health checker package with dependency registration
+- **observability**: Upgrade ELK stack, add metrics pipeline, dashboard and alerting
+- **docker**: Add make run for full Docker stack (infra + migrate + API)
+- **dx**: Add Claude Code DX setup with devcontainer, hooks, agents and skills
+- **migrations**: Implement ArgoCD PreSync Job strategy
+- **auth**: Add service key authentication middleware
+- **config**: Implement viper for flexible configuration
+- **app**: Add application bootstrap and server
+- **api**: Add HTTP handlers and router for Entity CRUD
+- **infra**: Add Redis cache and OpenTelemetry integration
+- **infra**: Add PostgreSQL repository and migration for Entity
+- **usecases**: Add CRUD use cases for Entity
+- **domain**: Add Entity aggregate with ID and Email value objects
+- **config**: Add application configuration with env support
+
+### Manutenção
+
+- Remove outdated template CLI specification document
+- **release**: Prepare for version 0.6.0 with updated changelog and Makefile enhancements
+- **deps**: Remove unused dependencies and update indirect dependencies
+- **deploy**: Toggle Swagger per environment and add @Security annotations
+- **claude**: Remove .env read deny rules from settings
+- **config**: Add GinMode, MaxBodySize and Idempotency vars to .env.example
+- **sandbox**: Add sandbox-clean to remove container, image and volumes
+- **build**: Unify air output to bin/ (remove tmp/ directory)
+- **build**: Include migrate binary in make build output
+- **tests**: Consolidate all test artifacts under tests/ directory
+- **changelog**: Add git-cliff config and make changelog command
+- **deps**: Go mod tidy (move x/time to indirect)
+- **ci**: Exclude bootstrap/wiring packages from coverage, raise threshold to 60%
+- **docs**: Add markdownlint config and fix all markdown issues
+- **middleware**: Remove unused rate limiter
+- **api**: Remover arquivo de configuração de API obsoleto
+- **lefthook**: Rewrite git hooks with 3-layer quality gates
+- **makefile**: Add docker prerequisite check
+- **makefile**: Add prerequisite checks for all external tool targets
+- **makefile**: Add kind/kubectl prerequisite check for kind-* targets
+- **deps**: Upgrade Go directive to 1.25 (align with CI and people)
+- **dx**: Add review report to gitignore, fix sandbox port conflict, improve skill output
+- **infra**: Standardize Docker and CI/CD with people-service-registry
+- Stop tracking roadmap.md
+- Refactor bitbucket pipelines with YAML anchors and variables
+- Refactor Makefile with configurable project variables
+- Unify config with root .env and viper
+- Setup config examples and gitignore
+- **deploy**: Add Docker and Kubernetes deployment configs
+- Add development config files (gitignore, air, golangci, lefthook)
+- Initialize Go module as ms-boilerplate-go
+
+### Refatoração
+
+- Migrate module path to GitHub and upgrade golangci-lint to v2
+- Rename entity_example to user across entire project
+- **pkg**: Decouple database from sqlx and PostgreSQL driver
+- **pkg**: Decouple telemetry from hardcoded gRPC exporters
+- **pkg**: Decouple logutil PII masking from hardcoded BR fields
+- **pkg**: Separate Gin implementation from httputil response helpers
+- **pkg**: Separate Redis implementations into subpackages
+- **cache**: Move singleflight from usecases to pkg/cache
+- **middleware**: Delete pkg/ctxkeys, propagate CallerService via LogContext
+- **logutil**: Merge fanout handler, masking, Logger interface
+- **logutil**: Add fanout handler, PII masking, Logger interface, context propagation
+- **apperror**: Merge remove HTTPStatus branch
+- **apperror**: Remove HTTPStatus, move HTTP mapping to handler layer
+- **cleanup**: Remove dead code, unused constants, rename database file
+- **observability**: Integrate with app network (external)
+- **dx**: Remove .agent/ directory, consolidate into .claude/
+- **cache**: Add pool config, singleflight protection, remove legacy impl
+- **ids**: Migrate from ULID to UUID v7 (RFC 9562)
+- **ci**: Restructure pipeline with parallel steps, vulncheck, and Slack notifications
+- **makefile**: Improve DX with categorized help, sandbox targets and vulncheck
+- **pkg**: Extract reusable packages and standardize API responses
+- Fix imports and tests after entity renaming
+- **cache**: Move interface to shared and add Ping method
+- Rename deploy/overlays/dev to deploy/overlays/develop
+- **config**: Migrate from Viper to godotenv + os
+- **deploy**: Rename dev-local overlay to dev
+- Remove all people/person references from project
+- Keep legacy person domain as reference (deprecated)
+
+### Testes
+
+- Comprehensive test coverage for multi-domain architecture
+- **cache**: Add singleflight unit tests (deduplication, error, independent keys)
+- **cache**: Add comprehensive unit tests with miniredis
+- Add comprehensive unit tests for middleware and pkg packages
+- **repository**: Add go-sqlmock unit tests for all CRUD methods
+- **e2e**: Improve test coverage with error and auth scenarios
+- Add comprehensive unit tests with mocks
+- Add e2e tests for Entity CRUD
 
 ---
 
-## [Unreleased]
-
-## [0.6.0] - 2026-03-30
-
-### Added
-
-- **Template CLI** (`cmd/cli/`): `boilerplate` CLI for scaffolding new services and domains — generates full Clean Architecture skeleton from templates. See `docs/guides/template-cli.md`
-- **Role domain**: second example domain (`internal/domain/role/`, `internal/usecases/role/`) wired into server and router as a multi-domain DI reference
-- **SDD + Ralph Loop**: AI-assisted development workflow — spec files in `.specs/`, `/spec` skill generates SDDs, `/ralph-loop` executes tasks autonomously via Stop hook
-- **Parallelism in SDD**: dependency graph + file-conflict analysis, Hybrid B+C merge strategy for parallel task batches. See `docs/guides/sdd-ralph-loop.md`
-- **gRPC guide**: documentation for integrating gRPC into the boilerplate (`docs/guides/grpc.md`)
-- **Recommended libraries guide**: complementary modules section with ecosystem recommendations (`docs/guides/`)
-
-### Changed
-
-- **Rename `entity_example` → `user`**: domain, use cases, repository, handlers, routes and docs all consistently use `user` terminology
-- **`pkg/database`**: decoupled from sqlx and PostgreSQL driver — now driver-agnostic (`database/sql`), supports postgres/mysql/sqlite3
-- **`pkg/telemetry`**: decoupled from hardcoded gRPC exporters — exporter is now configurable
-- **README**: reorganized by developer journey; added AI DX tools section (SDD, Ralph Loop, skills)
-
-### Fixed
-
-- **docker/docker**: upgraded v28.5.1 → v28.5.2 to address 2 HIGH vulnerabilities
-- Consolidated migrations and corrected routes (`/entities` → `/users`)
-
-### Tests
-
-- Comprehensive unit and integration test coverage for multi-domain architecture (user + role)
-
-### Chore
-
-- Removed unused dependencies and updated indirect dependencies (`go.mod` / `go.sum` tidy)
-
-## [0.5.0] - 2026-03-27
-
-### Added
-
-- **Observability stack**: ELK 8.13 + OTel Collector 0.114 with metrics pipeline, ECS mapping, and auto-setup
-- **Kibana dashboard**: 20-panel dashboard (SLO, HTTP, latency, cache, DB pool, logs) via `generate_dashboard.py`
-- **Alerting rules**: 6 SLO-based rules (burn rate, p95, p99, 5xx, DB saturation) via `generate_rules.py`
-- **Uber Fx guide**: Tutorial for migrating from manual DI to Uber Fx (`docs/guides/fx-dependency-injection.md`)
-- **Multi-database guide**: Strategy guide for services with multiple databases (`docs/guides/multi-database.md`)
-- **Lefthook 3-layer quality gates**: Pre-commit (fmt + vet), commit-msg (conventional commits), pre-push (lint + test)
-
-### Changed
-
-- Observability network integrated with app network (`go-boilerplate-network`, external)
-- Same Docker Desktop project group for all containers (`name: go-boilerplate`)
-
-## [0.4.0] - 2026-03-27
-
-### Added
-
-- **Claude Code DX setup**: `.claude/` with settings, 6 hooks, 3 agents, 3 rules, 11 skills
-- **DevContainer**: Dockerfile (Go 1.25 + Claude Code), firewall (default-deny), zsh + Powerline10k
-- **Sandbox targets**: `make sandbox`, `make sandbox-claude`, `make sandbox-shell`, firewall/ssh checks
-- **Pipeline restructure**: 4 parallel PR checks (lint, vulncheck, unit, e2e), Slack notifications, coverage threshold
-- **go-sqlmock tests**: 18 test cases covering all repository CRUD methods
-- **Singleflight**: Cache stampede protection in GetUseCase via `golang.org/x/sync/singleflight`
-- **Idempotency Redis**: `pkg/idempotency/` with Store interface + RedisStore (SHA-256 fingerprint, lock/unlock)
-- **Redis pool config**: PoolSize, MinIdleConns, DialTimeout, ReadTimeout, WriteTimeout
-- **NetworkPolicy**: K8s manifest restricting ingress/egress to required services only
-- **Container securityContext**: readOnlyRootFilesystem, drop ALL capabilities
-- **Prerequisite checks**: `make kind-*`, `make load-*`, `make docker-*` show install instructions if tools missing
-- **`make run`**: Full Docker stack (infra + migrations + API) via compose profile
-- **`make observability-setup`**: Auto-import dashboard + data views + alerting rules
-- **`make vulncheck`**: govulncheck dependency scanning
-
-### Changed
-
-- **ULID → UUID v7**: Migrated ID strategy to RFC 9562, native PostgreSQL UUID type
-- **DB config**: Individual vars (DB_HOST, DB_PORT, etc.) replacing single DB_DSN (SRE-approved pattern)
-- **DB cluster**: Repository now uses Writer/Reader split correctly
-- **Update use case**: Wrapped in transaction (fixes TOCTOU race)
-- **Error handling**: Sentinel `vo.ErrInvalidID`, timing-safe service key comparison, sanitized bind errors
-- **Middleware**: Rate limiter with context cancellation + smart eviction, X-Request-ID validation
-- **All error messages**: Standardized to English, generic auth errors (prevent enumeration)
-- **Swagger**: Default disabled, apiKey security definitions for X-Service-Name/Key
-- **OTel**: TLS option via `OTEL_INSECURE`, injected business metrics (removed global singleton)
-- **Server**: Error channel pattern replacing `os.Exit` in goroutine
-- **Cache interface**: ISP fix (Get/Set/Delete only, no Close)
-- **ConfigMaps**: Credentials removed from non-dev overlays, `sslmode=require` for prod
-- **Migration**: NOT NULL on active, partial index, VARCHAR(26)→UUID, IF EXISTS in down
-- **Makefile**: Categorized help, DRY with COMPOSE variable, `-include .env` auto-loading
-- **Go**: 1.24 → 1.25, removed `oklog/ulid` dependency
-- **Load tests**: Realistic VU counts, correct entity payload, fixed response parsing
-- **DTO validation**: `binding:"required,max=255"` on name/email fields
-
-### Removed
-
-- `.agent/` directory (consolidated into `.claude/`)
-- `internal/infrastructure/cache/` (legacy duplicate of `pkg/cache`)
-- `internal/domain/shared/interfaces/` (unused)
-- CORS middleware (internal service, not needed)
-- `ParseEmail()` (unused, bypassed validation)
-- `ErrInvalidInput` (declared but never used)
-- `GetRedisTTL()` (unused in production code)
-- `oklog/ulid/v2` dependency
-
-## [0.3.0] - 2026-03-12
-
-### Added
-
-- **Reusable packages**: `pkg/apperror`, `pkg/httputil`, `pkg/ctxkeys`, `pkg/logutil`, `pkg/telemetry`, `pkg/cache`, `pkg/database`
-- ADR-007 (reusable packages) and ADR-008 (API response format)
-- `.agent/` AI toolkit with 14 agents, 23 skills, 8 workflows
-
-### Changed
-
-- Standardized API responses via `httputil.SendSuccess`/`httputil.SendError`
-- Extracted shared code from internal to pkg/ for cross-service reuse
-
-### Fixed
-
-- OpenTelemetry SDK upgraded to v1.40.0 (fixes GO-2026-4394 vulnerability)
-
-## [0.2.0] - 2026-02-15
-
-### Added
-
-- **Service key authentication**: `X-Service-Name` + `X-Service-Key` middleware (ADR-005)
-- **ArgoCD PreSync migrations**: `cmd/migrate/` binary for K8s Job (ADR-006)
-- **Cache strategy**: Redis cache-aside pattern with builder `.WithCache()` (guide)
-- Comprehensive unit tests with hand-written mocks
-- E2E tests with error and auth scenarios
-- Rate limiting and idempotency middleware
-
-### Changed
-
-- Config migrated from Viper to godotenv + os (simpler, fewer deps)
-- Deploy overlay renamed from `dev` to `develop`
-- Docker and CI/CD standardized with people-service-registry patterns
-
-## [0.1.0] - 2026-01-08
-
-### Added
-
-- **Initial project structure**: Clean Architecture (domain → usecases → infrastructure)
-- **Entity CRUD**: Create, Get, List, Update, Delete with ULID IDs
-- **Domain layer**: Entity aggregate with ID and Email value objects
-- **Use cases**: One file per operation with interface-based DI
-- **Infrastructure**: Gin HTTP handlers, sqlx PostgreSQL repository, Redis cache, OpenTelemetry
-- **Manual DI**: `cmd/api/server.go:buildDependencies()` wiring
-- **Database**: PostgreSQL with Goose migrations
-- **Docker**: docker-compose (Postgres + Redis), multi-stage production Dockerfile (distroless)
-- **Kubernetes**: Kustomize overlays (develop, homologacao, producao), Kind support
-- **CI/CD**: GitHub Actions with lint, test, Docker build, ECR push, Kustomize tag update
-- **Observability**: OpenTelemetry traces + structured JSON logging
-- **Testing**: Unit tests + E2E with TestContainers
-- **Documentation**: README, ADRs (001-004), Swagger API docs, architecture guide
-- **Dev tools**: Air (hot reload), Lefthook (git hooks), golangci-lint, k6 load tests
-
----
-
-> This changelog can be auto-generated from conventional commits using tools like
-> [git-cliff](https://github.com/orhun/git-cliff) or
-> [conventional-changelog](https://github.com/conventional-changelog/conventional-changelog).
+> Gerado automaticamente com [git-cliff](https://github.com/orhun/git-cliff).
+> Para changelog curado manualmente, edite `CHANGELOG.md`.

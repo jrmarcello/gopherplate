@@ -176,11 +176,10 @@ release: ## Cria release: tag + CHANGELOG.md automático (uso: make release VERS
 	@[ -n "$(VERSION)" ] || { echo "Erro: informe a versão. Uso: make release VERSION=0.7.0"; exit 1; }
 	@[ -z "$$(git status --porcelain)" ] || { echo "Erro: working tree com mudanças não commitadas. Faça commit antes."; exit 1; }
 	@echo "Criando release v$(VERSION)..."
-	@git tag "v$(VERSION)"
-	@git-cliff --output CHANGELOG.md
+	@git-cliff --tag "v$(VERSION)" --output CHANGELOG.md
 	@git add CHANGELOG.md
 	@git commit -m "chore(release): v$(VERSION) [skip ci]"
-	@git tag -f "v$(VERSION)"
+	@git tag "v$(VERSION)"
 	@echo ""
 	@echo "Release v$(VERSION) criada. Para publicar:"
 	@echo "  git push origin main --tags"
