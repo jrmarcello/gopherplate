@@ -17,7 +17,7 @@ applies-to: ".specs/**"
 - Tasks are architecture-agnostic — no mandatory layer ordering
 - Order tasks logically for the feature, respecting the project's chosen structure
 - If a task is unclear, mark it `BLOCKED` with a reason and stop execution
-- **Mandatory review before testing**: re-read the task description and verify files/patterns match conventions before writing tests
+- **Mandatory review before testing**: after implementing a task, re-read the task description and verify ALL specified files, patterns, and behaviors were implemented. Check: all files listed in `files:` metadata were created/modified, all patterns from the Design section are followed, all error mappings and wrapping are complete, no implementation gap vs the spec. Only then proceed to tests. This is NEVER skipped.
 
 ## Task Metadata
 
@@ -46,11 +46,14 @@ For non-code specs (config/docs only), the Test Plan may be `N/A` with a justifi
 
 Every spec MUST satisfy all of the following:
 
-- Every REQ has >= 1 TC
-- Every domain error has >= 1 TC
-- Every validated field has boundary TCs (valid, invalid, edge)
-- Every external dependency has >= 1 infra-failure TC
-- Every conditional branch has TCs for both paths
+- Every REQ has >= 1 TC (at minimum the happy path)
+- Every sentinel error in domain `errors.go` has >= 1 TC that triggers it
+- Every validated field has boundary TCs: valid min, valid max, invalid min-1, invalid max+1
+- Every external dependency call (repo, cache, publisher) has >= 1 infra-failure TC
+- Every conditional branch in use case flow has TCs for both paths
+- Concurrency scenarios required for operations with advisory lock or optimistic locking
+- Every new HTTP endpoint has smoke TCs: happy path (201/200 + all response fields), each distinct error status (400/409/422), response format, auth, field boundaries, idempotency
+- **Rigor check**: error/edge TCs should outnumber happy-path TCs — review the complete Test Plan and verify no business rule untested, no error path missing, no boundary unchecked
 
 ### Mutability
 

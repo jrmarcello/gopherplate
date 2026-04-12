@@ -44,10 +44,17 @@ When a batch contains 2+ tasks, evaluate whether to parallelize:
 
 ### Decision Flow
 
-1. **1 task in batch** -> sequential (normal execution)
-2. **2+ tasks in batch** -> check if all files are exclusive (no shared files)
-3. **All exclusive** -> launch parallel agents in worktrees
-4. **Shared files exist** -> execute sequentially within the batch
+```
+Read next batch from spec
+  │
+  ├── 1 uncompleted task  → Execute sequentially (normal iteration)
+  │
+  └── 2+ uncompleted tasks
+        │
+        ├── All files exclusive → Launch parallel agents in worktrees
+        │
+        └── Shared files exist  → Execute sequentially within batch
+```
 
 ### How to Parallelize
 
@@ -62,13 +69,15 @@ When a batch contains 2+ tasks, evaluate whether to parallelize:
 
 ### Agent Prompt Template
 
-Each parallel agent receives:
+Each parallel agent receives a self-contained prompt with:
 
-- The task description (from spec)
-- The `files:` list for the task
-- The `tests:` TC-IDs (if any — triggers TDD cycle)
-- Project conventions summary
-- Instruction to follow TDD if `tests:` present
+- **Task**: full task description from spec
+- **Files**: the `files:` list — only these files should be created/modified
+- **Test Plan**: TC-IDs from `tests:` metadata with descriptions from the Test Plan section
+- **TDD Cycle**: if `tests:` present, follow RED -> GREEN -> REFACTOR
+- **Conventions**: module path, unique error names, table-driven tests, hand-written mocks
+- **REVIEW**: "Re-read the Task and Files sections. Verify all files created/modified, all patterns followed, all mappings complete. This is mandatory before running tests."
+- **Report**: return summary of what was done, files changed, TDD results
 
 ### When NOT to Parallelize
 
@@ -123,7 +132,7 @@ For each task:
 
 ### After execution (all modes):
 
-4. **Mandatory review**: re-read task description, verify files and patterns match conventions
+4. **Mandatory review** (NEVER skip): re-read task description and verify: all files listed in `files:` were created/modified, all patterns from the Design section are followed, all error mappings/wrapping/classifications are complete, no implementation gap vs the spec
 5. **Mark complete**: change `- [ ] TASK-N:` to `- [x] TASK-N:`
 6. **Log**: append to Execution Log:
 

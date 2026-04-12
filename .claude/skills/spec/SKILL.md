@@ -48,30 +48,32 @@ Creates a structured specification document following Specification-Driven Devel
 
 ### 4. Generate Test Plan
 
-After generating Requirements and Design, derive a comprehensive Test Plan:
+After generating Requirements and Design, derive an **exhaustive** Test Plan. If a scenario can happen in production, it must have a test case.
 
-1. **For each REQ**: create at least one happy-path TC + error/edge TCs
-2. **For each domain error**: create >= 1 TC that triggers it
-3. **For each validated field**: create boundary TCs (valid, invalid, edge values)
-4. **For each external dependency** (DB, cache, API): create >= 1 infra-failure TC
-5. **For each conditional branch**: create TCs for both paths
+1. **For each REQ**: derive at least one happy-path TC plus all error/edge TCs
+2. **For each sentinel error** in domain `errors.go`: ensure >= 1 TC triggers it
+3. **For each validated field**: boundary TCs — valid min, valid max, invalid min-1, invalid max+1
+4. **For each external dependency** (repo, cache, publisher): >= 1 infra-failure TC
+5. **For each conditional branch** in use case flow: TCs for both paths
+6. **Concurrency scenarios**: required for operations with advisory lock, optimistic locking, or REPEATABLE READ
+7. **For each new HTTP endpoint**, generate smoke TCs covering:
+   - Happy path (201/200 + all response fields validated)
+   - Each distinct error status (400, 409, 422)
+   - Auth errors (missing/invalid service key)
+   - Response format consistency (`{"data": ...}` or `{"errors": {"message": ...}}`)
+   - Field boundaries and edge cases
+   - Idempotency (if applicable)
+8. **Assign TCs to tasks** via `tests:` metadata — smoke TCs go in dedicated `TASK-SMOKE`
+9. **Rigor check**: review the complete Test Plan and verify — no business rule untested, no error path missing, no boundary unchecked. Error/edge TCs should outnumber happy-path TCs.
 
 Group TCs by layer:
 
 - **Domain Tests** (TC-D-NN): pure domain logic, value objects, entity invariants
 - **Use Case Tests** (TC-UC-NN): application logic, dependency interactions, error mapping
 - **E2E Tests** (TC-E2E-NN): full HTTP round-trip via TestContainers
-- **Smoke Tests** (TC-S-NN): k6-based validation of deployed behavior
+- **Smoke Tests** (TC-S-NN): k6 checks against running app — HTTP status, response format, auth, field boundaries, idempotency, business rules visible via API
 
-For each new endpoint, generate smoke TCs covering:
-- Happy path (create, get, list, update, delete)
-- Error statuses (400, 404, 409, 422)
-- Auth errors (missing/invalid service key)
-- Response format consistency (`{"data": ...}` or `{"errors": {"message": ...}}`)
-- Boundary values and edge cases
-- Idempotency (if applicable)
-
-Assign TCs to tasks via `tests:` metadata. Categories: `happy`, `validation`, `business`, `edge`, `infra`, `concurrency`, `idempotency`, `security`
+Categories: `happy`, `validation`, `business`, `edge`, `infra`, `concurrency`, `idempotency`, `security`
 
 For non-code specs (config/docs only), the Test Plan may be `N/A` with justification.
 
