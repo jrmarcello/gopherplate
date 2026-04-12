@@ -11,16 +11,9 @@ var ExcludePaths = []string{
 	// CLI itself (new projects don't need the scaffold tool)
 	"cmd/cli/",
 
-	// Claude/AI configuration
-	".claude/",
-	"CLAUDE.md",
-	"AGENTS.md",
-
-	// Specs (template development artifacts)
-	".specs/",
-
-	// DevContainer (template-specific)
-	".devcontainer/",
+	// Claude Code — only exclude runtime/local artifacts
+	".claude/worktrees/",
+	".claude/settings.local.json",
 
 	// Git directory
 	".git/",
@@ -35,18 +28,15 @@ var ExcludePaths = []string{
 	// CI pipeline (template-specific, teams add their own)
 	".github/",
 
-	// Changelog tooling (template-specific)
-	"cliff.toml",
-	"CHANGELOG.md",
+	// Changelog (template history excluded, but cliff.toml + empty CHANGELOG kept)
+	// cliff.toml is project-generic config; CHANGELOG.md is reset in post-processing
 
-	// Contributing guide (template-specific)
-	"CONTRIBUTING.md",
+	// Template-specific files
+	"roadmap.md",
+	"docs/guides/template-cli.md",
 
 	// Docs modules (auto-generated)
 	"docs/modules/",
-
-	// Markdownlint config (template-specific)
-	".markdownlint.json",
 
 	// Environment file with real values
 	".env",

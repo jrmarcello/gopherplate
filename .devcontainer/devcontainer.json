@@ -41,9 +41,9 @@
   "remoteUser": "node",
   "forwardPorts": [8080],
   "mounts": [
-    "source=boilerplate-bashhistory-${devcontainerId},target=/commandhistory,type=volume",
-    "source=boilerplate-claude-config-${devcontainerId},target=/home/node/.claude,type=volume",
-    "source=boilerplate-gopath-${devcontainerId},target=/home/node/go,type=volume"
+    "source=gopherplate-bashhistory-${devcontainerId},target=/commandhistory,type=volume",
+    "source=gopherplate-claude-config-${devcontainerId},target=/home/node/.claude,type=volume",
+    "source=gopherplate-gopath-${devcontainerId},target=/home/node/go,type=volume"
   ],
   "containerEnv": {
     "NODE_OPTIONS": "--max-old-space-size=4096",
@@ -52,6 +52,6 @@
     "GOPATH": "/home/node/go"
   },
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-  "postStartCommand": "sudo /usr/local/bin/init-firewall.sh && git config --global user.email \"${GIT_AUTHOR_EMAIL:-dev@boilerplate.local}\" && git config --global user.name \"${GIT_AUTHOR_NAME:-Developer}\"",
+  "postStartCommand": "sudo /usr/local/bin/init-firewall.sh && git config --global user.email \"${GIT_AUTHOR_EMAIL:-dev@gopherplate.local}\" && git config --global user.name \"${GIT_AUTHOR_NAME:-Developer}\"",
   "waitFor": "postStartCommand"
 }

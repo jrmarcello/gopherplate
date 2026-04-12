@@ -19,9 +19,9 @@ var newCmd = &cobra.Command{
 	Long: `Cria um novo microserviço Go com Clean Architecture a partir do template.
 
 Exemplos:
-  gopherplate new my-service
-  gopherplate new my-service --module github.com/org/my-service --db postgres
-  gopherplate new my-service --module github.com/org/my-service --no-redis --no-auth`,
+  boilerplate new my-service
+  boilerplate new my-service --module github.com/org/my-service --db postgres
+  boilerplate new my-service --module github.com/org/my-service --no-redis --no-auth`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runNew,
 }
@@ -231,7 +231,29 @@ func runNew(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("cleaning up wiring: %w", wiringErr)
 	}
 
-	// 9. Clean up template-specific files that shouldn't be in new projects
+	// 9. Clean up template-specific files
+	fmt.Println("  Cleaning up template files...")
+	// Remove template specs (keep only TEMPLATE.md, .gitkeep, .gitignore)
+	specsDir := filepath.Join(outputDir, ".specs")
+	if entries, readErr := os.ReadDir(specsDir); readErr == nil {
+		specsAllowList := map[string]bool{
+			"TEMPLATE.md": true,
+			".gitkeep":    true,
+			".gitignore":  true,
+		}
+		for _, entry := range entries {
+			if !specsAllowList[entry.Name()] {
+				_ = os.Remove(filepath.Join(specsDir, entry.Name()))
+			}
+		}
+	}
+
+	// 10. Reset CHANGELOG.md (template history replaced with empty starter)
+	changelogPath := filepath.Join(outputDir, "CHANGELOG.md")
+	changelogContent := "# Changelog\n\nAll notable changes to this project will be documented in this file.\n\nFormat based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).\n"
+	_ = os.WriteFile(changelogPath, []byte(changelogContent), 0o644) //nolint:gosec // CLI scaffold writes project files
+
+	// 11. Clean up generated files that shouldn't be in new projects
 	cleanupFiles := []string{
 		"docs/swagger.json",
 		"docs/swagger.yaml",
@@ -244,7 +266,7 @@ func runNew(cmd *cobra.Command, args []string) error {
 		_ = os.Remove(filepath.Join(outputDir, f))
 	}
 
-	// 10. Initialize fresh git
+	// 11. Initialize fresh git
 	fmt.Println("  Initializing git...")
 	gitCmd := exec.Command("git", "init")
 	gitCmd.Dir = outputDir
@@ -252,7 +274,7 @@ func runNew(cmd *cobra.Command, args []string) error {
 		fmt.Fprintf(os.Stderr, "  Warning: git init failed: %v\n", gitInitErr)
 	}
 
-	// 11. Run go mod tidy
+	// 12. Run go mod tidy
 	fmt.Println("  Running go mod tidy...")
 	tidyCmd := exec.Command("go", "mod", "tidy")
 	tidyCmd.Dir = outputDir
@@ -261,7 +283,7 @@ func runNew(cmd *cobra.Command, args []string) error {
 		fmt.Fprintf(os.Stderr, "  Warning: go mod tidy failed: %v\n%s\n", tidyErr, tidyOut)
 	}
 
-	// 12. Print success summary
+	// 13. Print success summary
 	fmt.Printf("\nProjeto '%s' criado com sucesso!\n\n", cfg.ServiceName)
 	fmt.Println("Próximos passos:")
 	fmt.Printf("  cd %s\n", cfg.ServiceName)

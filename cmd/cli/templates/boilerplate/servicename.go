@@ -60,10 +60,29 @@ var serviceNameFiles = []string{
 
 	// Documentation
 	"README.md",
+	"CLAUDE.md",
+	"AGENTS.md",
+	"CONTRIBUTING.md",
+
+	// Dev container
+	".devcontainer/devcontainer.json",
+	".devcontainer/init-firewall.sh",
 
 	// Swagger (generated, but included in snapshot)
 	"docs/swagger.yaml",
 	"docs/swagger.json",
+
+	// Go files with hardcoded service name (not module path)
+	"config/config.go",
+	"docs/docs.go",
+
+	// Documentation with service name references
+	"docs/adr/003-config-strategy.md",
+	"docs/guides/kubernetes.md",
+	"docs/guides/grpc.md",
+
+	// Claude skills with service name references
+	".claude/skills/debug-logs/SKILL.md",
 }
 
 const defaultServiceName = "gopherplate"
