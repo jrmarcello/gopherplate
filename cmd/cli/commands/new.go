@@ -2,16 +2,24 @@ package commands
 
 import (
 	"bufio"
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/jrmarcello/gopherplate/cmd/cli/scaffold"
 	gopherplatetmpl "github.com/jrmarcello/gopherplate/cmd/cli/templates/gopherplate"
 	"github.com/spf13/cobra"
 )
+
+// goModTidyTimeout limits how long `go mod tidy` can run before we give up.
+// Private modules without GOPRIVATE/auth configured can make tidy hang
+// indefinitely while Go tries to fetch from the public proxy.
+const goModTidyTimeout = 30 * time.Second
 
 var newCmd = &cobra.Command{
 	Use:   "new [service-name]",
@@ -274,12 +282,20 @@ func runNew(cmd *cobra.Command, args []string) error {
 		fmt.Fprintf(os.Stderr, "  Warning: git init failed: %v\n", gitInitErr)
 	}
 
-	// 12. Run go mod tidy
-	fmt.Println("  Running go mod tidy...")
-	tidyCmd := exec.Command("go", "mod", "tidy")
+	// 12. Run go mod tidy (with timeout: private modules without GOPRIVATE/auth
+	// configured can make tidy hang indefinitely while Go tries the public proxy).
+	fmt.Printf("  Running go mod tidy (timeout %s)...\n", goModTidyTimeout)
+	tidyCtx, tidyCancel := context.WithTimeout(context.Background(), goModTidyTimeout)
+	defer tidyCancel()
+	tidyCmd := exec.CommandContext(tidyCtx, "go", "mod", "tidy")
 	tidyCmd.Dir = outputDir
 	tidyOut, tidyErr := tidyCmd.CombinedOutput()
-	if tidyErr != nil {
+	switch {
+	case errors.Is(tidyCtx.Err(), context.DeadlineExceeded):
+		fmt.Fprintf(os.Stderr, "  Warning: go mod tidy timed out after %s.\n", goModTidyTimeout)
+		fmt.Fprintln(os.Stderr, "  This usually means the module path points to a private repo without auth.")
+		fmt.Fprintln(os.Stderr, "  Configure GOPRIVATE and credentials, then run 'go mod tidy' manually.")
+	case tidyErr != nil:
 		fmt.Fprintf(os.Stderr, "  Warning: go mod tidy failed: %v\n%s\n", tidyErr, tidyOut)
 	}
 
