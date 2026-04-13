@@ -43,7 +43,7 @@ Adotamos um sistema de **classificacao de erros no use case** com resolucao gene
 
 ### Fluxo
 
-```
+```text
 Domain Error (puro)
     |
     v

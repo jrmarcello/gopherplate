@@ -11,14 +11,18 @@ Creates a team of 3 specialized investigators who independently investigate the 
 ## Team
 
 ### 1. Application Layer Investigator
+
 Focus: Business logic and code flow
+
 - Trace the request path through handler → use case → repository
 - Check error handling chains
 - Verify DI wiring in `cmd/api/server.go`
 - Look for logic errors in domain/use case layer
 
 ### 2. Infrastructure & Data Investigator
+
 Focus: Database, cache, external services
+
 - Check SQL queries and migrations
 - Verify database schema matches code expectations
 - Check Redis cache behavior
@@ -26,7 +30,9 @@ Focus: Database, cache, external services
 - Verify environment variables
 
 ### 3. Test & Reproduction Investigator
+
 Focus: Reproducing and isolating the bug
+
 - Write a minimal reproduction case
 - Check existing test coverage for the affected area
 - Run relevant tests and analyze failures
@@ -42,7 +48,7 @@ Focus: Reproducing and isolating the bug
 
 ## Output
 
-```
+```text
 ## Root Cause Analysis
 
 ### Hypothesis (agreed by N/3 investigators)

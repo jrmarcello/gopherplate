@@ -21,7 +21,7 @@ Guia completo para adicionar suporte gRPC ao template, rodando lado a lado com o
 13. [Testes](#13-testes)
 14. [Kubernetes](#14-kubernetes)
 15. [Makefile](#15-makefile)
-16. [gRPC-Gateway (opcional)](#16-grpc-gateway)
+16. [gRPC-Gateway (opcional)](#16-grpc-gateway-opcional)
 17. [Referências](#17-referências)
 
 ---
@@ -353,6 +353,7 @@ buf generate
 ```
 
 Isso gera em `gen/proto/`:
+
 - `*.pb.go` — tipos de mensagem, serialização
 - `*_grpc.pb.go` — stubs de client e server, interfaces de serviço
 
@@ -1025,6 +1026,7 @@ server := grpc.NewServer(
 ```
 
 Isso automaticamente:
+
 - Cria spans para cada RPC (unary e stream)
 - Propaga trace context entre serviços
 - Coleta métricas: `rpc.server.duration`, `rpc.grpc.status_code`
@@ -1224,28 +1226,28 @@ Targets para adicionar ao Makefile:
 
 ## proto: Generate Go code from proto files
 proto:
-	buf generate
+ buf generate
 
 ## proto-lint: Lint proto files
 proto-lint:
-	buf lint
+ buf lint
 
 ## proto-breaking: Check for breaking changes against main
 proto-breaking:
-	buf breaking --against '.git#branch=main'
+ buf breaking --against '.git#branch=main'
 
 ## proto-install: Install protoc plugins
 proto-install:
-	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+ go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
 ## grpcurl-list: List available gRPC services (requires reflection)
 grpcurl-list:
-	grpcurl -plaintext localhost:$(GRPC_PORT) list
+ grpcurl -plaintext localhost:$(GRPC_PORT) list
 
 ## grpcui: Open gRPC web UI (requires reflection)
 grpcui:
-	grpcui -plaintext localhost:$(GRPC_PORT)
+ grpcui -plaintext localhost:$(GRPC_PORT)
 ```
 
 ---

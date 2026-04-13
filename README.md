@@ -477,35 +477,35 @@ Pacotes standalone do ecossistema, importáveis via `go get`. Diferente do `pkg/
 
 ## FAQ
 
-**"Qual a filosofia por trás do projeto?"**
+### Qual a filosofia por trás do projeto?
 
 Entregar **padronização e DX completa como padrão**. Todo novo microsserviço parte do mesmo ponto: mesma estrutura, mesma qualidade, mesma experiência de desenvolvimento. O objetivo não é impor uma arquitetura, mas garantir que boas práticas venham de fábrica — e que o dev tenha liberdade para evoluir a partir delas.
 
-**"Preciso mesmo de tudo isso para um serviço simples?"**
+### Preciso mesmo de tudo isso para um serviço simples?
 
 Não. O template é uma **base extensível**, não um monolito obrigatório. Use o que fizer sentido para seu caso. Cache é opcional (`.WithCache()`), idempotência é opcional (nil-safe), observabilidade é opcional. Comece simples e adicione conforme a necessidade.
 
-**"A organização em camadas não é over-engineering pra Go?"**
+### A organização em camadas não é over-engineering pra Go?
 
 O template usa camadas simples com DI manual — sem frameworks, sem reflection, sem mágica. São 3 diretórios (domain, usecases, infrastructure) com regras claras de dependência. O valor real não é a arquitetura em si, mas a **padronização entre serviços**: todo mundo sabe onde encontrar o quê, independente do projeto.
 
 Se for muito pro seu caso, colapse as camadas. A Clean Architecture brilha aqui por um motivo prático: **isola o domínio e as lógicas de negócio** das escolhas de infraestrutura, dando liberdade para o dev trocar qualquer peça sem reescrever a lógica.
 
-**"Por que não usar framework X ou ORM Y?"**
+### Por que não usar framework X ou ORM Y?
 
 O template é intencionalmente **pouco opinativo nas ferramentas**. Usa Gin (HTTP), sqlx (DB), go-redis (cache) — bibliotecas maduras e amplamente adotadas. Não usa ORMs, DI frameworks, ou geradores de código. Quanto menos mágica, mais fácil de entender e debugar.
 
 Mas essa é uma escolha do template como ponto de partida. Você tem **liberdade total para adicionar** qualquer biblioteca ou framework que desejar — Uber Fx para DI, GORM para ORM, gRPC para comunicação. A arquitetura em camadas facilita isso: adicione um adapter na infraestrutura e o domínio nem percebe.
 
-**"Posso usar só partes do template?"**
+### Posso usar só partes do template?
 
 Sim. Os pacotes em `pkg/` são independentes. Pode importar `pkg/cache` ou `pkg/apperror` em qualquer projeto Go sem usar o template inteiro.
 
-**"Como atualizo meu serviço quando o template evolui?"**
+### Como atualizo meu serviço quando o template evolui?
 
 O template é um ponto de partida, não um fork contínuo. Acompanhe o [CHANGELOG](CHANGELOG.md) e adote as melhorias que fizerem sentido. Para mudanças estruturais, consulte os ADRs para entender o raciocínio por trás de cada decisão.
 
-**"E a performance? Camadas não adicionam overhead?"**
+### E a performance? Camadas não adicionam overhead?
 
 Não. As camadas são uma separação lógica de código, não uma separação runtime. Não há serialização, rede, ou cópia de dados entre camadas — são chamadas de função Go normais. O overhead é zero.
 

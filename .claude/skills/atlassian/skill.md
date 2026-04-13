@@ -11,6 +11,7 @@ Delegates Jira and Confluence operations to a specialized sub-agent.
 ## Capabilities
 
 ### Jira
+
 - Search tasks: `searchJiraIssuesUsingJql`
 - Create issues: `createJiraIssue`
 - Update issues: `editJiraIssue`
@@ -19,6 +20,7 @@ Delegates Jira and Confluence operations to a specialized sub-agent.
 - Register worklogs: `addWorklogToJiraIssue`
 
 ### Confluence
+
 - Search pages: `searchConfluenceUsingCql`
 - Read pages: `getConfluencePage`
 - Create pages: `createConfluencePage`
@@ -27,6 +29,7 @@ Delegates Jira and Confluence operations to a specialized sub-agent.
 ## Context Inference
 
 When on a branch like `fix/PROJ-123-description`:
+
 - Extract issue key: `PROJ-123`
 - Auto-fetch issue context before starting work
 - Link commits and PRs to the issue

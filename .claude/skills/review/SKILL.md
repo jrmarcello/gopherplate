@@ -17,6 +17,7 @@ Code review focused on Clean Architecture, security, and project conventions.
 ## Checklist
 
 ### Architecture
+
 - [ ] Domain layer has zero external dependencies
 - [ ] Use cases define interfaces in `interfaces/`
 - [ ] No infrastructure imports from domain/usecases
@@ -24,34 +25,40 @@ Code review focused on Clean Architecture, security, and project conventions.
 - [ ] Error handling follows domain → AppError → HTTP translation
 
 ### Security
+
 - [ ] No credentials in code
 - [ ] Parameterized SQL queries only
 - [ ] Input validation at handler layer
 - [ ] No PII in logs or error responses
 
 ### Go Conventions
+
 - [ ] Unique error variable names (no shadowing)
 - [ ] Error wrapping with context
 - [ ] Context propagation through layers
 - [ ] Table-driven tests with descriptive names
 
 ### Testing
+
 - [ ] New code has corresponding tests
 - [ ] Hand-written mocks (no mocking frameworks)
 - [ ] Tests cover error paths
 
 ### Observability
+
 - [ ] OpenTelemetry spans for new operations
 - [ ] Structured logging with `logutil`
 
 ### Template Quality
+
 - [ ] Code is exemplary for teams cloning this boilerplate
 - [ ] Patterns are easy to follow
 
 ## Output Format
 
 For each finding:
-```
+
+```text
 [SEVERITY] file:line — Description
   Suggested fix: ...
 ```

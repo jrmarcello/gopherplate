@@ -44,7 +44,7 @@ When a batch contains 2+ tasks, evaluate whether to parallelize:
 
 ### Decision Flow
 
-```
+```text
 Read next batch from spec
   │
   ├── 1 uncompleted task  → Execute sequentially (normal iteration)
@@ -114,16 +114,19 @@ For each task:
 ### If task has `tests:` (with non-smoke TCs) -> TDD Cycle
 
 **RED Phase:**
+
 1. Write the test file FIRST (before production code)
 2. Tests reference the function/type to be implemented
 3. Run `go test` — tests MUST fail (compilation failure = valid RED)
 
 **GREEN Phase:**
+
 1. Write MINIMUM production code to make tests pass
 2. Follow existing patterns: hand-written mocks in `mocks_test.go`, table-driven tests
 3. Run `go test` — all TCs in `tests:` MUST pass
 
 **REFACTOR Phase:**
+
 1. Clean up: remove duplication, improve naming
 2. Run `go test` + `go build ./...` — must pass
 
@@ -139,11 +142,11 @@ For each task:
 1. Execute the task as described
 2. Verify: `go build ./...`
 
-### After execution (all modes):
+### After execution (all modes)
 
-4. **Mandatory review** (NEVER skip): re-read task description and verify: all files listed in `files:` were created/modified, all patterns from the Design section are followed, all error mappings/wrapping/classifications are complete, no implementation gap vs the spec
-5. **Mark complete**: change `- [ ] TASK-N:` to `- [x] TASK-N:`
-6. **Log**: append to Execution Log:
+1. **Mandatory review** (NEVER skip): re-read task description and verify: all files listed in `files:` were created/modified, all patterns from the Design section are followed, all error mappings/wrapping/classifications are complete, no implementation gap vs the spec
+2. **Mark complete**: change `- [ ] TASK-N:` to `- [x] TASK-N:`
+3. **Log**: append to Execution Log:
 
 ```markdown
 ### Iteration N — TASK-N (YYYY-MM-DD HH:MM)
@@ -152,7 +155,7 @@ For each task:
 TDD: RED(N failing) -> GREEN(N passing) -> REFACTOR(clean)  <!-- if TDD -->
 ```
 
-7. **Stop** — let the hook decide whether to continue or finish
+1. **Stop** — let the hook decide whether to continue or finish
 
 ## TDD Edge Cases
 

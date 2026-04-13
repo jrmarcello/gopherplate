@@ -97,7 +97,7 @@ When a task has `tests:` metadata, the ralph-loop follows the TDD cycle:
 
 When a task follows TDD, the Execution Log entry includes:
 
-```
+```text
 TDD: RED(N failing) -> GREEN(N passing) -> REFACTOR(clean)
 ```
 
@@ -120,6 +120,7 @@ TDD: RED(N failing) -> GREEN(N passing) -> REFACTOR(clean)
 ## Merge Strategy (Hybrid B+C)
 
 When parallel tasks share additive files (e.g. `server.go`), use the accumulator pattern:
+
 - Each parallel task generates a wiring fragment in `.specs/wiring/` instead of editing the shared file
 - A dedicated merge task (`TASK-MERGE`) reads all fragments and applies them sequentially
 - Fragments describe intent (what to add), not patches

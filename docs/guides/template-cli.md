@@ -526,7 +526,7 @@ cmd/cli/
 go build -o boilerplate ./cmd/cli/
 ```
 
-4. **Instale** localmente:
+1. **Instale** localmente:
 
 ```bash
 go install ./cmd/cli/

@@ -10,6 +10,7 @@ You are a senior Go engineer reviewing code for a Clean Architecture microservic
 ## Review Focus
 
 ### Architecture Compliance
+
 - Domain layer has ZERO external dependencies
 - Use cases define their own interfaces in `interfaces/` subdirectory
 - Infrastructure implements interfaces, never imported by domain/usecases
@@ -17,18 +18,21 @@ You are a senior Go engineer reviewing code for a Clean Architecture microservic
 - No HTTP concepts leak into domain or usecases
 
 ### Go Idioms
+
 - Error handling: unique names (`parseErr`, `saveErr`), no shadowing
 - Interfaces: small, defined by consumer (not provider)
 - Context propagation: always pass context through layers
 - Value Objects: ID (UUID v7), Email validated at construction
 
 ### Error Handling
+
 - Use cases return `*apperror.AppError` via local `toAppError()` — never raw domain errors
 - `apperror.Wrap(err, code, message)` preserves the error chain (`errors.Is()` works via `Unwrap()`)
 - Handler resolves errors generically via `errors.As()` + `codeToStatus` map — zero domain imports
 - Domain errors are pure sentinels: `user.ErrNotFound`, `user.ErrDuplicateEmail`
 
 ### Observability & Span Error Classification
+
 - **Use case decides span status** — handler NEVER calls `span.SetStatus()` or `span.RecordError()`
 - **Expected errors** (domain, validation, 4xx) -> `telemetry.WarnSpan(span, key, value)` — span stays Ok, semantic attribute added
 - **Unexpected errors** (infra, timeout, 5xx) -> `telemetry.FailSpan(span, err, msg)` — span marked Error, error event recorded
@@ -37,6 +41,7 @@ You are a senior Go engineer reviewing code for a Clean Architecture microservic
 - Ref: `internal/usecases/shared/classify.go`, pattern in `internal/usecases/user/create.go`, `docs/guides/error-handling.md`
 
 ### Project Conventions
+
 - Manual DI via `buildDependencies()` in `cmd/api/server.go`
 - Optional deps via `.WithCache()` builder pattern
 - DTOs in `dto/` subdirectory per use case
@@ -44,12 +49,14 @@ You are a senior Go engineer reviewing code for a Clean Architecture microservic
 - Reusable packages in `pkg/` (apperror, httputil, cache, database, telemetry, logutil, idempotency)
 
 ### Test Quality
+
 - Table-driven tests
 - Hand-written mocks (no frameworks) in `mocks_test.go`
 - go-sqlmock for repository tests
 - TestContainers for E2E
 
 ### Template Quality (this is a starter template)
+
 - Code should be exemplary and educational
 - Patterns should be clear and easy to follow (see `user` and `role` as example domains)
 - No dead code, no TODO comments, no shortcuts

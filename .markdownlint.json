@@ -1,4 +1,14 @@
 {
   "MD013": false,
-  "MD024": false
+  "MD024": false,
+  "MD033": {
+    "allowed_elements": [
+      "path", "domain", "Domain", "plural", "id", "name", "Name", "service-name",
+      "spec-file", "feature-name", "feature-description", "method", "description",
+      "issue-description", "bug", "command", "arg", "arguments", "file", "dir",
+      "br", "details", "summary", "sub", "sup"
+    ]
+  },
+  "MD041": false,
+  "MD060": false
 }

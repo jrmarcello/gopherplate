@@ -11,32 +11,40 @@ Manages database migrations using Goose.
 ## Actions
 
 ### create
-```
+
+```text
 /migrate create <name>
 ```
+
 1. Run `make migrate-create NAME=<name>`
 2. Edit the generated SQL file
 3. Ensure both `-- +goose Up` and `-- +goose Down` sections exist
 4. Down must be the exact reverse of Up
 
 ### up
-```
+
+```text
 /migrate up
 ```
+
 1. Run `make migrate-up`
 2. Verify with `make migrate-status`
 
 ### down
-```
+
+```text
 /migrate down
 ```
+
 1. Run `make migrate-down`
 2. Verify with `make migrate-status`
 
 ### status
-```
+
+```text
 /migrate status
 ```
+
 1. Run `make migrate-status`
 
 ## Migration Rules

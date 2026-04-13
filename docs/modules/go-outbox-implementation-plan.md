@@ -33,7 +33,7 @@
 Quando um servico precisa **persistir dados no banco E publicar um evento** para outro servico
 (ex: "UserCreated" via SQS), existe um risco de inconsistencia:
 
-```
+```text
 Cenario A: Salva no banco OK → Publica no SQS FALHA → evento perdido
 Cenario B: Publica no SQS OK → Salva no banco FALHA → evento fantasma
 ```
@@ -42,7 +42,7 @@ O **dual write problem** nao tem solucao com two-phase commit em sistemas distri
 O Outbox Pattern resolve isso com **atomicidade transacional**: o evento e gravado na mesma
 transacao do banco, e um processo separado (relay) faz o dispatch para o broker.
 
-```
+```text
 ┌─────────────┐     TX atomica      ┌─────────────────┐
 │  Use Case   │ ──────────────────→  │ DB: entity +     │
 │  (Create)   │                      │     outbox event  │
@@ -89,7 +89,7 @@ transacao do banco, e um processo separado (relay) faz o dispatch para o broker.
 
 ## 3. Arquitetura
 
-```
+```text
 go-outbox/
 │
 │   Camada Core (zero deps externas alem de stdlib)
@@ -128,7 +128,7 @@ go-outbox/
 
 ### Diagrama de Dependencias
 
-```
+```text
 outbox (core)          ← zero deps
   ├── pgstore          ← database/sql
   ├── relay            ← outbox (core)
@@ -274,7 +274,7 @@ type Relay interface {
 
 ## 5. Estrutura do Repositorio
 
-```
+```text
 go-outbox/
 ├── outbox.go                  # Event, Status, Metadata (tipos core)
 ├── store.go                   # Store interface + DBTX
@@ -332,7 +332,7 @@ go-outbox/
 
 O `go.mod` principal contem apenas:
 
-```
+```text
 require (
     // Nenhuma dep obrigatoria alem de stdlib
 )
@@ -380,6 +380,7 @@ RETURNING outbox.*;
 ```
 
 Porque `SKIP LOCKED`:
+
 - `FOR UPDATE` sozinho bloqueia consumers concorrentes
 - `SKIP LOCKED` silenciosamente pula rows travadas por outras transacoes
 - Combinado com o CTE, cada consumer pega um batch diferente — **zero coordenacao**
@@ -481,7 +482,7 @@ porque:
 - Simples de operar (zero infra adicional)
 - Latencia configuravel (polling interval)
 
-```
+```text
 ┌──────────────────────────────────────────┐
 │                 Relay                     │
 │                                          │
@@ -786,6 +787,7 @@ func (cb *CircuitBreaker) RecordFailure() { /* incrementa ou abre */ }
 ```
 
 **Comportamento no relay:**
+
 - Circuit **closed**: dispatch normal
 - Circuit **open**: pula o ciclo de dispatch, eventos ficam pending
 - Circuit **half-open**: tenta 1 batch, se ok fecha, se falha reabre
@@ -819,7 +821,7 @@ Se esse numero cresce, o relay nao esta acompanhando a producao.
 
 O modulo propaga trace context do request original ate o broker:
 
-```
+```text
 [HTTP Request] → [Use Case] → [Outbox Save] ···(async)··· [Relay Dispatch] → [SQS]
      span 1         span 2        span 3                       span 4
                                     │                             │
@@ -918,7 +920,7 @@ seus repositories para aceitar `DBTX` quando precisar de atomicidade com o outbo
 
 Multiplas instancias do relay podem rodar em paralelo graças ao `SKIP LOCKED`:
 
-```
+```text
 Relay Instance A                 Relay Instance B
      │                                │
      ▼                                ▼
@@ -1102,7 +1104,7 @@ DROP TABLE IF EXISTS outbox;
 
 ### 15.1 go.mod do servico consumidor
 
-```
+```text
 require (
     github.com/jrmarcello/go-outbox v0.1.0
 )

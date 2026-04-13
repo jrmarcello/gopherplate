@@ -22,7 +22,7 @@ O error handling segue 3 camadas, cada uma com responsabilidade clara:
 
 ## Fluxo Completo de um Erro
 
-```
+```text
 1. Domain/VO gera erro puro
    vo.NewEmail("invalido") --> vo.ErrInvalidEmail
 
@@ -158,12 +158,14 @@ func WarnSpan(span trace.Span, key, value string) {
 Ao criar um novo erro de dominio (ex: `ErrEmailAlreadyExists`), siga estes passos:
 
 - [ ] **1. Definir o erro no dominio**
+
   ```go
   // internal/domain/user/errors.go
   var ErrEmailAlreadyExists = errors.New("email already exists")
   ```
 
 - [ ] **2. Adicionar mapeamento no `toAppError()` de cada use case que pode gerar esse erro**
+
   ```go
   // internal/usecases/user/create.go
   case errors.Is(err, userdomain.ErrEmailAlreadyExists):
@@ -171,6 +173,7 @@ Ao criar um novo erro de dominio (ex: `ErrEmailAlreadyExists`), siga estes passo
   ```
 
 - [ ] **3. Adicionar na lista `expectedErrors` (se for um erro de negocio esperado)**
+
   ```go
   var createExpectedErrors = []error{
       vo.ErrInvalidEmail,
@@ -193,6 +196,7 @@ Ao criar um novo erro de dominio (ex: `ErrEmailAlreadyExists`), siga estes passo
 Ao precisar de um novo codigo (ex: `CodeRateLimited`), siga estes passos:
 
 - [ ] **1. Definir a constante em `pkg/apperror/apperror.go`**
+
   ```go
   const (
       // ... existentes ...
@@ -201,6 +205,7 @@ Ao precisar de um novo codigo (ex: `CodeRateLimited`), siga estes passos:
   ```
 
 - [ ] **2. Adicionar no mapa `codeToStatus` em `internal/infrastructure/web/handler/error.go`**
+
   ```go
   var codeToStatus = map[string]int{
       // ... existentes ...
@@ -209,6 +214,7 @@ Ao precisar de um novo codigo (ex: `CodeRateLimited`), siga estes passos:
   ```
 
 - [ ] **3. Usar no `toAppError()` do use case**
+
   ```go
   case errors.Is(err, someDomain.ErrRateLimited):
       return apperror.Wrap(err, apperror.CodeRateLimited, "too many requests")
