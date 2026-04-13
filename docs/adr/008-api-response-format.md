@@ -116,5 +116,5 @@ httputil.SendErrorWithDetails(c, http.StatusUnprocessableEntity, "validação fa
 ## Referências
 
 - `pkg/httputil/response.go`: Implementação dos helpers
-- ADR-004: Error Handling
+- ADR-009: Error Handling Refactor (supersede ADR-004)
 - ADR-007: Pacotes Reutilizáveis em pkg/

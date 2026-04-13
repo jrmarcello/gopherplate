@@ -86,4 +86,4 @@ pkg/
 
 - [Go Project Layout](https://github.com/golang-standards/project-layout)
 - ADR-001: Clean Architecture
-- ADR-004: Error Handling
+- ADR-009: Error Handling Refactor (supersede ADR-004)
