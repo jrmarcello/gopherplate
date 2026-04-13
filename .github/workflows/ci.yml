@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Generate Swagger docs
+        run: |
+          go install github.com/swaggo/swag/cmd/swag@v1.16.6
+          swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v2.11.4
+          args: --timeout=5m
+
+  vulncheck:
+    name: Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Run govulncheck (non-blocking)
+        run: |
+          if ! govulncheck -show verbose ./...; then
+            echo "::warning::govulncheck found known vulnerabilities (see logs)"
+          fi
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Run unit tests with coverage
+        run: |
+          mkdir -p tests/coverage
+          # Exclude packages that are exercised by E2E, not unit tests:
+          # handlers, routers, telemetry bootstrap, and the postgres wiring package.
+          PACKAGES=$(go list ./internal/... ./pkg/... ./config/... \
+            | grep -v -E '(web/handler$|web/router$|telemetry$|db/postgres$)')
+          go test $PACKAGES -race -coverprofile=tests/coverage/coverage.out
+
+      - name: Enforce 60% coverage threshold
+        run: |
+          COVERAGE=$(go tool cover -func=tests/coverage/coverage.out | awk '/^total:/ {print $3}' | tr -d '%')
+          echo "Total coverage: ${COVERAGE}%"
+          awk -v c="$COVERAGE" 'BEGIN { if (c+0 < 60) exit 1 }' || {
+            echo "::error::coverage ${COVERAGE}% is below the 60% minimum";
+            exit 1;
+          }
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: tests/coverage/coverage.out
+          retention-days: 7
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    # TestContainers-go spawns Postgres + Redis; ubuntu-latest has Docker built-in.
+    env:
+      TESTCONTAINERS_RYUK_DISABLED: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Run E2E tests
+        run: go test ./tests/e2e/... -v -count=1 -timeout 120s
