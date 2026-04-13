@@ -37,7 +37,7 @@ Exemplos:
 func init() {
 	newCmd.Flags().String("module", "", "Go module path (ex: github.com/org/service)")
 	newCmd.Flags().String("db", "", "Database driver: postgres, mysql, sqlite3, other")
-	newCmd.Flags().String("template", ".", "Path to the template project root")
+	newCmd.Flags().String("template", "", "Path to the template project root (auto-detected from $GOPHERPLATE_TEMPLATE, cwd, or the CLI binary location when omitted)")
 	newCmd.Flags().Bool("no-redis", false, "Disable Redis cache")
 	newCmd.Flags().Bool("no-idempotency", false, "Disable idempotency middleware")
 	newCmd.Flags().Bool("no-auth", false, "Disable service key authentication")
@@ -46,7 +46,9 @@ func init() {
 	newCmd.Flags().BoolP("yes", "y", false, "Accept defaults for all unspecified options (non-interactive)")
 }
 
-const templateModulePath = "github.com/jrmarcello/gopherplate"
+// templateEnvVar lets users pin the template path explicitly, overriding all
+// auto-detection strategies below it in the resolution chain.
+const templateEnvVar = "GOPHERPLATE_TEMPLATE"
 
 func runNew(cmd *cobra.Command, args []string) error {
 	cfg := scaffold.DefaultConfig()
@@ -183,10 +185,10 @@ func runNew(cmd *cobra.Command, args []string) error {
 	// --- Execution flow ---
 
 	// 1. Determine source directory (template root)
-	templateDir, _ := cmd.Flags().GetString("template")
-	templateDir, absErr := filepath.Abs(templateDir)
-	if absErr != nil {
-		return fmt.Errorf("resolving template path: %w", absErr)
+	templateFlag, _ := cmd.Flags().GetString("template")
+	templateDir, resolveErr := resolveTemplateRoot(templateFlag)
+	if resolveErr != nil {
+		return resolveErr
 	}
 
 	// 2. Validate output directory doesn't exist
@@ -204,7 +206,7 @@ func runNew(cmd *cobra.Command, args []string) error {
 
 	// 4. Rewrite module path
 	fmt.Println("  Rewriting module path...")
-	rewriteErr := scaffold.RewriteModulePath(outputDir, templateModulePath, cfg.ModulePath)
+	rewriteErr := scaffold.RewriteModulePath(outputDir, scaffold.TemplateModulePath, cfg.ModulePath)
 	if rewriteErr != nil {
 		return fmt.Errorf("rewriting module path: %w", rewriteErr)
 	}
@@ -360,4 +362,108 @@ func boolToYesNo(v bool) string {
 		return "sim"
 	}
 	return "não"
+}
+
+// resolveTemplateRoot returns the absolute path to the gopherplate template
+// directory, trying (in order):
+//  1. the --template flag (if non-empty and not the legacy ".")
+//  2. the $GOPHERPLATE_TEMPLATE env var
+//  3. the current working directory
+//  4. the directory tree around the running CLI binary (os.Executable())
+//
+// A candidate is accepted only if its go.mod declares the template module
+// path. When all strategies fail, it returns an error that explains how to
+// fix the situation.
+func resolveTemplateRoot(flagValue string) (string, error) {
+	var candidates []string
+
+	// 1. Explicit --template flag (accept "." for backwards compatibility,
+	//    but still validate it like any other candidate).
+	if flagValue != "" {
+		abs, absErr := filepath.Abs(flagValue)
+		if absErr != nil {
+			return "", fmt.Errorf("resolving --template path: %w", absErr)
+		}
+		if isGopherplateRoot(abs) {
+			return abs, nil
+		}
+		return "", fmt.Errorf(
+			"--template %q does not point to a gopherplate checkout (no go.mod with module %s)",
+			flagValue, scaffold.TemplateModulePath,
+		)
+	}
+
+	// 2. Env var override (useful when the CLI is installed via `go install`
+	//    and the user wants a fixed template location).
+	if envPath := os.Getenv(templateEnvVar); envPath != "" {
+		abs, absErr := filepath.Abs(envPath)
+		if absErr == nil && isGopherplateRoot(abs) {
+			return abs, nil
+		}
+		return "", fmt.Errorf(
+			"$%s=%q does not point to a gopherplate checkout (no go.mod with module %s)",
+			templateEnvVar, envPath, scaffold.TemplateModulePath,
+		)
+	}
+
+	// 3. Current working directory (and its ancestors) — covers the common
+	//    case of running the CLI from inside the gopherplate repo.
+	if cwd, cwdErr := os.Getwd(); cwdErr == nil {
+		candidates = append(candidates, cwd)
+	}
+
+	// 4. Directory tree around the running binary — covers `go run ./cmd/cli`
+	//    and `./bin/gopherplate` invocations from within the source tree.
+	if exe, exeErr := os.Executable(); exeErr == nil {
+		if resolved, symErr := filepath.EvalSymlinks(exe); symErr == nil {
+			exe = resolved
+		}
+		candidates = append(candidates, filepath.Dir(exe))
+	}
+
+	for _, start := range candidates {
+		if found, ok := walkUpForTemplate(start); ok {
+			return found, nil
+		}
+	}
+
+	return "", fmt.Errorf(
+		"could not locate the gopherplate template automatically; "+
+			"run from inside a gopherplate checkout, set $%s to the checkout path, "+
+			"or pass --template <path>",
+		templateEnvVar,
+	)
+}
+
+// walkUpForTemplate walks from start up to the filesystem root looking for a
+// directory whose go.mod declares the gopherplate template module.
+func walkUpForTemplate(start string) (string, bool) {
+	dir := start
+	for {
+		if isGopherplateRoot(dir) {
+			return dir, true
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", false
+		}
+		dir = parent
+	}
+}
+
+// isGopherplateRoot reports whether dir contains a go.mod whose module
+// directive matches the gopherplate template module path.
+func isGopherplateRoot(dir string) bool {
+	data, readErr := os.ReadFile(filepath.Join(dir, "go.mod")) //nolint:gosec // CLI reads well-known project manifest
+	if readErr != nil {
+		return false
+	}
+	needle := []byte("module " + scaffold.TemplateModulePath)
+	for _, line := range strings.Split(string(data), "\n") {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "module ") {
+			return strings.TrimSpace(trimmed) == string(needle)
+		}
+	}
+	return false
 }
