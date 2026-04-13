@@ -203,12 +203,20 @@ func TestBuildTemplateMappings(t *testing.T) {
 			mappings["entity.go.tmpl"],
 		)
 		assert.Equal(t,
+			filepath.Join("internal", "domain", "order", "entity_test.go"),
+			mappings["entity_test.go.tmpl"],
+		)
+		assert.Equal(t,
 			filepath.Join("internal", "domain", "order", "errors.go"),
 			mappings["errors.go.tmpl"],
 		)
 		assert.Equal(t,
 			filepath.Join("internal", "domain", "order", "filter.go"),
 			mappings["filter.go.tmpl"],
+		)
+		assert.Equal(t,
+			filepath.Join("internal", "domain", "order", "filter_test.go"),
+			mappings["filter_test.go.tmpl"],
 		)
 
 		// Use cases
@@ -285,7 +293,7 @@ func TestBuildTemplateMappings(t *testing.T) {
 
 	t.Run("total template count matches expected", func(t *testing.T) {
 		mappings := buildTemplateMappings("product", "20260329120000")
-		// 3 domain + 5 usecases + 1 interface + 5 DTOs + 3 infra + 1 migration = 18
-		assert.Len(t, mappings, 18)
+		// 5 domain (3 source + 2 tests) + 12 usecases (5 UC + 5 UC tests + errors + mocks) + 1 interface + 5 DTOs + 4 infra (repo + repo_test + handler + router) + 1 migration = 28
+		assert.Len(t, mappings, 28)
 	})
 }

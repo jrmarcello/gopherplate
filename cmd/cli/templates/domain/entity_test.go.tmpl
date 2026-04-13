@@ -1,0 +1,28 @@
+package {{.DomainNameSnake}}
+
+import (
+	"testing"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestNew{{.DomainNamePascal}}(t *testing.T) {
+	e := New{{.DomainNamePascal}}("Test Name")
+
+	assert.NotEmpty(t, e.ID)
+	assert.NotEqual(t, uuid.Nil, e.ID)
+	assert.Equal(t, "Test Name", e.Name)
+	assert.NotZero(t, e.CreatedAt)
+	assert.NotZero(t, e.UpdatedAt)
+}
+
+func Test{{.DomainNamePascal}}_UpdateName(t *testing.T) {
+	e := New{{.DomainNamePascal}}("Original")
+	originalUpdatedAt := e.UpdatedAt
+
+	e.UpdateName("Updated")
+
+	assert.Equal(t, "Updated", e.Name)
+	assert.GreaterOrEqual(t, e.UpdatedAt.UnixNano(), originalUpdatedAt.UnixNano())
+}

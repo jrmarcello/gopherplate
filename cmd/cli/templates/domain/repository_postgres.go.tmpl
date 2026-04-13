@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 
 	{{.DomainNameCamel}}domain "{{.ModulePath}}/internal/domain/{{.DomainNameSnake}}"
 )
@@ -72,7 +73,14 @@ func (r *{{.DomainNamePascal}}Repository) Create(ctx context.Context, e *{{.Doma
 
 	dbModel := fromDomain{{.DomainNamePascal}}(e)
 	_, execErr := r.writer.NamedExecContext(ctx, query, dbModel)
-	return execErr
+	if execErr != nil {
+		var pqErr *pq.Error
+		if errors.As(execErr, &pqErr) && pqErr.Code == "23505" {
+			return {{.DomainNameCamel}}domain.Err{{.DomainNamePascal}}DuplicateKey
+		}
+		return execErr
+	}
+	return nil
 }
 
 func (r *{{.DomainNamePascal}}Repository) FindByID(ctx context.Context, id uuid.UUID) (*{{.DomainNameCamel}}domain.{{.DomainNamePascal}}, error) {

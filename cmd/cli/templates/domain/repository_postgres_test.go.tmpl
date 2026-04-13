@@ -1,0 +1,505 @@
+package repository
+
+import (
+	"context"
+	"database/sql"
+	"testing"
+	"time"
+
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	{{.DomainNameCamel}}domain "{{.ModulePath}}/internal/domain/{{.DomainNameSnake}}"
+	"github.com/google/uuid"
+)
+
+// =============================================================================
+// Unit Tests for internal conversions
+// =============================================================================
+
+func Test{{.DomainNamePascal}}DB_ToDomain_Success(t *testing.T) {
+	now := time.Now().Truncate(time.Microsecond)
+	dbModel := {{.DomainNameCamel}}DB{
+		ID:        "018e4a2c-6b4d-7000-9410-abcdef123456",
+		Name:      "Test Name",
+		CreatedAt: now.Add(-24 * time.Hour),
+		UpdatedAt: now,
+	}
+
+	result, convertErr := dbModel.toDomain()
+
+	assert.NoError(t, convertErr)
+	assert.NotNil(t, result)
+	assert.Equal(t, "018e4a2c-6b4d-7000-9410-abcdef123456", result.ID.String())
+	assert.Equal(t, "Test Name", result.Name)
+	assert.Equal(t, now.Add(-24*time.Hour), result.CreatedAt)
+	assert.Equal(t, now, result.UpdatedAt)
+}
+
+func Test{{.DomainNamePascal}}DB_ToDomain_InvalidID(t *testing.T) {
+	dbModel := {{.DomainNameCamel}}DB{
+		ID:   "invalid-id",
+		Name: "Test",
+	}
+
+	result, convertErr := dbModel.toDomain()
+
+	assert.Error(t, convertErr)
+	assert.Nil(t, result)
+	assert.Contains(t, convertErr.Error(), "parsing ID")
+}
+
+func TestFromDomain{{.DomainNamePascal}}(t *testing.T) {
+	now := time.Now().Truncate(time.Microsecond)
+
+	entity := &{{.DomainNameCamel}}domain.{{.DomainNamePascal}}{
+		ID:        uuid.New(),
+		Name:      "Test Name",
+		CreatedAt: now.Add(-24 * time.Hour),
+		UpdatedAt: now,
+	}
+
+	dbModel := fromDomain{{.DomainNamePascal}}(entity)
+
+	assert.Equal(t, entity.ID.String(), dbModel.ID)
+	assert.Equal(t, entity.Name, dbModel.Name)
+	assert.Equal(t, entity.CreatedAt, dbModel.CreatedAt)
+	assert.Equal(t, entity.UpdatedAt, dbModel.UpdatedAt)
+}
+
+func TestFromDomain{{.DomainNamePascal}}_RoundTrip(t *testing.T) {
+	now := time.Now().Truncate(time.Microsecond)
+
+	original := &{{.DomainNameCamel}}domain.{{.DomainNamePascal}}{
+		ID:        uuid.New(),
+		Name:      "Round Trip Test",
+		CreatedAt: now.Add(-24 * time.Hour),
+		UpdatedAt: now,
+	}
+
+	dbModel := fromDomain{{.DomainNamePascal}}(original)
+	restored, convertErr := dbModel.toDomain()
+
+	assert.NoError(t, convertErr)
+	assert.Equal(t, original.ID, restored.ID)
+	assert.Equal(t, original.Name, restored.Name)
+	assert.Equal(t, original.CreatedAt, restored.CreatedAt)
+	assert.Equal(t, original.UpdatedAt, restored.UpdatedAt)
+}
+
+// =============================================================================
+// Helpers for sqlmock tests
+// =============================================================================
+
+func buildTest{{.DomainNamePascal}}() *{{.DomainNameCamel}}domain.{{.DomainNamePascal}} {
+	now := time.Now().Truncate(time.Microsecond)
+
+	return &{{.DomainNameCamel}}domain.{{.DomainNamePascal}}{
+		ID:        uuid.New(),
+		Name:      "Test Name",
+		CreatedAt: now.Add(-24 * time.Hour),
+		UpdatedAt: now,
+	}
+}
+
+// =============================================================================
+// Unit Tests for {{.DomainNamePascal}}Repository with sqlmock
+// =============================================================================
+
+// --- Create ------------------------------------------------------------------
+
+func Test{{.DomainNamePascal}}Repository_Create(t *testing.T) {
+	db, mock, mockErr := sqlmock.New()
+	require.NoError(t, mockErr)
+	defer func() { _ = db.Close() }()
+
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	repo := New{{.DomainNamePascal}}Repository(sqlxDB, sqlxDB)
+
+	t.Run("success", func(t *testing.T) {
+		mock.ExpectExec("INSERT INTO {{.DomainNamePlural}}").
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+
+		e := buildTest{{.DomainNamePascal}}()
+		createErr := repo.Create(context.Background(), e)
+
+		assert.NoError(t, createErr)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("duplicate key", func(t *testing.T) {
+		pqErr := &pq.Error{Code: "23505"}
+		mock.ExpectExec("INSERT INTO {{.DomainNamePlural}}").
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnError(pqErr)
+
+		e := buildTest{{.DomainNamePascal}}()
+		createErr := repo.Create(context.Background(), e)
+
+		assert.Error(t, createErr)
+		assert.ErrorIs(t, createErr, {{.DomainNameCamel}}domain.Err{{.DomainNamePascal}}DuplicateKey)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("database error", func(t *testing.T) {
+		mock.ExpectExec("INSERT INTO {{.DomainNamePlural}}").
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnError(sql.ErrConnDone)
+
+		e := buildTest{{.DomainNamePascal}}()
+		createErr := repo.Create(context.Background(), e)
+
+		assert.Error(t, createErr)
+		assert.ErrorIs(t, createErr, sql.ErrConnDone)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
+// --- FindByID ----------------------------------------------------------------
+
+func Test{{.DomainNamePascal}}Repository_FindByID(t *testing.T) {
+	db, mock, mockErr := sqlmock.New()
+	require.NoError(t, mockErr)
+	defer func() { _ = db.Close() }()
+
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	repo := New{{.DomainNamePascal}}Repository(sqlxDB, sqlxDB)
+
+	now := time.Now().Truncate(time.Microsecond)
+	testID := uuid.New()
+
+	t.Run("success", func(t *testing.T) {
+		rows := sqlmock.NewRows([]string{"id", "name", "created_at", "updated_at"}).
+			AddRow(testID.String(), "Test Name", now, now)
+
+		mock.ExpectQuery("SELECT .+ FROM {{.DomainNamePlural}} WHERE id").
+			WithArgs(testID.String()).
+			WillReturnRows(rows)
+
+		result, findErr := repo.FindByID(context.Background(), testID)
+
+		assert.NoError(t, findErr)
+		require.NotNil(t, result)
+		assert.Equal(t, testID, result.ID)
+		assert.Equal(t, "Test Name", result.Name)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		mock.ExpectQuery("SELECT .+ FROM {{.DomainNamePlural}} WHERE id").
+			WithArgs(testID.String()).
+			WillReturnError(sql.ErrNoRows)
+
+		result, findErr := repo.FindByID(context.Background(), testID)
+
+		assert.Nil(t, result)
+		assert.ErrorIs(t, findErr, {{.DomainNameCamel}}domain.Err{{.DomainNamePascal}}NotFound)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("database error", func(t *testing.T) {
+		mock.ExpectQuery("SELECT .+ FROM {{.DomainNamePlural}} WHERE id").
+			WithArgs(testID.String()).
+			WillReturnError(sql.ErrConnDone)
+
+		result, findErr := repo.FindByID(context.Background(), testID)
+
+		assert.Nil(t, result)
+		assert.Error(t, findErr)
+		assert.ErrorIs(t, findErr, sql.ErrConnDone)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
+// --- List --------------------------------------------------------------------
+
+func Test{{.DomainNamePascal}}Repository_List(t *testing.T) {
+	db, mock, mockErr := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
+	require.NoError(t, mockErr)
+	defer func() { _ = db.Close() }()
+
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	repo := New{{.DomainNamePascal}}Repository(sqlxDB, sqlxDB)
+
+	now := time.Now().Truncate(time.Microsecond)
+	testID := uuid.New()
+
+	t.Run("success with results", func(t *testing.T) {
+		mock.ExpectBegin()
+
+		countRows := sqlmock.NewRows([]string{"count"}).AddRow(1)
+		mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM {{.DomainNamePlural}}").
+			WillReturnRows(countRows)
+
+		dataRows := sqlmock.NewRows([]string{"id", "name", "created_at", "updated_at"}).
+			AddRow(testID.String(), "Test Name", now, now)
+		mock.ExpectQuery("SELECT .+ FROM {{.DomainNamePlural}}").
+			WillReturnRows(dataRows)
+
+		mock.ExpectCommit()
+
+		filter := {{.DomainNameCamel}}domain.ListFilter{Page: 1, Limit: 20}
+		result, listErr := repo.List(context.Background(), filter)
+
+		assert.NoError(t, listErr)
+		require.NotNil(t, result)
+		assert.Equal(t, 1, result.Total)
+		assert.Equal(t, 1, result.Page)
+		assert.Equal(t, 20, result.Limit)
+		require.Len(t, result.Items, 1)
+		assert.Equal(t, testID, result.Items[0].ID)
+		assert.Equal(t, "Test Name", result.Items[0].Name)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("empty result", func(t *testing.T) {
+		mock.ExpectBegin()
+
+		countRows := sqlmock.NewRows([]string{"count"}).AddRow(0)
+		mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM {{.DomainNamePlural}}").
+			WillReturnRows(countRows)
+
+		dataRows := sqlmock.NewRows([]string{"id", "name", "created_at", "updated_at"})
+		mock.ExpectQuery("SELECT .+ FROM {{.DomainNamePlural}}").
+			WillReturnRows(dataRows)
+
+		mock.ExpectCommit()
+
+		filter := {{.DomainNameCamel}}domain.ListFilter{Page: 1, Limit: 20}
+		result, listErr := repo.List(context.Background(), filter)
+
+		assert.NoError(t, listErr)
+		require.NotNil(t, result)
+		assert.Equal(t, 0, result.Total)
+		assert.Empty(t, result.Items)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("with name filter", func(t *testing.T) {
+		mock.ExpectBegin()
+
+		countRows := sqlmock.NewRows([]string{"count"}).AddRow(1)
+		mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM {{.DomainNamePlural}} WHERE name ILIKE").
+			WillReturnRows(countRows)
+
+		dataRows := sqlmock.NewRows([]string{"id", "name", "created_at", "updated_at"}).
+			AddRow(testID.String(), "Test Name", now, now)
+		mock.ExpectQuery("SELECT .+ FROM {{.DomainNamePlural}}.+WHERE name ILIKE").
+			WillReturnRows(dataRows)
+
+		mock.ExpectCommit()
+
+		filter := {{.DomainNameCamel}}domain.ListFilter{Page: 1, Limit: 20, Name: "Test"}
+		result, listErr := repo.List(context.Background(), filter)
+
+		assert.NoError(t, listErr)
+		require.NotNil(t, result)
+		assert.Equal(t, 1, result.Total)
+		require.Len(t, result.Items, 1)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("transaction begin error", func(t *testing.T) {
+		mock.ExpectBegin().WillReturnError(sql.ErrConnDone)
+
+		filter := {{.DomainNameCamel}}domain.ListFilter{Page: 1, Limit: 20}
+		result, listErr := repo.List(context.Background(), filter)
+
+		assert.Nil(t, result)
+		assert.Error(t, listErr)
+		assert.Contains(t, listErr.Error(), "beginning read transaction")
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("database error on count query", func(t *testing.T) {
+		mock.ExpectBegin()
+
+		mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM {{.DomainNamePlural}}").
+			WillReturnError(sql.ErrConnDone)
+
+		mock.ExpectRollback()
+
+		filter := {{.DomainNameCamel}}domain.ListFilter{Page: 1, Limit: 20}
+		result, listErr := repo.List(context.Background(), filter)
+
+		assert.Nil(t, result)
+		assert.Error(t, listErr)
+		assert.ErrorIs(t, listErr, sql.ErrConnDone)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("database error on data query", func(t *testing.T) {
+		mock.ExpectBegin()
+
+		countRows := sqlmock.NewRows([]string{"count"}).AddRow(5)
+		mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM {{.DomainNamePlural}}").
+			WillReturnRows(countRows)
+
+		mock.ExpectQuery("SELECT .+ FROM {{.DomainNamePlural}}").
+			WillReturnError(sql.ErrConnDone)
+
+		mock.ExpectRollback()
+
+		filter := {{.DomainNameCamel}}domain.ListFilter{Page: 1, Limit: 20}
+		result, listErr := repo.List(context.Background(), filter)
+
+		assert.Nil(t, result)
+		assert.Error(t, listErr)
+		assert.ErrorIs(t, listErr, sql.ErrConnDone)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("commit error", func(t *testing.T) {
+		mock.ExpectBegin()
+
+		countRows := sqlmock.NewRows([]string{"count"}).AddRow(1)
+		mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM {{.DomainNamePlural}}").
+			WillReturnRows(countRows)
+
+		dataRows := sqlmock.NewRows([]string{"id", "name", "created_at", "updated_at"}).
+			AddRow(testID.String(), "Test Name", now, now)
+		mock.ExpectQuery("SELECT .+ FROM {{.DomainNamePlural}}").
+			WillReturnRows(dataRows)
+
+		mock.ExpectCommit().WillReturnError(sql.ErrConnDone)
+
+		filter := {{.DomainNameCamel}}domain.ListFilter{Page: 1, Limit: 20}
+		result, listErr := repo.List(context.Background(), filter)
+
+		assert.Nil(t, result)
+		assert.Error(t, listErr)
+		assert.Contains(t, listErr.Error(), "committing read transaction")
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
+// --- Update ------------------------------------------------------------------
+
+func Test{{.DomainNamePascal}}Repository_Update(t *testing.T) {
+	db, mock, mockErr := sqlmock.New()
+	require.NoError(t, mockErr)
+	defer func() { _ = db.Close() }()
+
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	repo := New{{.DomainNamePascal}}Repository(sqlxDB, sqlxDB)
+
+	t.Run("success", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectExec("UPDATE {{.DomainNamePlural}} SET").
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectCommit()
+
+		e := buildTest{{.DomainNamePascal}}()
+		updateErr := repo.Update(context.Background(), e)
+
+		assert.NoError(t, updateErr)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("not found - zero rows affected", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectExec("UPDATE {{.DomainNamePlural}} SET").
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectRollback()
+
+		e := buildTest{{.DomainNamePascal}}()
+		updateErr := repo.Update(context.Background(), e)
+
+		assert.ErrorIs(t, updateErr, {{.DomainNameCamel}}domain.Err{{.DomainNamePascal}}NotFound)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("database error on exec", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectExec("UPDATE {{.DomainNamePlural}} SET").
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnError(sql.ErrConnDone)
+		mock.ExpectRollback()
+
+		e := buildTest{{.DomainNamePascal}}()
+		updateErr := repo.Update(context.Background(), e)
+
+		assert.Error(t, updateErr)
+		assert.ErrorIs(t, updateErr, sql.ErrConnDone)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("transaction begin error", func(t *testing.T) {
+		mock.ExpectBegin().WillReturnError(sql.ErrConnDone)
+
+		e := buildTest{{.DomainNamePascal}}()
+		updateErr := repo.Update(context.Background(), e)
+
+		assert.Error(t, updateErr)
+		assert.Contains(t, updateErr.Error(), "beginning transaction")
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("transaction commit error", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectExec("UPDATE {{.DomainNamePlural}} SET").
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectCommit().WillReturnError(sql.ErrConnDone)
+
+		e := buildTest{{.DomainNamePascal}}()
+		updateErr := repo.Update(context.Background(), e)
+
+		assert.Error(t, updateErr)
+		assert.Contains(t, updateErr.Error(), "committing transaction")
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
+// --- Delete ------------------------------------------------------------------
+
+func Test{{.DomainNamePascal}}Repository_Delete(t *testing.T) {
+	db, mock, mockErr := sqlmock.New()
+	require.NoError(t, mockErr)
+	defer func() { _ = db.Close() }()
+
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	repo := New{{.DomainNamePascal}}Repository(sqlxDB, sqlxDB)
+
+	testID := uuid.New()
+
+	t.Run("success", func(t *testing.T) {
+		mock.ExpectExec("DELETE FROM {{.DomainNamePlural}}").
+			WithArgs(testID.String()).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+
+		deleteErr := repo.Delete(context.Background(), testID)
+
+		assert.NoError(t, deleteErr)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("not found - zero rows affected", func(t *testing.T) {
+		mock.ExpectExec("DELETE FROM {{.DomainNamePlural}}").
+			WithArgs(testID.String()).
+			WillReturnResult(sqlmock.NewResult(0, 0))
+
+		deleteErr := repo.Delete(context.Background(), testID)
+
+		assert.ErrorIs(t, deleteErr, {{.DomainNameCamel}}domain.Err{{.DomainNamePascal}}NotFound)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("database error", func(t *testing.T) {
+		mock.ExpectExec("DELETE FROM {{.DomainNamePlural}}").
+			WithArgs(testID.String()).
+			WillReturnError(sql.ErrConnDone)
+
+		deleteErr := repo.Delete(context.Background(), testID)
+
+		assert.Error(t, deleteErr)
+		assert.ErrorIs(t, deleteErr, sql.ErrConnDone)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}

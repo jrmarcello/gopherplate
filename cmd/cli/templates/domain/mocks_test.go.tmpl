@@ -1,0 +1,39 @@
+package {{.DomainNameSnake}}
+
+import (
+	"context"
+
+	"github.com/google/uuid"
+
+	{{.DomainNameCamel}}domain "{{.ModulePath}}/internal/domain/{{.DomainNameSnake}}"
+)
+
+// mockRepository is a hand-written mock for the Repository interface.
+// Each field is a function that the test configures with the desired behavior.
+type mockRepository struct {
+	CreateFn   func(ctx context.Context, e *{{.DomainNameCamel}}domain.{{.DomainNamePascal}}) error
+	FindByIDFn func(ctx context.Context, id uuid.UUID) (*{{.DomainNameCamel}}domain.{{.DomainNamePascal}}, error)
+	ListFn     func(ctx context.Context, filter {{.DomainNameCamel}}domain.ListFilter) (*{{.DomainNameCamel}}domain.ListResult, error)
+	UpdateFn   func(ctx context.Context, e *{{.DomainNameCamel}}domain.{{.DomainNamePascal}}) error
+	DeleteFn   func(ctx context.Context, id uuid.UUID) error
+}
+
+func (m *mockRepository) Create(ctx context.Context, e *{{.DomainNameCamel}}domain.{{.DomainNamePascal}}) error {
+	return m.CreateFn(ctx, e)
+}
+
+func (m *mockRepository) FindByID(ctx context.Context, id uuid.UUID) (*{{.DomainNameCamel}}domain.{{.DomainNamePascal}}, error) {
+	return m.FindByIDFn(ctx, id)
+}
+
+func (m *mockRepository) List(ctx context.Context, filter {{.DomainNameCamel}}domain.ListFilter) (*{{.DomainNameCamel}}domain.ListResult, error) {
+	return m.ListFn(ctx, filter)
+}
+
+func (m *mockRepository) Update(ctx context.Context, e *{{.DomainNameCamel}}domain.{{.DomainNamePascal}}) error {
+	return m.UpdateFn(ctx, e)
+}
+
+func (m *mockRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	return m.DeleteFn(ctx, id)
+}

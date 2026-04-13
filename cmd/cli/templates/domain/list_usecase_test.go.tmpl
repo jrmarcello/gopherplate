@@ -1,0 +1,87 @@
+package {{.DomainNameSnake}}
+
+import (
+	"context"
+	"errors"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+
+	{{.DomainNameCamel}}domain "{{.ModulePath}}/internal/domain/{{.DomainNameSnake}}"
+	"{{.ModulePath}}/internal/usecases/{{.DomainNameSnake}}/dto"
+	"{{.ModulePath}}/pkg/apperror"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestListUseCase_Execute_Success(t *testing.T) {
+	now := time.Now()
+	repo := &mockRepository{
+		ListFn: func(_ context.Context, _ {{.DomainNameCamel}}domain.ListFilter) (*{{.DomainNameCamel}}domain.ListResult, error) {
+			return &{{.DomainNameCamel}}domain.ListResult{
+				Items: []*{{.DomainNameCamel}}domain.{{.DomainNamePascal}}{
+					{ID: uuid.New(), Name: "First", CreatedAt: now, UpdatedAt: now},
+					{ID: uuid.New(), Name: "Second", CreatedAt: now, UpdatedAt: now},
+				},
+				Total: 2,
+				Page:  1,
+				Limit: 20,
+			}, nil
+		},
+	}
+
+	uc := NewListUseCase(repo)
+	input := dto.ListInput{Page: 1, Limit: 20}
+
+	output, execErr := uc.Execute(context.Background(), input)
+
+	require.NoError(t, execErr)
+	require.NotNil(t, output)
+	assert.Len(t, output.Data, 2)
+	assert.Equal(t, 2, output.Pagination.Total)
+	assert.Equal(t, 1, output.Pagination.Page)
+}
+
+func TestListUseCase_Execute_EmptyResult(t *testing.T) {
+	repo := &mockRepository{
+		ListFn: func(_ context.Context, _ {{.DomainNameCamel}}domain.ListFilter) (*{{.DomainNameCamel}}domain.ListResult, error) {
+			return &{{.DomainNameCamel}}domain.ListResult{
+				Items: []*{{.DomainNameCamel}}domain.{{.DomainNamePascal}}{},
+				Total: 0,
+				Page:  1,
+				Limit: 20,
+			}, nil
+		},
+	}
+
+	uc := NewListUseCase(repo)
+	input := dto.ListInput{Page: 1, Limit: 20}
+
+	output, execErr := uc.Execute(context.Background(), input)
+
+	require.NoError(t, execErr)
+	require.NotNil(t, output)
+	assert.Empty(t, output.Data)
+	assert.Equal(t, 0, output.Pagination.Total)
+}
+
+func TestListUseCase_Execute_RepositoryError(t *testing.T) {
+	repo := &mockRepository{
+		ListFn: func(_ context.Context, _ {{.DomainNameCamel}}domain.ListFilter) (*{{.DomainNameCamel}}domain.ListResult, error) {
+			return nil, errors.New("database error")
+		},
+	}
+
+	uc := NewListUseCase(repo)
+	input := dto.ListInput{Page: 1, Limit: 20}
+
+	output, execErr := uc.Execute(context.Background(), input)
+
+	assert.Error(t, execErr)
+	assert.Nil(t, output)
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(execErr, &appErr))
+	assert.Equal(t, apperror.CodeInternalError, appErr.Code)
+}

@@ -1,0 +1,38 @@
+package {{.DomainNameSnake}}
+
+import (
+	"errors"
+	"strings"
+
+	{{.DomainNameCamel}}domain "{{.ModulePath}}/internal/domain/{{.DomainNameSnake}}"
+	"{{.ModulePath}}/pkg/apperror"
+)
+
+// expectedErrors per use case — used by ClassifyError to distinguish
+// domain errors (expected) from infra errors (unexpected).
+var (
+	createExpectedErrors = []error{{"{"}}{{.DomainNameCamel}}domain.Err{{.DomainNamePascal}}DuplicateKey}
+	getExpectedErrors    = []error{{"{"}}{{.DomainNameCamel}}domain.Err{{.DomainNamePascal}}NotFound}
+	updateExpectedErrors = []error{{"{"}}{{.DomainNameCamel}}domain.Err{{.DomainNamePascal}}NotFound}
+	deleteExpectedErrors = []error{{"{"}}{{.DomainNameCamel}}domain.Err{{.DomainNamePascal}}NotFound}
+	// listExpectedErrors is intentionally nil — list only produces infra errors.
+)
+
+// {{.DomainNameCamel}}ToAppError maps domain errors to structured AppError codes.
+func {{.DomainNameCamel}}ToAppError(err error) *apperror.AppError {
+	switch {
+	case errors.Is(err, {{.DomainNameCamel}}domain.Err{{.DomainNamePascal}}NotFound):
+		return apperror.Wrap(err, apperror.CodeNotFound, "{{.DomainNameSnake}} not found")
+	case errors.Is(err, {{.DomainNameCamel}}domain.Err{{.DomainNamePascal}}DuplicateKey):
+		return apperror.Wrap(err, apperror.CodeConflict, "{{.DomainNameSnake}} already exists")
+	case isParseError(err):
+		return apperror.Wrap(err, apperror.CodeInvalidRequest, "invalid ID")
+	default:
+		return apperror.Wrap(err, apperror.CodeInternalError, "internal server error")
+	}
+}
+
+// isParseError detects UUID/ID parse errors from uuid.Parse.
+func isParseError(err error) bool {
+	return strings.Contains(err.Error(), "invalid UUID")
+}

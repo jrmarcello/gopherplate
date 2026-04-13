@@ -1,0 +1,69 @@
+package {{.DomainNameSnake}}
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestListFilter_Normalize(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    ListFilter
+		expected ListFilter
+	}{
+		{
+			name:     "zero values are normalized to defaults",
+			input:    ListFilter{Page: 0, Limit: 0},
+			expected: ListFilter{Page: 1, Limit: 20},
+		},
+		{
+			name:     "valid values are preserved",
+			input:    ListFilter{Page: 2, Limit: 50},
+			expected: ListFilter{Page: 2, Limit: 50},
+		},
+		{
+			name:     "limit above 100 is normalized to default",
+			input:    ListFilter{Page: 1, Limit: 200},
+			expected: ListFilter{Page: 1, Limit: 20},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.input.Normalize()
+			assert.Equal(t, tt.expected.Page, tt.input.Page)
+			assert.Equal(t, tt.expected.Limit, tt.input.Limit)
+		})
+	}
+}
+
+func TestListFilter_Offset(t *testing.T) {
+	tests := []struct {
+		name   string
+		filter ListFilter
+		want   int
+	}{
+		{
+			name:   "page 1 has offset 0",
+			filter: ListFilter{Page: 1, Limit: 20},
+			want:   0,
+		},
+		{
+			name:   "page 2 with limit 20 has offset 20",
+			filter: ListFilter{Page: 2, Limit: 20},
+			want:   20,
+		},
+		{
+			name:   "page 3 with limit 10 has offset 20",
+			filter: ListFilter{Page: 3, Limit: 10},
+			want:   20,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, tt.filter.Offset())
+		})
+	}
+}

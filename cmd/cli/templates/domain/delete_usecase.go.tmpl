@@ -2,12 +2,16 @@ package {{.DomainNameSnake}}
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 
 	"{{.ModulePath}}/internal/usecases/{{.DomainNameSnake}}/dto"
 	"{{.ModulePath}}/internal/usecases/{{.DomainNameSnake}}/interfaces"
+
+	ucshared "{{.ModulePath}}/internal/usecases/shared"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // DeleteUseCase implements the {{.DomainNameSnake}} deletion use case.
@@ -22,13 +26,18 @@ func NewDeleteUseCase(repo interfaces.Repository) *DeleteUseCase {
 
 // Execute deletes a {{.DomainNameSnake}} by ID.
 func (uc *DeleteUseCase) Execute(ctx context.Context, input dto.DeleteInput) (*dto.DeleteOutput, error) {
+	span := trace.SpanFromContext(ctx)
+
 	id, parseErr := uuid.Parse(input.ID)
 	if parseErr != nil {
-		return nil, parseErr
+		ucshared.ClassifyError(span, parseErr, deleteExpectedErrors, "deleting {{.DomainNameSnake}}: invalid ID")
+		return nil, {{.DomainNameCamel}}ToAppError(parseErr)
 	}
 
 	if deleteErr := uc.Repo.Delete(ctx, id); deleteErr != nil {
-		return nil, deleteErr
+		wrappedErr := fmt.Errorf("deleting {{.DomainNameSnake}}: %w", deleteErr)
+		ucshared.ClassifyError(span, deleteErr, deleteExpectedErrors, wrappedErr.Error())
+		return nil, {{.DomainNameCamel}}ToAppError(deleteErr)
 	}
 
 	return &dto.DeleteOutput{

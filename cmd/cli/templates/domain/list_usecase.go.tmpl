@@ -2,12 +2,16 @@ package {{.DomainNameSnake}}
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"time"
 
 	{{.DomainNameCamel}}domain "{{.ModulePath}}/internal/domain/{{.DomainNameSnake}}"
 	"{{.ModulePath}}/internal/usecases/{{.DomainNameSnake}}/dto"
 	"{{.ModulePath}}/internal/usecases/{{.DomainNameSnake}}/interfaces"
+
+	ucshared "{{.ModulePath}}/internal/usecases/shared"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // ListUseCase implements the use case for listing {{.DomainNamePlural}}.
@@ -22,20 +26,21 @@ func NewListUseCase(repo interfaces.Repository) *ListUseCase {
 
 // Execute returns a paginated list of {{.DomainNamePlural}}.
 func (uc *ListUseCase) Execute(ctx context.Context, input dto.ListInput) (*dto.ListOutput, error) {
-	// Convert input to domain filter
+	span := trace.SpanFromContext(ctx)
+
 	filter := {{.DomainNameCamel}}domain.ListFilter{
 		Page:  input.Page,
 		Limit: input.Limit,
 		Name:  input.Name,
 	}
 
-	// Fetch from repository
 	result, listErr := uc.Repo.List(ctx, filter)
 	if listErr != nil {
-		return nil, listErr
+		wrappedErr := fmt.Errorf("listing {{.DomainNamePlural}}: %w", listErr)
+		ucshared.ClassifyError(span, listErr, nil, wrappedErr.Error())
+		return nil, {{.DomainNameCamel}}ToAppError(listErr)
 	}
 
-	// Convert to output DTOs
 	items := make([]dto.GetOutput, 0, len(result.Items))
 	for _, e := range result.Items {
 		items = append(items, dto.GetOutput{
@@ -46,7 +51,6 @@ func (uc *ListUseCase) Execute(ctx context.Context, input dto.ListInput) (*dto.L
 		})
 	}
 
-	// Calculate total pages
 	totalPages := int(math.Ceil(float64(result.Total) / float64(result.Limit)))
 
 	return &dto.ListOutput{

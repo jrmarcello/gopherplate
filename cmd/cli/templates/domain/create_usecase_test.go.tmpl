@@ -1,0 +1,71 @@
+package {{.DomainNameSnake}}
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	{{.DomainNameCamel}}domain "{{.ModulePath}}/internal/domain/{{.DomainNameSnake}}"
+	"{{.ModulePath}}/internal/usecases/{{.DomainNameSnake}}/dto"
+	"{{.ModulePath}}/pkg/apperror"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestCreateUseCase_Execute_Success(t *testing.T) {
+	repo := &mockRepository{
+		CreateFn: func(_ context.Context, _ *{{.DomainNameCamel}}domain.{{.DomainNamePascal}}) error {
+			return nil
+		},
+	}
+
+	uc := NewCreateUseCase(repo)
+	input := dto.CreateInput{Name: "Test {{.DomainNamePascal}}"}
+
+	output, execErr := uc.Execute(context.Background(), input)
+
+	require.NoError(t, execErr)
+	require.NotNil(t, output)
+	assert.NotEmpty(t, output.ID)
+	assert.NotEmpty(t, output.CreatedAt)
+}
+
+func TestCreateUseCase_Execute_RepositoryError(t *testing.T) {
+	repo := &mockRepository{
+		CreateFn: func(_ context.Context, _ *{{.DomainNameCamel}}domain.{{.DomainNamePascal}}) error {
+			return errors.New("database connection failed")
+		},
+	}
+
+	uc := NewCreateUseCase(repo)
+	input := dto.CreateInput{Name: "Test {{.DomainNamePascal}}"}
+
+	output, execErr := uc.Execute(context.Background(), input)
+
+	assert.Error(t, execErr)
+	assert.Nil(t, output)
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(execErr, &appErr))
+	assert.Equal(t, apperror.CodeInternalError, appErr.Code)
+}
+
+func TestCreateUseCase_Execute_DuplicateKey(t *testing.T) {
+	repo := &mockRepository{
+		CreateFn: func(_ context.Context, _ *{{.DomainNameCamel}}domain.{{.DomainNamePascal}}) error {
+			return {{.DomainNameCamel}}domain.Err{{.DomainNamePascal}}DuplicateKey
+		},
+	}
+
+	uc := NewCreateUseCase(repo)
+	input := dto.CreateInput{Name: "Duplicate"}
+
+	output, execErr := uc.Execute(context.Background(), input)
+
+	assert.Error(t, execErr)
+	assert.Nil(t, output)
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(execErr, &appErr))
+	assert.Equal(t, apperror.CodeConflict, appErr.Code)
+}

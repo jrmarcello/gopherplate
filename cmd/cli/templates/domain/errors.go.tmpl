@@ -4,5 +4,6 @@ import "errors"
 
 // Domain errors for {{.DomainNamePascal}}.
 var (
-	Err{{.DomainNamePascal}}NotFound = errors.New("{{.DomainNameSnake}} not found")
+	Err{{.DomainNamePascal}}NotFound     = errors.New("{{.DomainNameSnake}} not found")
+	Err{{.DomainNamePascal}}DuplicateKey = errors.New("{{.DomainNameSnake}} already exists")
 )

@@ -151,16 +151,25 @@ func buildTemplateMappings(snakeName, migrationTimestamp string) map[string]stri
 
 	return map[string]string{
 		// Domain layer
-		"entity.go.tmpl": filepath.Join("internal", "domain", snakeName, "entity.go"),
-		"errors.go.tmpl": filepath.Join("internal", "domain", snakeName, "errors.go"),
-		"filter.go.tmpl": filepath.Join("internal", "domain", snakeName, "filter.go"),
+		"entity.go.tmpl":      filepath.Join("internal", "domain", snakeName, "entity.go"),
+		"entity_test.go.tmpl": filepath.Join("internal", "domain", snakeName, "entity_test.go"),
+		"errors.go.tmpl":      filepath.Join("internal", "domain", snakeName, "errors.go"),
+		"filter.go.tmpl":      filepath.Join("internal", "domain", snakeName, "filter.go"),
+		"filter_test.go.tmpl": filepath.Join("internal", "domain", snakeName, "filter_test.go"),
 
 		// Use cases
-		"create_usecase.go.tmpl": filepath.Join("internal", "usecases", snakeName, "create.go"),
-		"get_usecase.go.tmpl":    filepath.Join("internal", "usecases", snakeName, "get.go"),
-		"list_usecase.go.tmpl":   filepath.Join("internal", "usecases", snakeName, "list.go"),
-		"update_usecase.go.tmpl": filepath.Join("internal", "usecases", snakeName, "update.go"),
-		"delete_usecase.go.tmpl": filepath.Join("internal", "usecases", snakeName, "delete.go"),
+		"create_usecase.go.tmpl":      filepath.Join("internal", "usecases", snakeName, "create.go"),
+		"get_usecase.go.tmpl":         filepath.Join("internal", "usecases", snakeName, "get.go"),
+		"list_usecase.go.tmpl":        filepath.Join("internal", "usecases", snakeName, "list.go"),
+		"update_usecase.go.tmpl":      filepath.Join("internal", "usecases", snakeName, "update.go"),
+		"delete_usecase.go.tmpl":      filepath.Join("internal", "usecases", snakeName, "delete.go"),
+		"usecase_errors.go.tmpl":      filepath.Join("internal", "usecases", snakeName, "errors.go"),
+		"mocks_test.go.tmpl":          filepath.Join("internal", "usecases", snakeName, "mocks_test.go"),
+		"create_usecase_test.go.tmpl": filepath.Join("internal", "usecases", snakeName, "create_test.go"),
+		"get_usecase_test.go.tmpl":    filepath.Join("internal", "usecases", snakeName, "get_test.go"),
+		"update_usecase_test.go.tmpl": filepath.Join("internal", "usecases", snakeName, "update_test.go"),
+		"delete_usecase_test.go.tmpl": filepath.Join("internal", "usecases", snakeName, "delete_test.go"),
+		"list_usecase_test.go.tmpl":   filepath.Join("internal", "usecases", snakeName, "list_test.go"),
 
 		// Use case interfaces
 		"repository_interface.go.tmpl": filepath.Join("internal", "usecases", snakeName, "interfaces", "repository.go"),
@@ -173,7 +182,8 @@ func buildTemplateMappings(snakeName, migrationTimestamp string) map[string]stri
 		"dto_delete.go.tmpl": filepath.Join("internal", "usecases", snakeName, "dto", "delete.go"),
 
 		// Infrastructure - Repository
-		"repository_postgres.go.tmpl": filepath.Join("internal", "infrastructure", "db", "postgres", "repository", snakeName+".go"),
+		"repository_postgres.go.tmpl":      filepath.Join("internal", "infrastructure", "db", "postgres", "repository", snakeName+".go"),
+		"repository_postgres_test.go.tmpl": filepath.Join("internal", "infrastructure", "db", "postgres", "repository", snakeName+"_test.go"),
 
 		// Infrastructure - Handler
 		"handler.go.tmpl": filepath.Join("internal", "infrastructure", "web", "handler", snakeName+".go"),

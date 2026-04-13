@@ -1,0 +1,89 @@
+package {{.DomainNameSnake}}
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/google/uuid"
+
+	{{.DomainNameCamel}}domain "{{.ModulePath}}/internal/domain/{{.DomainNameSnake}}"
+	"{{.ModulePath}}/internal/usecases/{{.DomainNameSnake}}/dto"
+	"{{.ModulePath}}/pkg/apperror"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestDeleteUseCase_Execute_Success(t *testing.T) {
+	id := uuid.New()
+	repo := &mockRepository{
+		DeleteFn: func(_ context.Context, _ uuid.UUID) error {
+			return nil
+		},
+	}
+
+	uc := NewDeleteUseCase(repo)
+	input := dto.DeleteInput{ID: id.String()}
+
+	output, execErr := uc.Execute(context.Background(), input)
+
+	require.NoError(t, execErr)
+	require.NotNil(t, output)
+	assert.Equal(t, id.String(), output.ID)
+	assert.NotEmpty(t, output.DeletedAt)
+}
+
+func TestDeleteUseCase_Execute_NotFound(t *testing.T) {
+	repo := &mockRepository{
+		DeleteFn: func(_ context.Context, _ uuid.UUID) error {
+			return {{.DomainNameCamel}}domain.Err{{.DomainNamePascal}}NotFound
+		},
+	}
+
+	uc := NewDeleteUseCase(repo)
+	input := dto.DeleteInput{ID: uuid.New().String()}
+
+	output, execErr := uc.Execute(context.Background(), input)
+
+	assert.Error(t, execErr)
+	assert.Nil(t, output)
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(execErr, &appErr))
+	assert.Equal(t, apperror.CodeNotFound, appErr.Code)
+}
+
+func TestDeleteUseCase_Execute_InvalidID(t *testing.T) {
+	repo := &mockRepository{}
+	uc := NewDeleteUseCase(repo)
+	input := dto.DeleteInput{ID: "invalid-id"}
+
+	output, execErr := uc.Execute(context.Background(), input)
+
+	assert.Error(t, execErr)
+	assert.Nil(t, output)
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(execErr, &appErr))
+	assert.Equal(t, apperror.CodeInvalidRequest, appErr.Code)
+}
+
+func TestDeleteUseCase_Execute_RepositoryError(t *testing.T) {
+	repo := &mockRepository{
+		DeleteFn: func(_ context.Context, _ uuid.UUID) error {
+			return errors.New("database error")
+		},
+	}
+
+	uc := NewDeleteUseCase(repo)
+	input := dto.DeleteInput{ID: uuid.New().String()}
+
+	output, execErr := uc.Execute(context.Background(), input)
+
+	assert.Error(t, execErr)
+	assert.Nil(t, output)
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(execErr, &appErr))
+	assert.Equal(t, apperror.CodeInternalError, appErr.Code)
+}

@@ -2,12 +2,16 @@ package {{.DomainNameSnake}}
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 
 	"{{.ModulePath}}/internal/usecases/{{.DomainNameSnake}}/dto"
 	"{{.ModulePath}}/internal/usecases/{{.DomainNameSnake}}/interfaces"
+
+	ucshared "{{.ModulePath}}/internal/usecases/shared"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // GetUseCase implements the use case for fetching a {{.DomainNameSnake}} by ID.
@@ -22,14 +26,19 @@ func NewGetUseCase(repo interfaces.Repository) *GetUseCase {
 
 // Execute fetches a {{.DomainNameSnake}} by ID.
 func (uc *GetUseCase) Execute(ctx context.Context, input dto.GetInput) (*dto.GetOutput, error) {
+	span := trace.SpanFromContext(ctx)
+
 	id, parseErr := uuid.Parse(input.ID)
 	if parseErr != nil {
-		return nil, parseErr
+		ucshared.ClassifyError(span, parseErr, getExpectedErrors, "getting {{.DomainNameSnake}}: invalid ID")
+		return nil, {{.DomainNameCamel}}ToAppError(parseErr)
 	}
 
 	e, findErr := uc.Repo.FindByID(ctx, id)
 	if findErr != nil {
-		return nil, findErr
+		wrappedErr := fmt.Errorf("getting {{.DomainNameSnake}}: %w", findErr)
+		ucshared.ClassifyError(span, findErr, getExpectedErrors, wrappedErr.Error())
+		return nil, {{.DomainNameCamel}}ToAppError(findErr)
 	}
 
 	return &dto.GetOutput{

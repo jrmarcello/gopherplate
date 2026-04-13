@@ -1,0 +1,99 @@
+package {{.DomainNameSnake}}
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/google/uuid"
+
+	{{.DomainNameCamel}}domain "{{.ModulePath}}/internal/domain/{{.DomainNameSnake}}"
+	"{{.ModulePath}}/internal/usecases/{{.DomainNameSnake}}/dto"
+	"{{.ModulePath}}/pkg/apperror"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestUpdateUseCase_Execute_Success(t *testing.T) {
+	existing := {{.DomainNameCamel}}domain.New{{.DomainNamePascal}}("Original")
+	repo := &mockRepository{
+		FindByIDFn: func(_ context.Context, _ uuid.UUID) (*{{.DomainNameCamel}}domain.{{.DomainNamePascal}}, error) {
+			return existing, nil
+		},
+		UpdateFn: func(_ context.Context, _ *{{.DomainNameCamel}}domain.{{.DomainNamePascal}}) error {
+			return nil
+		},
+	}
+
+	uc := NewUpdateUseCase(repo)
+	updatedName := "Updated"
+	input := dto.UpdateInput{ID: existing.ID.String(), Name: &updatedName}
+
+	output, execErr := uc.Execute(context.Background(), input)
+
+	require.NoError(t, execErr)
+	require.NotNil(t, output)
+	assert.Equal(t, existing.ID.String(), output.ID)
+}
+
+func TestUpdateUseCase_Execute_NotFound(t *testing.T) {
+	repo := &mockRepository{
+		FindByIDFn: func(_ context.Context, _ uuid.UUID) (*{{.DomainNameCamel}}domain.{{.DomainNamePascal}}, error) {
+			return nil, {{.DomainNameCamel}}domain.Err{{.DomainNamePascal}}NotFound
+		},
+	}
+
+	uc := NewUpdateUseCase(repo)
+	notFoundName := "Updated"
+	input := dto.UpdateInput{ID: uuid.New().String(), Name: &notFoundName}
+
+	output, execErr := uc.Execute(context.Background(), input)
+
+	assert.Error(t, execErr)
+	assert.Nil(t, output)
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(execErr, &appErr))
+	assert.Equal(t, apperror.CodeNotFound, appErr.Code)
+}
+
+func TestUpdateUseCase_Execute_InvalidID(t *testing.T) {
+	repo := &mockRepository{}
+	uc := NewUpdateUseCase(repo)
+	invalidName := "Updated"
+	input := dto.UpdateInput{ID: "invalid-id", Name: &invalidName}
+
+	output, execErr := uc.Execute(context.Background(), input)
+
+	assert.Error(t, execErr)
+	assert.Nil(t, output)
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(execErr, &appErr))
+	assert.Equal(t, apperror.CodeInvalidRequest, appErr.Code)
+}
+
+func TestUpdateUseCase_Execute_RepositoryError(t *testing.T) {
+	existing := {{.DomainNameCamel}}domain.New{{.DomainNamePascal}}("Original")
+	repo := &mockRepository{
+		FindByIDFn: func(_ context.Context, _ uuid.UUID) (*{{.DomainNameCamel}}domain.{{.DomainNamePascal}}, error) {
+			return existing, nil
+		},
+		UpdateFn: func(_ context.Context, _ *{{.DomainNameCamel}}domain.{{.DomainNamePascal}}) error {
+			return errors.New("database error")
+		},
+	}
+
+	uc := NewUpdateUseCase(repo)
+	updatedName := "Updated"
+	input := dto.UpdateInput{ID: existing.ID.String(), Name: &updatedName}
+
+	output, execErr := uc.Execute(context.Background(), input)
+
+	assert.Error(t, execErr)
+	assert.Nil(t, output)
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(execErr, &appErr))
+	assert.Equal(t, apperror.CodeInternalError, appErr.Code)
+}

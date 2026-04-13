@@ -1,0 +1,89 @@
+package {{.DomainNameSnake}}
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/google/uuid"
+
+	{{.DomainNameCamel}}domain "{{.ModulePath}}/internal/domain/{{.DomainNameSnake}}"
+	"{{.ModulePath}}/internal/usecases/{{.DomainNameSnake}}/dto"
+	"{{.ModulePath}}/pkg/apperror"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestGetUseCase_Execute_Success(t *testing.T) {
+	existing := {{.DomainNameCamel}}domain.New{{.DomainNamePascal}}("Test")
+	repo := &mockRepository{
+		FindByIDFn: func(_ context.Context, _ uuid.UUID) (*{{.DomainNameCamel}}domain.{{.DomainNamePascal}}, error) {
+			return existing, nil
+		},
+	}
+
+	uc := NewGetUseCase(repo)
+	input := dto.GetInput{ID: existing.ID.String()}
+
+	output, execErr := uc.Execute(context.Background(), input)
+
+	require.NoError(t, execErr)
+	require.NotNil(t, output)
+	assert.Equal(t, existing.ID.String(), output.ID)
+	assert.Equal(t, "Test", output.Name)
+}
+
+func TestGetUseCase_Execute_NotFound(t *testing.T) {
+	repo := &mockRepository{
+		FindByIDFn: func(_ context.Context, _ uuid.UUID) (*{{.DomainNameCamel}}domain.{{.DomainNamePascal}}, error) {
+			return nil, {{.DomainNameCamel}}domain.Err{{.DomainNamePascal}}NotFound
+		},
+	}
+
+	uc := NewGetUseCase(repo)
+	input := dto.GetInput{ID: uuid.New().String()}
+
+	output, execErr := uc.Execute(context.Background(), input)
+
+	assert.Error(t, execErr)
+	assert.Nil(t, output)
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(execErr, &appErr))
+	assert.Equal(t, apperror.CodeNotFound, appErr.Code)
+}
+
+func TestGetUseCase_Execute_InvalidID(t *testing.T) {
+	repo := &mockRepository{}
+	uc := NewGetUseCase(repo)
+	input := dto.GetInput{ID: "invalid-id"}
+
+	output, execErr := uc.Execute(context.Background(), input)
+
+	assert.Error(t, execErr)
+	assert.Nil(t, output)
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(execErr, &appErr))
+	assert.Equal(t, apperror.CodeInvalidRequest, appErr.Code)
+}
+
+func TestGetUseCase_Execute_RepositoryError(t *testing.T) {
+	repo := &mockRepository{
+		FindByIDFn: func(_ context.Context, _ uuid.UUID) (*{{.DomainNameCamel}}domain.{{.DomainNamePascal}}, error) {
+			return nil, errors.New("database error")
+		},
+	}
+
+	uc := NewGetUseCase(repo)
+	input := dto.GetInput{ID: uuid.New().String()}
+
+	output, execErr := uc.Execute(context.Background(), input)
+
+	assert.Error(t, execErr)
+	assert.Nil(t, output)
+
+	var appErr *apperror.AppError
+	assert.True(t, errors.As(execErr, &appErr))
+	assert.Equal(t, apperror.CodeInternalError, appErr.Code)
+}

@@ -2,12 +2,16 @@ package {{.DomainNameSnake}}
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 
 	"{{.ModulePath}}/internal/usecases/{{.DomainNameSnake}}/dto"
 	"{{.ModulePath}}/internal/usecases/{{.DomainNameSnake}}/interfaces"
+
+	ucshared "{{.ModulePath}}/internal/usecases/shared"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // UpdateUseCase implements the {{.DomainNameSnake}} update use case.
@@ -21,20 +25,20 @@ func NewUpdateUseCase(repo interfaces.Repository) *UpdateUseCase {
 }
 
 // Execute updates an existing {{.DomainNameSnake}}.
-//
-// Flow:
-//  1. Fetch existing {{.DomainNameSnake}} by ID
-//  2. Apply partial updates
-//  3. Persist changes
 func (uc *UpdateUseCase) Execute(ctx context.Context, input dto.UpdateInput) (*dto.UpdateOutput, error) {
+	span := trace.SpanFromContext(ctx)
+
 	id, parseErr := uuid.Parse(input.ID)
 	if parseErr != nil {
-		return nil, parseErr
+		ucshared.ClassifyError(span, parseErr, updateExpectedErrors, "updating {{.DomainNameSnake}}: invalid ID")
+		return nil, {{.DomainNameCamel}}ToAppError(parseErr)
 	}
 
 	e, findErr := uc.Repo.FindByID(ctx, id)
 	if findErr != nil {
-		return nil, findErr
+		wrappedErr := fmt.Errorf("updating {{.DomainNameSnake}}: %w", findErr)
+		ucshared.ClassifyError(span, findErr, updateExpectedErrors, wrappedErr.Error())
+		return nil, {{.DomainNameCamel}}ToAppError(findErr)
 	}
 
 	if input.Name != nil {
@@ -42,7 +46,9 @@ func (uc *UpdateUseCase) Execute(ctx context.Context, input dto.UpdateInput) (*d
 	}
 
 	if saveErr := uc.Repo.Update(ctx, e); saveErr != nil {
-		return nil, saveErr
+		wrappedErr := fmt.Errorf("updating {{.DomainNameSnake}}: %w", saveErr)
+		ucshared.ClassifyError(span, saveErr, updateExpectedErrors, wrappedErr.Error())
+		return nil, {{.DomainNameCamel}}ToAppError(saveErr)
 	}
 
 	return &dto.UpdateOutput{
