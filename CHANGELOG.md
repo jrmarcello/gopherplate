@@ -6,6 +6,24 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Commits seguem [Conventional Commits](https://www.conventionalcommits.org/).
 
 ---
+## [0.12.0] - 2026-04-13
+
+### Correções
+
+- **cli**: Add 30s timeout to go mod tidy during scaffold
+
+### Documentação
+
+- Fix ADR-004 references to ADR-009 (post error-handling-refactor)
+
+### Funcionalidades
+
+- **cli**: Auto-resolve template path for gopherplate new
+
+### Manutenção
+
+- Remove lingering go-boilerplate references after rename to gopherplate
+- Add a blank line for better readability in CHANGELOG.md
 
 ## [0.11.0] - 2026-04-13
 
@@ -21,6 +39,7 @@ Commits seguem [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Manutenção
 
+- **release**: V0.11.0 [skip ci]
 - Add CLI new commands spec (remove domain, doctor, add/remove endpoint, wiring, bug fixes)
 
 ### Refatoração
