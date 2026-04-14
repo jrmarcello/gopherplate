@@ -219,6 +219,7 @@ func buildDependencies(cluster *database.DBCluster, sqlxWriter, sqlxReader *sqlx
 			ServiceKeysEnabled: cfg.Auth.Enabled,
 			ServiceKeys:        cfg.Auth.ServiceKeys,
 			SwaggerEnabled:     cfg.Swagger.Enabled,
+			MaxBodySize:        cfg.Server.MaxBodySize,
 		},
 	}
 }

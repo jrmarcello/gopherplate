@@ -22,6 +22,7 @@ type Config struct {
 	ServiceKeysEnabled bool   // fail-closed em HML/PRD se keys vazio
 	ServiceKeys        string // "service1:key1,service2:key2"
 	SwaggerEnabled     bool
+	MaxBodySize        int64 // Max request body in bytes (0 disables the cap)
 }
 
 // Dependencies agrupa todas as dependências necessárias para o router
@@ -40,6 +41,10 @@ func Setup(deps Dependencies) *gin.Engine {
 
 	// Recovery middleware (panic recovery — returns JSON 500, not HTML)
 	r.Use(middleware.CustomRecovery())
+
+	// Body size cap (must run before any middleware that reads the body,
+	// e.g. Idempotency and handlers doing ShouldBindJSON).
+	r.Use(middleware.BodyLimit(deps.Config.MaxBodySize))
 
 	// OpenTelemetry (must be before Logger to populate trace_id)
 	r.Use(otelgin.Middleware(deps.Config.ServiceName))
