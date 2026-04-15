@@ -83,7 +83,7 @@ Ao executar `gopherplate new`, o CLI guia você por uma série de perguntas:
 | 2 | Module path | texto livre | Go module path completo (ex: `github.com/yourorg/payment-service`) |
 | 3 | Banco de dados | PostgreSQL / MySQL / SQLite3 / Outro | Driver de banco de dados que será configurado no projeto |
 | 4 | Protocolo | HTTP/REST (Gin) / ~~gRPC~~ | Protocolo de comunicação da API (gRPC em breve) |
-| 5 | Injeção de dependência | Manual / ~~Uber Fx~~ | Estratégia de DI (Uber Fx em breve) |
+| 5 | Injeção de dependência | Manual | Estratégia de DI (constructor injection + builder methods) |
 | 6 | Cache Redis? | sim / não | Habilita cache com Redis (pkg/cache) |
 | 7 | Idempotência? | sim / não | Habilita middleware de idempotência (só aparece se Redis = sim) |
 | 8 | Service Key Auth? | sim / não | Habilita autenticação service-to-service via headers |
@@ -99,7 +99,7 @@ $ gopherplate new payment-service
   Banco de dados (postgres/mysql/sqlite3/other) [postgres]: postgres
 
   Protocolo: HTTP/REST (Gin) [gRPC: em breve]
-  Injeção de dependência: Manual [Uber Fx: em breve]
+  Injeção de dependência: Manual
 
   Incluir cache Redis? [Y/n]: y
   Incluir idempotência? [Y/n]: y
@@ -551,17 +551,6 @@ Atualmente o único protocolo disponível é **HTTP/REST (Gin)**. O suporte a gR
 - Handlers gRPC como alternativa aos HTTP handlers
 - Opção de rodar ambos os protocolos simultaneamente (gRPC + HTTP gateway)
 
-### Uber Fx
-
-Atualmente a única estratégia de DI é **Manual** (wiring em `server.go:buildDependencies()`). O suporte a Uber Fx substituirá o wiring manual por:
-
-- `fx.Module` para cada domínio (providers agrupados)
-- `fx.Lifecycle` para gerenciamento de ciclo de vida (graceful shutdown)
-- Autowiring automático via tipos de interface
-- Redução significativa de código boilerplate em `server.go`
-
-> Para entender como Uber Fx funciona com este projeto, consulte o guia [Uber Fx para Injeção de Dependência](fx-dependency-injection.md).
-
 ---
 
 ## Troubleshooting
@@ -654,5 +643,4 @@ Isso gera um projeto apenas com Clean Architecture, PostgreSQL e OpenTelemetry -
 - [Clean Architecture - Guia de Arquitetura](architecture.md)
 - [Cache Strategy - Guia de Cache](cache.md)
 - [Multi-Database - Guia de Banco de Dados](multi-database.md)
-- [Uber Fx - Guia de DI](fx-dependency-injection.md)
 - [Go embed package](https://pkg.go.dev/embed)

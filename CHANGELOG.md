@@ -134,7 +134,6 @@ Commits seguem [Conventional Commits](https://www.conventionalcommits.org/).
 - **contributing**: Rewrite with issue tracker, dev workflow, and architecture refs
 - Add CHANGELOG.md with full project history
 - **guides**: Add multi-database strategy guide
-- **guides**: Add Uber Fx dependency injection guide
 - Comprehensive documentation update to match current codebase
 - **agents**: Add .agent/ toolkit references to CLAUDE.md and AGENTS.md
 - **readme**: Update with pkg/, new ADRs, commands and features

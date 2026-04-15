@@ -106,9 +106,9 @@ func runNew(cmd *cobra.Command, args []string) error {
 	cfg.Protocol = scaffold.ProtocolHTTP
 	fmt.Println("\n  Protocolo: HTTP/REST (Gin) [gRPC: em breve]")
 
-	// DI (currently manual only, show "coming soon" for others)
+	// DI (manual only)
 	cfg.DI = scaffold.DIManual
-	fmt.Println("  Injeção de dependência: Manual [Uber Fx: em breve]")
+	fmt.Println("  Injeção de dependência: Manual")
 
 	// Redis
 	noRedis, _ := cmd.Flags().GetBool("no-redis")

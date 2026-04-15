@@ -71,7 +71,7 @@ func TestScaffold_Validate(t *testing.T) {
 		},
 		{
 			name:    "unsupported DI strategy",
-			modify:  func(cfg *Config) { cfg.DI = DIFx },
+			modify:  func(cfg *Config) { cfg.DI = "fx" },
 			wantErr: `DI strategy "fx" is not yet supported`,
 		},
 		{

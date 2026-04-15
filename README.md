@@ -438,7 +438,6 @@ O projeto inclui 8 ADRs (Architecture Decision Records) em `docs/adr/` explicand
 | [architecture.md](docs/guides/architecture.md) | Diagramas e visão geral |
 | [cache.md](docs/guides/cache.md) | Cache com Redis, singleflight e pool config |
 | [kubernetes.md](docs/guides/kubernetes.md) | Deploy, Kind e operação |
-| [fx-dependency-injection.md](docs/guides/fx-dependency-injection.md) | Uber Fx como alternativa ao DI manual |
 | [multi-database.md](docs/guides/multi-database.md) | Estratégia para serviços com múltiplos bancos |
 | [sdd-ralph-loop.md](docs/guides/sdd-ralph-loop.md) | SDD + Ralph Loop — fluxo spec-driven com execução autônoma |
 | [grpc.md](docs/guides/grpc.md) | gRPC como alternativa ao REST (buf, dual server, interceptors) |
@@ -455,7 +454,6 @@ O template está em evolução contínua. Próximos passos planejados:
 - [ ] Outbox pattern para eventos assíncronos (SQS/SNS)
 - [ ] Suporte a gRPC como alternativa ao REST
 - [ ] Feature flags com LaunchDarkly/Unleash
-- [ ] Uber Fx como opção de DI (guia já documentado)
 - [x] CLI para scaffold automático (`gopherplate new my-service`)
 
 Sugestões são bem-vindas via [Issues](https://github.com/jrmarcello/gopherplate/issues).
@@ -496,7 +494,7 @@ Se for muito pro seu caso, colapse as camadas. A Clean Architecture brilha aqui 
 
 O template é intencionalmente **pouco opinativo nas ferramentas**. Usa Gin (HTTP), sqlx (DB), go-redis (cache) — bibliotecas maduras e amplamente adotadas. Não usa ORMs, DI frameworks, ou geradores de código. Quanto menos mágica, mais fácil de entender e debugar.
 
-Mas essa é uma escolha do template como ponto de partida. Você tem **liberdade total para adicionar** qualquer biblioteca ou framework que desejar — Uber Fx para DI, GORM para ORM, gRPC para comunicação. A arquitetura em camadas facilita isso: adicione um adapter na infraestrutura e o domínio nem percebe.
+Mas essa é uma escolha do template como ponto de partida. Você tem **liberdade total para adicionar** qualquer biblioteca ou framework que desejar — GORM para ORM, gRPC para comunicação, etc. A arquitetura em camadas facilita isso: adicione um adapter na infraestrutura e o domínio nem percebe.
 
 ### Posso usar só partes do template?
 

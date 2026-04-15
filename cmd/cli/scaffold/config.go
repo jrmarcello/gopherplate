@@ -14,7 +14,6 @@ type DIStrategy string
 
 const (
 	DIManual DIStrategy = "manual"
-	DIFx     DIStrategy = "fx"
 )
 
 // DBDriver defines the database driver choice.
