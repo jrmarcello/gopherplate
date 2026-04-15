@@ -434,6 +434,40 @@ func TestIdempotency_4xxResponse_CompletesKey(t *testing.T) {
 	assert.Equal(t, 0, store.unlockCalls, "should NOT unlock for 4xx responses")
 }
 
+func TestIdempotency_OversizedBody_Returns413WithoutLocking(t *testing.T) {
+	store := newMockStore()
+
+	handlerCalled := false
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		// Simulate BodyLimit being registered upstream: cap at 32 bytes.
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 32)
+		c.Next()
+	})
+	r.Use(Idempotency(store))
+	r.POST("/test", func(c *gin.Context) {
+		handlerCalled = true
+		c.JSON(http.StatusCreated, gin.H{"id": "123"})
+	})
+
+	body := bytes.Repeat([]byte("a"), 200)
+	w := httptest.NewRecorder()
+	req, reqErr := http.NewRequest("POST", "/test", bytes.NewBuffer(body))
+	require.NoError(t, reqErr)
+	req.Header.Set(IdempotencyKeyHeader, "oversized-key")
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusRequestEntityTooLarge, w.Code)
+	assert.False(t, handlerCalled, "handler must not run when body exceeds cap")
+	assert.Equal(t, 0, store.lockCalls, "Lock must not be called — body is rejected before fingerprinting")
+
+	var errResp httputil.ErrorResponse
+	unmarshalErr := json.Unmarshal(w.Body.Bytes(), &errResp)
+	require.NoError(t, unmarshalErr)
+	assert.Equal(t, "request body too large", errResp.Errors.Message)
+}
+
 func TestBuildIdempotencyKey_WithServiceName(t *testing.T) {
 	key := buildIdempotencyKey("my-service", "abc-123")
 	assert.Equal(t, "idempotency:my-service:abc-123", key)

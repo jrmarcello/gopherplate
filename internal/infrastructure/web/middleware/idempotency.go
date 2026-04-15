@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"io"
 	"net/http"
 
@@ -39,9 +40,21 @@ func Idempotency(store idempotency.Store) gin.HandlerFunc {
 			return
 		}
 
-		// 3. Read and buffer body for fingerprint
+		// 3. Read and buffer body for fingerprint.
+		// Memory safety relies on an upstream body cap (see middleware.BodyLimit).
+		// When the cap trips, io.ReadAll surfaces *http.MaxBytesError and we
+		// return 413 here instead of letting the handler respond 400. Other
+		// read errors fall through to fail-open so a transient network hiccup
+		// does not break requests that would otherwise succeed.
 		reqBody, readErr := io.ReadAll(c.Request.Body)
 		if readErr != nil {
+			var maxBytesErr *http.MaxBytesError
+			if errors.As(readErr, &maxBytesErr) {
+				c.AbortWithStatusJSON(http.StatusRequestEntityTooLarge, httputil.ErrorResponse{
+					Errors: httputil.ErrorDetail{Message: "request body too large"},
+				})
+				return
+			}
 			c.Next()
 			return
 		}
