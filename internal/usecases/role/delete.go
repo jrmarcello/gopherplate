@@ -3,7 +3,6 @@ package role
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/jrmarcello/gopherplate/internal/domain/user/vo"
 	"github.com/jrmarcello/gopherplate/internal/usecases/role/dto"
@@ -46,8 +45,5 @@ func (uc *DeleteUseCase) Execute(ctx context.Context, input dto.DeleteInput) (*d
 		return nil, roleToAppError(wrappedErr)
 	}
 
-	return &dto.DeleteOutput{
-		ID:        input.ID,
-		DeletedAt: time.Now().Format(time.RFC3339),
-	}, nil
+	return &dto.DeleteOutput{ID: input.ID}, nil
 }

@@ -11,6 +11,5 @@ type DeleteInput struct {
 
 // DeleteOutput representa os dados de saída após deleção.
 type DeleteOutput struct {
-	ID        string `json:"id"`
-	DeletedAt string `json:"deleted_at"` // Timestamp da deleção
+	ID string `json:"id"`
 }

@@ -30,7 +30,6 @@ func TestDeleteUseCase_Execute_Success(t *testing.T) {
 	assert.NoError(t, executeErr)
 	assert.NotNil(t, output)
 	assert.Equal(t, id.String(), output.ID)
-	assert.NotEmpty(t, output.DeletedAt)
 	mockRepo.AssertExpectations(t)
 }
 

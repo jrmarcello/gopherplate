@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"time"
 
 	"github.com/jrmarcello/gopherplate/internal/domain/user/vo"
 	"github.com/jrmarcello/gopherplate/internal/usecases/user/dto"
@@ -64,8 +63,5 @@ func (uc *DeleteUseCase) Execute(ctx context.Context, input dto.DeleteInput) (*d
 		}
 	}
 
-	return &dto.DeleteOutput{
-		ID:        input.ID,
-		DeletedAt: time.Now().Format(time.RFC3339),
-	}, nil
+	return &dto.DeleteOutput{ID: input.ID}, nil
 }

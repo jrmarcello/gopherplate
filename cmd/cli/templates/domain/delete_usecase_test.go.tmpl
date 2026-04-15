@@ -30,7 +30,6 @@ func TestDeleteUseCase_Execute_Success(t *testing.T) {
 	require.NoError(t, execErr)
 	require.NotNil(t, output)
 	assert.Equal(t, id.String(), output.ID)
-	assert.NotEmpty(t, output.DeletedAt)
 }
 
 func TestDeleteUseCase_Execute_NotFound(t *testing.T) {
