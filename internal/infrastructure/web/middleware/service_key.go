@@ -11,6 +11,12 @@ import (
 	"github.com/jrmarcello/gopherplate/pkg/logutil"
 )
 
+// dummyServiceKey is compared against the presented key when the service name
+// is unknown, so an attacker cannot distinguish 'unknown service' from 'wrong
+// key' by response time. Its content is irrelevant — it will never match a
+// real key.
+const dummyServiceKey = "unknown-service-constant-time-dummy"
+
 // ServiceKeyConfig contém a configuração de autenticação por Service Key.
 type ServiceKeyConfig struct {
 	// Enabled indica se a autenticação está habilitada.
@@ -102,15 +108,15 @@ func ServiceKeyAuth(config ServiceKeyConfig) gin.HandlerFunc {
 			return
 		}
 
-		// Validar chave do serviço
+		// Always run the constant-time compare, even when the service name is
+		// unknown, so an attacker cannot enumerate valid service names from
+		// response-time differences (CWE-203).
 		expectedKey, exists := config.Keys[serviceName]
 		if !exists {
-			httpgin.SendError(c, http.StatusUnauthorized, "unauthorized")
-			c.Abort()
-			return
+			expectedKey = dummyServiceKey
 		}
-
-		if subtle.ConstantTimeCompare([]byte(expectedKey), []byte(serviceKey)) != 1 {
+		keyMatch := subtle.ConstantTimeCompare([]byte(expectedKey), []byte(serviceKey)) == 1
+		if !exists || !keyMatch {
 			httpgin.SendError(c, http.StatusUnauthorized, "unauthorized")
 			c.Abort()
 			return
