@@ -183,15 +183,18 @@ release: ## Cria release + publica no GitHub (uso: make release VERSION=0.13.0)
 	@git-cliff --tag "v$(VERSION)" --output CHANGELOG.md
 	@git add CHANGELOG.md
 	@git commit -m "chore(release): v$(VERSION) [skip ci]"
-	@git tag "v$(VERSION)"
+	@git tag -a "v$(VERSION)" -m "v$(VERSION)"
 	@echo ""
 	@echo "Commit e tag criados localmente."
 	@read -p "Push para origin/main + tag v$(VERSION) agora? [y/N] " ans; \
-		[ "$$ans" = "y" ] || [ "$$ans" = "Y" ] || { echo "Cancelado. Para publicar depois: git push origin main --follow-tags"; exit 0; }
-	@git push origin main --follow-tags
-	@echo ""
-	@echo "v$(VERSION) publicada. GitHub Actions vai criar a Release em ~30s."
-	@echo "Acompanhe: gh run watch  (ou veja em github.com/<owner>/<repo>/actions)"
+		if [ "$$ans" = "y" ] || [ "$$ans" = "Y" ]; then \
+			git push origin main --follow-tags && \
+			echo "" && \
+			echo "v$(VERSION) publicada. GitHub Actions vai criar a Release em ~30s." && \
+			echo "Acompanhe: gh run watch  (ou veja em github.com/<owner>/<repo>/actions)"; \
+		else \
+			echo "Cancelado. Para publicar depois: git push origin main --follow-tags"; \
+		fi
 
 # ============================================
 # QUALIDADE DE CÓDIGO
