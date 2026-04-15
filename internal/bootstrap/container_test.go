@@ -24,16 +24,16 @@ func TestNew_ReturnsPopulatedContainer(t *testing.T) {
 	c := New(db, db, nil, nil)
 
 	require.NotNil(t, c)
-	assert.NotNil(t, c.Repos.User, "Repos.User")
-	assert.NotNil(t, c.Repos.Role, "Repos.Role")
-	assert.NotNil(t, c.UserUseCases.Create, "UserUseCases.Create")
-	assert.NotNil(t, c.UserUseCases.Get, "UserUseCases.Get")
-	assert.NotNil(t, c.UserUseCases.List, "UserUseCases.List")
-	assert.NotNil(t, c.UserUseCases.Update, "UserUseCases.Update")
-	assert.NotNil(t, c.UserUseCases.Delete, "UserUseCases.Delete")
-	assert.NotNil(t, c.RoleUseCases.Create, "RoleUseCases.Create")
-	assert.NotNil(t, c.RoleUseCases.List, "RoleUseCases.List")
-	assert.NotNil(t, c.RoleUseCases.Delete, "RoleUseCases.Delete")
+	assert.NotNil(t, c.repos.User, "repos.User")
+	assert.NotNil(t, c.repos.Role, "repos.Role")
+	assert.NotNil(t, c.userUseCases.Create, "userUseCases.Create")
+	assert.NotNil(t, c.userUseCases.Get, "userUseCases.Get")
+	assert.NotNil(t, c.userUseCases.List, "userUseCases.List")
+	assert.NotNil(t, c.userUseCases.Update, "userUseCases.Update")
+	assert.NotNil(t, c.userUseCases.Delete, "userUseCases.Delete")
+	assert.NotNil(t, c.roleUseCases.Create, "roleUseCases.Create")
+	assert.NotNil(t, c.roleUseCases.List, "roleUseCases.List")
+	assert.NotNil(t, c.roleUseCases.Delete, "roleUseCases.Delete")
 	assert.NotNil(t, c.Handlers.User, "Handlers.User")
 	assert.NotNil(t, c.Handlers.Role, "Handlers.Role")
 }
@@ -41,35 +41,35 @@ func TestNew_ReturnsPopulatedContainer(t *testing.T) {
 func TestNew_ReposPopulated(t *testing.T) {
 	db := newMockDB(t)
 
-	// TC-U-02: Container.Repos has all repositories populated
+	// TC-U-02: Container.repos has all repositories populated
 	c := New(db, db, nil, nil)
 
-	assert.NotNil(t, c.Repos.User)
-	assert.NotNil(t, c.Repos.Role)
+	assert.NotNil(t, c.repos.User)
+	assert.NotNil(t, c.repos.Role)
 }
 
 func TestNew_UserUseCasesPopulated(t *testing.T) {
 	db := newMockDB(t)
 
-	// TC-U-03: Container.UserUseCases has all use cases populated
+	// TC-U-03: Container.userUseCases has all use cases populated
 	c := New(db, db, nil, nil)
 
-	assert.NotNil(t, c.UserUseCases.Create)
-	assert.NotNil(t, c.UserUseCases.Get)
-	assert.NotNil(t, c.UserUseCases.List)
-	assert.NotNil(t, c.UserUseCases.Update)
-	assert.NotNil(t, c.UserUseCases.Delete)
+	assert.NotNil(t, c.userUseCases.Create)
+	assert.NotNil(t, c.userUseCases.Get)
+	assert.NotNil(t, c.userUseCases.List)
+	assert.NotNil(t, c.userUseCases.Update)
+	assert.NotNil(t, c.userUseCases.Delete)
 }
 
 func TestNew_RoleUseCasesPopulated(t *testing.T) {
 	db := newMockDB(t)
 
-	// TC-U-04: Container.RoleUseCases has all use cases populated
+	// TC-U-04: Container.roleUseCases has all use cases populated
 	c := New(db, db, nil, nil)
 
-	assert.NotNil(t, c.RoleUseCases.Create)
-	assert.NotNil(t, c.RoleUseCases.List)
-	assert.NotNil(t, c.RoleUseCases.Delete)
+	assert.NotNil(t, c.roleUseCases.Create)
+	assert.NotNil(t, c.roleUseCases.List)
+	assert.NotNil(t, c.roleUseCases.Delete)
 }
 
 func TestNew_HandlersPopulated(t *testing.T) {

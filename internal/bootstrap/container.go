@@ -16,9 +16,9 @@ import (
 
 // Container holds all application dependencies grouped by layer.
 type Container struct {
-	Repos        Repos
-	UserUseCases UserUseCases
-	RoleUseCases RoleUseCases
+	repos        Repos
+	userUseCases UserUseCases
+	roleUseCases RoleUseCases
 	Handlers     Handlers
 }
 
@@ -62,7 +62,7 @@ func New(writer, reader *sqlx.DB, cacheClient cache.Cache, metrics *infratelemet
 }
 
 func (c *Container) buildRepos(writer, reader *sqlx.DB) {
-	c.Repos = Repos{
+	c.repos = Repos{
 		User: repository.NewUserRepository(writer, reader),
 		Role: repository.NewRoleRepository(writer, reader),
 	}
@@ -71,35 +71,35 @@ func (c *Container) buildRepos(writer, reader *sqlx.DB) {
 func (c *Container) buildUseCases(cacheClient cache.Cache) {
 	flightGroup := cache.NewFlightGroup()
 
-	c.UserUseCases = UserUseCases{
-		Create: useruc.NewCreateUseCase(c.Repos.User),
-		Get:    useruc.NewGetUseCase(c.Repos.User).WithCache(cacheClient).WithFlight(flightGroup),
-		List:   useruc.NewListUseCase(c.Repos.User),
-		Update: useruc.NewUpdateUseCase(c.Repos.User).WithCache(cacheClient),
-		Delete: useruc.NewDeleteUseCase(c.Repos.User).WithCache(cacheClient),
+	c.userUseCases = UserUseCases{
+		Create: useruc.NewCreateUseCase(c.repos.User),
+		Get:    useruc.NewGetUseCase(c.repos.User).WithCache(cacheClient).WithFlight(flightGroup),
+		List:   useruc.NewListUseCase(c.repos.User),
+		Update: useruc.NewUpdateUseCase(c.repos.User).WithCache(cacheClient),
+		Delete: useruc.NewDeleteUseCase(c.repos.User).WithCache(cacheClient),
 	}
 
-	c.RoleUseCases = RoleUseCases{
-		Create: roleuc.NewCreateUseCase(c.Repos.Role),
-		List:   roleuc.NewListUseCase(c.Repos.Role),
-		Delete: roleuc.NewDeleteUseCase(c.Repos.Role),
+	c.roleUseCases = RoleUseCases{
+		Create: roleuc.NewCreateUseCase(c.repos.Role),
+		List:   roleuc.NewListUseCase(c.repos.Role),
+		Delete: roleuc.NewDeleteUseCase(c.repos.Role),
 	}
 }
 
 func (c *Container) buildHandlers(metrics *infratelemetry.Metrics) {
 	c.Handlers = Handlers{
 		User: handler.NewUserHandler(
-			c.UserUseCases.Create,
-			c.UserUseCases.Get,
-			c.UserUseCases.List,
-			c.UserUseCases.Update,
-			c.UserUseCases.Delete,
+			c.userUseCases.Create,
+			c.userUseCases.Get,
+			c.userUseCases.List,
+			c.userUseCases.Update,
+			c.userUseCases.Delete,
 			metrics,
 		),
 		Role: handler.NewRoleHandler(
-			c.RoleUseCases.Create,
-			c.RoleUseCases.List,
-			c.RoleUseCases.Delete,
+			c.roleUseCases.Create,
+			c.roleUseCases.List,
+			c.roleUseCases.Delete,
 		),
 	}
 }
