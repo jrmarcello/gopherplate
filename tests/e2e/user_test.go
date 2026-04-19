@@ -13,6 +13,7 @@ import (
 
 	"github.com/jrmarcello/gopherplate/internal/bootstrap"
 	"github.com/jrmarcello/gopherplate/pkg/httputil"
+	"github.com/jrmarcello/gopherplate/tests/testutil/golden"
 )
 
 // addAuthHeaders adiciona os headers de autenticação para testes
@@ -75,6 +76,35 @@ func TestE2E_CreateUser_Success(t *testing.T) {
 	dbErr := GetTestDB().Get(&count, "SELECT COUNT(*) FROM users WHERE email = $1", "test@example.com")
 	require.NoError(t, dbErr)
 	assert.Equal(t, 1, count)
+}
+
+// TestE2E_CreateUser_Golden is the approved-fixtures (golden) variant of the
+// happy-path test. It catches response-shape drift that field-level asserts
+// miss: accidental new field, wrong casing, changed envelope, etc.
+//
+// Regenerate the golden after an intentional response change:
+//
+//	make golden-update
+//
+// Dynamic fields (id, created_at) are masked so they don't cause flaky diffs.
+func TestE2E_CreateUser_Golden(t *testing.T) {
+	require.NoError(t, CleanupUsers())
+	router := bootstrap.SetupTestRouter(t, GetTestDB(), GetTestCache())
+
+	body := `{
+		"name": "Golden Test User",
+		"email": "golden-test@example.com"
+	}`
+
+	req := httptest.NewRequest(http.MethodPost, "/users", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+	require.Equal(t, http.StatusCreated, w.Code)
+
+	golden.AssertJSONWithMask(t, "create_user_201", w.Body.Bytes(),
+		golden.Mask{Paths: []string{"data.id", "data.created_at"}})
 }
 
 func TestE2E_UserFullCycle(t *testing.T) {

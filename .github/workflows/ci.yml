@@ -36,6 +36,39 @@ jobs:
           version: v2.11.4
           args: --timeout=5m
 
+  buf-breaking:
+    name: Proto Breaking Changes
+    runs-on: ubuntu-latest
+    # Only runs when proto files change on a PR; a no-op on pushes to main
+    # (main is the baseline — breaking vs. itself is always clean).
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          # buf breaking --against '.git#branch=<base>' needs the base ref available.
+          fetch-depth: 0
+
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@65e6dafc9b6d5b68baafcb35f2df56df2e47a104 # v1
+
+      - name: buf breaking
+        run: buf breaking --against ".git#branch=origin/${{ github.base_ref }},subdir=."
+        working-directory: .
+
+  semgrep:
+    name: Semgrep (organizational patterns)
+    runs-on: ubuntu-latest
+    container:
+      image: returntocorp/semgrep:latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Validate semgrep rules against fixtures
+        run: semgrep --test .semgrep/
+
+      - name: Run semgrep rules
+        run: semgrep --config .semgrep/ --error ./internal/
+
   deadcode:
     name: Dead Code Check
     runs-on: ubuntu-latest

@@ -1,0 +1,53 @@
+# Semgrep rules for Gin HTTP handlers.
+#
+# These rules enforce organizational patterns that golangci-lint cannot
+# express — specifically that every handler uses the project's response
+# helpers and never imports domain error packages directly.
+#
+# Scope is enforced by the CLI target, not by `paths.include`, so that
+# `semgrep --test` can exercise these rules against fixtures in .semgrep/.
+# The production invocation in the Makefile/CI targets ./internal/ explicitly.
+#
+# Run locally:   make semgrep
+# Validate:      make semgrep-test
+#
+# See docs/guides/semgrep-rules.md for rationale and how to extend.
+
+rules:
+  - id: gopherplate-no-direct-gin-json
+    languages: [go]
+    severity: WARNING
+    message: >-
+      Gin handlers must use httpgin.SendSuccess / httpgin.SendError / httpgin.SendSuccessWithMeta
+      instead of c.JSON / c.String / c.IndentedJSON / c.AbortWithStatusJSON.
+      This keeps the response envelope consistent (see ADR-008) and lets us
+      evolve the API response format in one place.
+    paths:
+      include:
+        - "**/internal/infrastructure/web/handler/**"
+      exclude:
+        - "**/*_test.go"
+    patterns:
+      - pattern-either:
+          - pattern: $C.JSON(...)
+          - pattern: $C.String(...)
+          - pattern: $C.IndentedJSON(...)
+          - pattern: $C.AbortWithStatusJSON(...)
+      - metavariable-regex:
+          metavariable: $C
+          regex: "^c$"
+
+  - id: gopherplate-handler-no-domain-errors-import
+    languages: [go]
+    severity: WARNING
+    message: >-
+      Handlers must resolve errors generically via `errors.As(&appErr)` — they
+      do not import domain error packages directly. Domain errors are mapped
+      to AppError by the use-case layer; the handler only sees *apperror.AppError.
+      See ADR-009 and docs/guides/error-handling.md.
+    paths:
+      include:
+        - "**/internal/infrastructure/web/handler/**"
+      exclude:
+        - "**/*_test.go"
+    pattern-regex: 'github\.com/jrmarcello/gopherplate/internal/domain/[^/]+/errors'

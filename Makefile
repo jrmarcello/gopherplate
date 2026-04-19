@@ -37,7 +37,8 @@ ENV_FILE := $(shell test -f .env && echo "--env-file .env" || echo "")
 .PHONY: help setup tools go-tools-check docker-check k6-check kind-check \
         dev run run-stop build build-cli install-cli clean lint security vulncheck swagger \
         proto proto-lint \
-        test test-unit test-e2e test-coverage mutation deadcode coverage-delta \
+        test test-unit test-e2e test-coverage mutation deadcode coverage-delta golden-update \
+        semgrep semgrep-test buf-breaking \
         load-smoke load-test load-stress load-spike load-kind load-clean \
         load-baseline load-regression \
         docker-up docker-down docker-build \
@@ -74,7 +75,7 @@ help: ## Exibe esta mensagem de ajuda
 	@grep -Eh '^proto.*:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "\033[1;33m  Testing\033[0m"
-	@grep -Eh '^(test|test-unit|test-e2e|test-coverage|mutation|deadcode|coverage-delta):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -Eh '^(test|test-unit|test-e2e|test-coverage|mutation|deadcode|coverage-delta|golden-update|semgrep|semgrep-test|buf-breaking):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "\033[1;33m  Docker\033[0m"
 	@grep -Eh '^docker-(up|down|build):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -268,6 +269,22 @@ deadcode: ## Detecta funcoes inalcancaveis em cmd/(api|migrate) e internal/ (cmd
 		exit 1; \
 	fi
 	@echo "deadcode: OK — no unreachable code in cmd/(api|migrate) or internal/"
+
+buf-breaking: ## Checa se as mudancas atuais em proto/ sao breaking vs. main
+	@which buf >/dev/null 2>&1 || { echo "buf nao encontrado. Instale com: go install github.com/bufbuild/buf/cmd/buf@latest"; exit 1; }
+	buf breaking --against ".git#branch=main,subdir=."
+
+semgrep: ## Roda regras semgrep customizadas do projeto (.semgrep/)
+	@which semgrep >/dev/null 2>&1 || { echo "semgrep nao encontrado. Instale com: pip install semgrep  (ou: brew install semgrep)"; exit 1; }
+	semgrep --config .semgrep/ --error ./internal/...
+
+semgrep-test: ## Valida as regras semgrep contra as fixtures em .semgrep/testdata/
+	@which semgrep >/dev/null 2>&1 || { echo "semgrep nao encontrado. Instale com: pip install semgrep  (ou: brew install semgrep)"; exit 1; }
+	semgrep --test .semgrep/
+
+golden-update: ## Regenera todos os golden files (use apos mudanca intencional de response)
+	go test ./tests/e2e/... -update -count=1
+	@echo "Golden files atualizados. Revise os diffs antes de commitar."
 
 coverage-delta: ## Compara cobertura nas linhas alteradas vs. main (requer diff-cover: pip install diff-cover)
 	@which diff-cover >/dev/null 2>&1 || { echo "diff-cover nao encontrado. Instale com: pip install diff-cover"; exit 1; }

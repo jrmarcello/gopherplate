@@ -156,6 +156,8 @@ Config: [.golangci.yml](../.golangci.yml)
 | Workflow / Job | Type | Exec | Category | Stage | Implementation |
 | --- | --- | --- | --- | --- | --- |
 | `ci.yml::lint` | sensor | C | maint | CI | golangci-lint v2.11.4, timeout 5m |
+| `ci.yml::buf-breaking` | sensor | C | behavior | CI | `buf breaking --against 'main'` — fails proto contract regressions |
+| `ci.yml::semgrep` | sensor | C | behavior | CI | Custom organizational patterns (.semgrep/*.yml) — handlers + use cases |
 | `ci.yml::deadcode` | sensor | C | maint | CI | `deadcode -test -filter '(cmd\|internal)/'` — fails on unreachable funcs |
 | `ci.yml::vulncheck` | sensor | C | behavior | CI | `govulncheck -show verbose ./...` |
 | `ci.yml::unit-tests` | sensor | C | behavior | CI | `go test -race -coverprofile=...`, **60% coverage threshold** |
@@ -221,9 +223,9 @@ the sensor or guide. Links may be broken until the corresponding spec ships.
 | ~~`unused` catches unreferenced; no detection of unreachable-but-referenced code.~~ **Resolved by spec maintainability-harness** (DONE) — see `ci.yml::deadcode`. | maint | [.specs/maintainability-harness.md](../.specs/maintainability-harness.md) |
 | ~~Coverage threshold is global 60%, not a delta on changed lines.~~ **Resolved by spec maintainability-harness** (DONE) — see `ci.yml::coverage-delta` (70% threshold on changed lines). | maint | [.specs/maintainability-harness.md](../.specs/maintainability-harness.md) |
 | ~~`gopls` diagnostics in `lint-go-file.sh` are not optimized for LLM consumption.~~ **Resolved by spec maintainability-harness** (DONE) — see `.claude/hooks/gopls-hints.awk` postprocessor. | maint | [.specs/maintainability-harness.md](../.specs/maintainability-harness.md) |
-| No golden / approved-fixtures pattern for HTTP and gRPC response shapes. | behavior | [.specs/behavior-harness.md](../.specs/behavior-harness.md) |
-| No `buf breaking` check — proto can regress contracts silently. | behavior | [.specs/behavior-harness.md](../.specs/behavior-harness.md) |
-| Organizational patterns (handler must use `httpgin.SendSuccess`, use case must `ClassifyError`, etc.) are convention-only — no Semgrep rules to catch drift. | behavior | [.specs/behavior-harness.md](../.specs/behavior-harness.md) |
+| ~~No golden / approved-fixtures pattern for HTTP and gRPC response shapes.~~ **Resolved by spec behavior-harness** (DONE) — see `tests/testutil/golden/` and [guides/golden-fixtures.md](guides/golden-fixtures.md). | behavior | [.specs/behavior-harness.md](../.specs/behavior-harness.md) |
+| ~~No `buf breaking` check — proto can regress contracts silently.~~ **Resolved by spec behavior-harness** (DONE) — see `ci.yml::buf-breaking`. | behavior | [.specs/behavior-harness.md](../.specs/behavior-harness.md) |
+| ~~Organizational patterns (handler must use `httpgin.SendSuccess`, use case must `ClassifyError`, etc.) are convention-only — no Semgrep rules to catch drift.~~ **Resolved by spec behavior-harness** (DONE) — see `.semgrep/*.yml` + [guides/semgrep-rules.md](guides/semgrep-rules.md). | behavior | [.specs/behavior-harness.md](../.specs/behavior-harness.md) |
 | `gopherplate new` produces a single generalist template — no flavor per service topology (CRUD / event-processor / data-pipeline). | meta | [.specs/cli-harness-flavors.md](../.specs/cli-harness-flavors.md) |
 
 For the process of identifying new gaps and evolving the harness, see

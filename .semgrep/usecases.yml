@@ -1,0 +1,34 @@
+# Semgrep rules for use cases.
+#
+# Scope enforced by CLI invocation (targets ./internal/usecases/ in production).
+# Run locally:   make semgrep
+# Validate:      make semgrep-test
+#
+# See docs/guides/semgrep-rules.md for rationale and how to extend.
+
+rules:
+  - id: gopherplate-usecase-no-direct-domain-error-bare-return
+    languages: [go]
+    severity: WARNING
+    message: >-
+      Use cases must return `*apperror.AppError` via a local `xxxToAppError()` (or
+      equivalent) — never return a bare domain error. Handlers resolve errors
+      via `errors.As(&appErr)` and rely on the apperror wrapping.
+      See ADR-009 and docs/guides/error-handling.md.
+    paths:
+      # Only scope use cases — repositories legitimately return bare domain errors
+      # because the use case layer is responsible for wrapping into *apperror.AppError.
+      include:
+        - "**/internal/usecases/**"
+      exclude:
+        - "**/*_test.go"
+        - "**/internal/usecases/shared/**"
+        - "**/internal/usecases/*/interfaces/**"
+        - "**/internal/usecases/*/dto/**"
+    patterns:
+      - pattern-either:
+          - pattern: return nil, $PKG.$ERR
+          - pattern: return $X, $PKG.$ERR
+      - metavariable-regex:
+          metavariable: $ERR
+          regex: "^Err[A-Z].*"
