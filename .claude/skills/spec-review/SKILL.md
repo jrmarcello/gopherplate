@@ -39,6 +39,19 @@ For each requirement:
 - Run `make lint` and `make test`
 - Check for regressions in existing functionality
 
+### 3b. Test Quality Audit (for any spec with `tests:` metadata on tasks)
+
+If the spec has tasks with `tests:` metadata (TDD tasks), delegate a deep test-quality
+audit to the `test-reviewer` subagent. It reviews coverage quality (mutation-survivor
+hints), error-path density, table-driven structure, mocking discipline, and test smells.
+
+Request: "Use the test-reviewer subagent to audit the tests added by this spec against
+the Test Plan. Verify every TC-ID maps to a real test, happy-path / error-path ratio is
+appropriate, and no test smells were introduced."
+
+Include the test-reviewer findings in the final report as a dedicated **Test Quality**
+section.
+
 ### 4. Generate Report
 
 Append a review section to the spec file:

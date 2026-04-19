@@ -96,6 +96,7 @@ Each row is an artifact (or coherent group) that currently exists in the repo. C
 | `code-reviewer` | sensor | I | maint | review-time | [.claude/agents/code-reviewer.md](../.claude/agents/code-reviewer.md) |
 | `security-reviewer` | sensor | I | behavior | review-time | [.claude/agents/security-reviewer.md](../.claude/agents/security-reviewer.md) |
 | `db-analyst` | sensor | I | arch-fitness | review-time | [.claude/agents/db-analyst.md](../.claude/agents/db-analyst.md) |
+| `test-reviewer` | sensor | I | maint+behavior | review-time | [.claude/agents/test-reviewer.md](../.claude/agents/test-reviewer.md) |
 
 ### Hooks
 

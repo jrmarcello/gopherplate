@@ -34,6 +34,11 @@ End-to-end issue analysis and fixing workflow.
 - Create/update unit tests for the fix
 - Ensure existing tests still pass
 - Run `make test`
+- **Write a regression test first** (RED) — the test must fail on the broken code and pass
+  after the fix. If the test also passes on the pre-fix code, the test doesn't cover the bug.
+- For non-trivial fixes, delegate a test-quality review to the `test-reviewer` subagent
+  before finalizing: "use the test-reviewer subagent to audit the regression test added for
+  this fix."
 
 ### 5. Validate
 

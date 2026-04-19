@@ -1,12 +1,12 @@
 ---
 name: full-review-team
-description: Parallel 3-agent review (architecture + security + database)
+description: Parallel 4-agent review (architecture + security + database + tests)
 user-invocable: true
 ---
 
 # /full-review-team
 
-Launches a parallel code review with 3 specialized agents auditing the codebase independently.
+Launches a parallel code review with 4 specialized agents auditing the codebase independently.
 
 ## Team
 
@@ -34,14 +34,25 @@ Launches a parallel code review with 3 specialized agents auditing the codebase 
 - DBCluster usage patterns
 - Connection pool configuration
 
+### 4. Test Reviewer (test-reviewer agent)
+
+- Coverage quality (mutation-survivor analysis, not just %)
+- Error-path / boundary / concurrency coverage
+- Table-driven structure, mocking discipline, `t.Helper()` usage
+- E2E vs. unit vs. domain boundary violations
+- TestContainers hygiene, golden-fixture discipline
+- Test smells (sleep-based waits, over-mocking, flaky patterns)
+- TDD compliance (RED → GREEN → REFACTOR evidence for spec-driven tasks)
+
 ## Execution
 
-Launch all 3 agents in parallel using Agent tool:
+Launch all 4 agents in parallel using Agent tool:
 
 ```text
 Agent(code-reviewer): Review codebase for architecture compliance and Go conventions
 Agent(security-reviewer): Audit codebase for security vulnerabilities
 Agent(db-analyst): Analyze database schema, queries, and migrations
+Agent(test-reviewer): Audit tests for coverage quality, structure, and maintainability
 ```
 
 ## Output
@@ -61,3 +72,4 @@ The report must include:
 | Architecture | MUST FIX / SHOULD FIX / NICE TO HAVE | N |
 | Security | CRITICAL / HIGH / MEDIUM / LOW | N |
 | Database | MUST FIX / SHOULD FIX / NICE TO HAVE | N |
+| Tests | MUST FIX / SHOULD FIX / NICE TO HAVE | N |

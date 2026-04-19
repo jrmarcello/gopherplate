@@ -143,7 +143,7 @@ coherence check, see [docs/guides/harness-self-steering.md](docs/guides/harness-
 | `/fix-issue` | E2E bug fix workflow (understand → plan → implement → test) | Fixing reported bugs |
 | `/migrate` | Create/run/rollback Goose migrations | Database schema changes |
 | `/review` | Single-agent code review | Quick review of small changes |
-| `/full-review-team` | Parallel review: architecture + security + DB (Agent Team) | PRs, major changes, cross-layer work |
+| `/full-review-team` | Parallel review: architecture + security + DB + tests (Agent Team) | PRs, major changes, cross-layer work |
 | `/security-review-team` | Parallel security audit with 3 specialists (Agent Team) | Releases, sensitive changes, compliance |
 | `/debug-logs` | Analyze logs from Kind/Docker | Quick log-based debugging |
 | `/debug-team` | Parallel bug investigation with competing hypotheses (Agent Team) | Complex bugs that resist sequential debugging |
@@ -156,7 +156,8 @@ coherence check, see [docs/guides/harness-self-steering.md](docs/guides/harness-
 
 Agent Teams enabled (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`). Team skills spawn 3 parallel teammates each. Use for tasks where parallel exploration adds value: reviews, audits, debugging.
 
-- `security-reviewer`, `code-reviewer`, `db-analyst` — all with persistent memory (`memory: project`). Delegate with "use a subagent to..."
+- `security-reviewer`, `code-reviewer`, `db-analyst`, `test-reviewer` — all with persistent memory (`memory: project`). Delegate with "use a subagent to..."
+- `test-reviewer` specializes in test quality (mutation-survivor hints, error-path density, mocking discipline, test smells, TDD compliance). Use it whenever a change adds or modifies tests, or whenever you suspect under-tested behavior. Pairs with the mutation-nightly report artifact.
 
 ### Rules
 

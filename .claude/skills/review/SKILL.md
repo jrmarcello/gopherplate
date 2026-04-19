@@ -42,7 +42,15 @@ Code review focused on Clean Architecture, security, and project conventions.
 
 - [ ] New code has corresponding tests
 - [ ] Hand-written mocks (no mocking frameworks)
-- [ ] Tests cover error paths
+- [ ] Tests cover error paths (error-path TCs should outnumber happy-path TCs per sdd.md rigor check)
+- [ ] Table-driven structure with named subtests (`t.Run(tc.name, ...)`)
+- [ ] No test smells: `time.Sleep` for sync, asserted `time.Now()`, unseeded random, empty bodies, naked `panic`
+- [ ] Mocks assert calls when they matter (not record-and-forget)
+- [ ] Boundary TCs on validated fields (valid min/max + invalid min-1/max+1)
+- [ ] For SDD tasks: Execution Log shows `TDD: RED(N) -> GREEN(N) -> REFACTOR` evidence
+
+For a deep audit of test quality across the branch, delegate to the `test-reviewer`
+subagent ("use the test-reviewer subagent to audit these tests") or run `/full-review-team`.
 
 ### Observability
 
