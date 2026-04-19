@@ -173,7 +173,61 @@ After marking the last task complete:
 2. `stop-validate.sh` runs full validation (build + lint + tests)
 3. If validation passes: set spec status to `DONE`
 4. If validation fails: fix issues (stop-validate retries up to 3 times)
-5. Suggest: "Run `/spec-review .specs/<name>.md` for a formal review against requirements"
+5. **Perform the Final Review + Runtime Validation below** — this is MANDATORY before telling the user the spec is done
+6. Suggest: "Run `/spec-review .specs/<name>.md` for a formal review against requirements"
+
+## Final Review + Runtime Validation (MANDATORY before presenting results)
+
+Before reporting completion, run this sequence. The user having to ask "did you validate?" or "did we miss anything?" means this block was skipped — that is a process violation.
+
+### 1. Implementation audit (spec vs. code)
+
+Re-read the spec's **Design** section end-to-end. For each item, confirm the implementation matches:
+
+- **Files to Create**: every listed file exists with the intended shape (not just touched).
+- **Files to Modify**: every listed modification actually landed — diff is not trivial/empty.
+- **Architecture Decisions**: each decision is honored in code (not silently contradicted).
+- **Dependencies**: every declared dependency is wired (`go.mod`, `pip install` in CI, `go install` in Makefile, etc.).
+
+### 2. Requirement audit
+
+For each REQ: locate the concrete code/config that satisfies it, and write one line citing the evidence. If a REQ cannot be mapped to evidence, flag it — do not assume "probably covered".
+
+### 3. Validation criteria
+
+Run every item in the spec's **Validation Criteria** section. Mark each with:
+
+- `[x] executed and passed`
+- `[ ] deferred (reason)` — e.g., "needs CI to exercise"
+- `[ ] failed (details)` — STOP and fix before presenting
+
+### 4. Runtime validation (if applicable)
+
+If the spec touches runtime behavior and the service can be started, **do so and exercise it with real data**:
+
+- Start the service (`./bin/api &` after `make build`, `make dev`, or the spec's equivalent)
+- Issue real requests against the changed code paths
+- Verify response shape, status codes, side effects (DB rows, cache entries, emitted events, log lines)
+- Exercise error paths too, not just happy paths
+- Stop the service cleanly
+
+If runtime validation is not applicable (docs-only, CI-only changes, config-only), state so explicitly in the final report. Do not skip silently.
+
+### 5. Bug / gap disclosure
+
+If you found bugs or gaps during review — in the spec itself, in the implementation, in adjacent code, in tooling config — list them in the Execution Log AND surface them to the user. Quietly fixing a latent bug without mentioning it hides signal. Surface first, then offer to fix.
+
+### 6. Present findings
+
+Only after (1)–(5) are complete, present the user with:
+
+- **Delivered artifacts** — files and what each does
+- **Spec vs. implementation review** — what matched, what deviated, what was deferred (and why)
+- **Bugs / gaps found** — how each was handled
+- **Validation results** — local checks + runtime validation (or explicit N/A)
+- **"Ready to commit?"** as an explicit question
+
+A final report that lacks this structure signals the review was skipped. If the user had to ask "revise se está tudo ok" or "valide com dados reais", the presentation was premature.
 
 ## Resume After Interruption
 

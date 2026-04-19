@@ -11,6 +11,26 @@ applies-to: ".specs/**"
 - Always append to Execution Log, never overwrite previous entries
 - Status transitions: DRAFT -> APPROVED -> IN_PROGRESS -> DONE | FAILED
 
+## Discipline Checkpoints (non-negotiable)
+
+Two checkpoints exist alongside the normal flow. Skipping either is a process violation.
+
+### After creating a spec — mandatory self-review
+
+The `/spec` skill MUST run the self-review checklist before presenting (REQ↔Task sync, Files sync, Test Plan coverage, architecture fit, validation criteria concreteness, scope hygiene, [NEEDS CLARIFICATION] surfacing). See `.claude/skills/spec/SKILL.md` § "Self-Review". When presenting, explicit "Spec self-review" notes are required alongside the spec.
+
+### After executing a spec — mandatory final review + runtime validation
+
+The `/ralph-loop` skill (or manual task-by-task execution) MUST conclude with:
+
+1. **Implementation audit** — every Files to Create/Modify item in Design is verified against code
+2. **Requirement audit** — each REQ mapped to concrete evidence
+3. **Validation criteria** — every checkbox executed (or explicitly deferred with reason)
+4. **Runtime validation** — if the spec touches runtime, the service is started and exercised with real requests and real data; error paths too, not only happy paths
+5. **Bug / gap disclosure** — any incidental findings are surfaced, not silently fixed
+
+See `.claude/skills/ralph-loop/SKILL.md` § "Final Review + Runtime Validation" for the full sequence. **The user should never have to ask "did you validate?" — that question means the checkpoint was skipped.**
+
 ## Task Execution
 
 - Each task must be independently verifiable (`go build ./...` should pass after each task)

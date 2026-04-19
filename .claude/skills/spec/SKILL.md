@@ -110,9 +110,27 @@ File overlap analysis:
 - All other files: exclusive to one task
 ```
 
-### 6. Present for Approval
+### 6. Self-Review the Generated Spec (MANDATORY)
+
+Before presenting to the user, **critically review your own draft**. The user should never be the first line of defense for gaps in the spec. Run through this checklist:
+
+- **REQ ↔ Task coverage**: every REQ is addressed by at least one task. No orphan REQs.
+- **Task ↔ Files sync**: every file in Design's "Files to Create/Modify" appears in some task's `files:` metadata, and every `files:` entry maps back to the Design section. No orphan files in either direction.
+- **Test Plan completeness**: every REQ has ≥ 1 TC; the sdd.md Coverage Rules are all satisfied; error/edge TCs outnumber happy-path TCs.
+- **[NEEDS CLARIFICATION]**: any remaining? Surface them explicitly to the user — do not paper over.
+- **Architecture fit**: tasks respect the project's existing patterns (reference `user`/`role` domains, `pkg/`, `cmd/` layout). No task implies a cross-layer violation or introduces a framework without justification.
+- **Validation criteria**: each line is concrete and verifiable — maps to a command or observable state, not vague prose.
+- **Scope hygiene**: each task owns a clear REQ; no task expands scope beyond what REQs authorize.
+- **Task independence**: `go build ./...` passes after each task (per sdd.md). No mid-spec compile breakage.
+- **Parallel Batches**: no shared-mutative files in the same batch; shared-additive files flagged with mitigation (accumulator pattern or serialization).
+- **Best practices**: are we picking the simplest tool that solves the problem? Are we adding tests commensurate with risk? Are we honoring existing conventions (unique error names, `httpgin.SendSuccess`, `shared.ClassifyError`, hand-written mocks)?
+
+**If any check fails, iterate on the spec before presenting.** When presenting to the user, include a "Spec self-review" paragraph listing any deliberate trade-offs, unresolved [NEEDS CLARIFICATION] markers, or deviations from convention. Explicit honesty beats silent hope.
+
+### 7. Present for Approval
 
 - Display the spec to the user, highlighting the **Test Plan** and **Parallel Batches** sections
+- Include the **Spec self-review** notes from step 6
 - Set status to `DRAFT`
 - Ask: "Review this spec. Edit anything you want, then approve to begin implementation."
 - If parallel batches exist, note: "Batches with multiple tasks can run in parallel via worktree agents or sequentially via `/ralph-loop`."
