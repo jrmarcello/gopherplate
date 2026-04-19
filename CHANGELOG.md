@@ -6,6 +6,30 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Commits seguem [Conventional Commits](https://www.conventionalcommits.org/).
 
 ---
+## [0.14.0] - 2026-04-19
+
+### Correções
+
+- **make**: Tag release at commit before [skip ci] so GitHub Actions fires
+
+### Documentação
+
+- Curation pass after harness specs — fix stale refs, coverage gaps
+- **harness**: Add harness map and self-steering guide
+- **specs**: Plan 5 harness-engineering improvements
+
+### Funcionalidades
+
+- **cli**: Add --flavor flag with overlay engine (MVP: crud flavor)
+- **harness**: Add behavior sensors (golden fixtures, buf breaking, semgrep rules)
+- **harness**: Add maintainability sensors (mutation, deadcode, coverage-delta, gopls hints)
+- **perf**: Add k6 regression gate with perfcompare CLI
+
+### Manutenção
+
+- **agents**: Add test-reviewer subagent and wire it into review skills
+- **sdd**: Enforce post-creation self-review and post-execution runtime validation
+
 ## [0.13.0] - 2026-04-15
 
 ### CI/CD
@@ -36,6 +60,7 @@ Commits seguem [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Manutenção
 
+- **release**: V0.13.0 [skip ci]
 - Remove Uber Fx references and guide, keep manual DI only
 - **gitignore**: Cover all .env.* variants
 - **config**: Align DB_NAME default and document pool/DSN choices
