@@ -458,6 +458,7 @@ O projeto inclui 8 ADRs (Architecture Decision Records) em `docs/adr/` explicand
 | [mutation-testing.md](docs/guides/mutation-testing.md) | Mutation testing (gremlins): testa seus testes |
 | [golden-fixtures.md](docs/guides/golden-fixtures.md) | Approved-fixtures (golden) para travar shape de resposta |
 | [semgrep-rules.md](docs/guides/semgrep-rules.md) | Regras Semgrep organizacionais (handlers, use cases) |
+| [cli-flavors.md](docs/guides/cli-flavors.md) | Flavors do `gopherplate new` — como funcionam, como adicionar |
 
 Para agentes de IA, ver [AGENTS.md](AGENTS.md) e [CLAUDE.md](CLAUDE.md).
 

@@ -8,9 +8,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
+	"github.com/jrmarcello/gopherplate/cmd/cli/flavors"
 	"github.com/jrmarcello/gopherplate/cmd/cli/scaffold"
 	gopherplatetmpl "github.com/jrmarcello/gopherplate/cmd/cli/templates/gopherplate"
 	"github.com/spf13/cobra"
@@ -38,12 +40,49 @@ func init() {
 	newCmd.Flags().String("module", "", "Go module path (ex: github.com/org/service)")
 	newCmd.Flags().String("db", "", "Database driver: postgres, mysql, sqlite3, other")
 	newCmd.Flags().String("template", "", "Path to the template project root (auto-detected from $GOPHERPLATE_TEMPLATE, cwd, or the CLI binary location when omitted)")
+	newCmd.Flags().String("flavor", "crud", flavorFlagHelp())
 	newCmd.Flags().Bool("no-redis", false, "Disable Redis cache")
 	newCmd.Flags().Bool("no-idempotency", false, "Disable idempotency middleware")
 	newCmd.Flags().Bool("no-auth", false, "Disable service key authentication")
 	newCmd.Flags().Bool("no-examples", false, "Remove example domains (user/role)")
 	newCmd.Flags().Bool("keep-examples", false, "Keep example domains (user/role)")
 	newCmd.Flags().BoolP("yes", "y", false, "Accept defaults for all unspecified options (non-interactive)")
+}
+
+// serviceNamePattern rejects anything that is not a lowercase slug starting with
+// a letter. Keeps generated directory names and Go package names portable.
+var serviceNamePattern = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
+
+// validateServiceName enforces the service-name contract: non-empty, matches
+// [a-z][a-z0-9-]*, no path traversal. Returns a clear error explaining which
+// rule failed for surfacing to the CLI caller.
+func validateServiceName(name string) error {
+	if name == "" {
+		return fmt.Errorf("service name is required")
+	}
+	if !serviceNamePattern.MatchString(name) {
+		return fmt.Errorf(
+			"invalid service name %q: must start with a lowercase letter and contain only lowercase letters, digits, and hyphens",
+			name)
+	}
+	return nil
+}
+
+// resolveFlavor looks up the requested flavor id against the default registry,
+// defaulting to "crud" when empty. Errors include the list of available flavors
+// so CLI users can correct a typo in one round trip.
+func resolveFlavor(id string) (flavors.Flavor, error) {
+	if id == "" {
+		id = "crud"
+	}
+	return flavors.Default().Get(id)
+}
+
+// flavorFlagHelp builds the --flavor help string dynamically from the registry
+// so `--help` stays in sync when new flavors are added.
+func flavorFlagHelp() string {
+	return fmt.Sprintf("Service topology flavor (one of: %s)",
+		strings.Join(flavors.Default().List(), ", "))
 }
 
 // templateEnvVar lets users pin the template path explicitly, overriding all
@@ -69,8 +108,15 @@ func runNew(cmd *cobra.Command, args []string) error {
 		}
 		cfg.ServiceName = promptVal
 	}
-	if cfg.ServiceName == "" {
-		return fmt.Errorf("service name is required")
+	if validateErr := validateServiceName(cfg.ServiceName); validateErr != nil {
+		return validateErr
+	}
+
+	// Flavor — default "crud"; rejects unknown ids with a message listing options.
+	flavorID, _ := cmd.Flags().GetString("flavor")
+	flavor, flavorErr := resolveFlavor(flavorID)
+	if flavorErr != nil {
+		return flavorErr
 	}
 
 	// Module path
@@ -172,6 +218,7 @@ func runNew(cmd *cobra.Command, args []string) error {
 	fmt.Println("  Resumo")
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	fmt.Printf("  Serviço:      %s\n", cfg.ServiceName)
+	fmt.Printf("  Flavor:       %s — %s\n", flavor.ID, flavor.Description)
 	fmt.Printf("  Module:       %s\n", cfg.ModulePath)
 	fmt.Printf("  Banco:        %s\n", cfg.DB)
 	fmt.Printf("  Protocolo:    %s\n", cfg.Protocol)
@@ -276,6 +323,18 @@ func runNew(cmd *cobra.Command, args []string) error {
 		_ = os.Remove(filepath.Join(outputDir, f))
 	}
 
+	// 10b. Apply flavor overlays on top of the base scaffold.
+	// CRUD has no overlays today; future flavors plug in here.
+	if len(flavor.Overlays) > 0 {
+		fmt.Printf("  Applying %d overlay(s) for flavor %s...\n", len(flavor.Overlays), flavor.ID)
+		applier := flavors.NewApplier(outputDir)
+		for _, overlay := range flavor.Overlays {
+			if applyErr := applier.Apply(overlay, cfg); applyErr != nil {
+				return fmt.Errorf("applying overlay %s@%s: %w", overlay.Action, overlay.Path, applyErr)
+			}
+		}
+	}
+
 	// 11. Initialize fresh git
 	fmt.Println("  Initializing git...")
 	gitCmd := exec.Command("git", "init")
@@ -299,6 +358,21 @@ func runNew(cmd *cobra.Command, args []string) error {
 		fmt.Fprintln(os.Stderr, "  Configure GOPRIVATE and credentials, then run 'go mod tidy' manually.")
 	case tidyErr != nil:
 		fmt.Fprintf(os.Stderr, "  Warning: go mod tidy failed: %v\n%s\n", tidyErr, tidyOut)
+	}
+
+	// 12b. Post-scaffold smoke validation: go build ./... in the generated tree.
+	// If it fails, the scaffold is left in place so the user can investigate.
+	// make lint is NOT run here — it requires golangci-lint installed, and the
+	// user's environment may not have it; `go build` is sufficient to catch
+	// template rewrites producing non-compilable Go.
+	fmt.Println("  Running go build ./... in scaffold (smoke validation)...")
+	smokeBuildCmd := exec.Command("go", "build", "./...")
+	smokeBuildCmd.Dir = outputDir
+	smokeOut, smokeErr := smokeBuildCmd.CombinedOutput()
+	if smokeErr != nil {
+		fmt.Fprintf(os.Stderr,
+			"\n  WARNING: post-scaffold 'go build ./...' failed in %s\n  %v\n%s\n  Scaffold left in place for inspection.\n",
+			outputDir, smokeErr, string(smokeOut))
 	}
 
 	// 13. Print success summary

@@ -71,6 +71,17 @@ Em poucos minutos você tem um microsserviço rodando com Clean Architecture, ob
 
 ### `gopherplate new [service-name]`
 
+**Flag `--flavor`** (default `crud`): seleciona uma variante nomeada do scaffold —
+mesma base, harness pré-configurado para a topologia. Ver [cli-flavors.md](cli-flavors.md)
+para a lista atual de flavors e como adicionar novos.
+
+```bash
+gopherplate new my-service                     # default: --flavor crud
+gopherplate new my-service --flavor crud       # explícito
+gopherplate new --help                         # lista flavors registrados
+```
+
+
 Cria um novo projeto completo a partir do template. O comando gera toda a estrutura de diretórios, configura dependências e deixa o projeto pronto para `make setup && make dev`.
 
 #### Prompts interativos

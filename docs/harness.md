@@ -183,7 +183,7 @@ Files: [.github/workflows/ci.yml](../.github/workflows/ci.yml),
 
 | Command | Type | Exec | Category | Stage | Implementation |
 | --- | --- | --- | --- | --- | --- |
-| `gopherplate new` | guide | C | meta | scaffold-time | [cmd/cli/](../cmd/cli/) |
+| `gopherplate new` | guide | C | meta | scaffold-time | [cmd/cli/](../cmd/cli/) — supports `--flavor` for per-topology harness overlays; see [guides/cli-flavors.md](guides/cli-flavors.md) |
 | `gopherplate add domain` | guide | C | arch-fitness | scaffold-time | [cmd/cli/](../cmd/cli/) |
 | `gopherplate remove domain` | guide | C | arch-fitness | scaffold-time | [cmd/cli/](../cmd/cli/) |
 | `gopherplate add endpoint` | guide | C | arch-fitness | scaffold-time | [cmd/cli/](../cmd/cli/) |
@@ -229,7 +229,7 @@ the sensor or guide. Links may be broken until the corresponding spec ships.
 | ~~No golden / approved-fixtures pattern for HTTP and gRPC response shapes.~~ **Resolved by spec behavior-harness** (DONE) — see `tests/testutil/golden/` and [guides/golden-fixtures.md](guides/golden-fixtures.md). | behavior | [.specs/behavior-harness.md](../.specs/behavior-harness.md) |
 | ~~No `buf breaking` check — proto can regress contracts silently.~~ **Resolved by spec behavior-harness** (DONE) — see `ci.yml::buf-breaking`. | behavior | [.specs/behavior-harness.md](../.specs/behavior-harness.md) |
 | ~~Organizational patterns (handler must use `httpgin.SendSuccess`, use case must `ClassifyError`, etc.) are convention-only — no Semgrep rules to catch drift.~~ **Resolved by spec behavior-harness** (DONE) — see `.semgrep/*.yml` + [guides/semgrep-rules.md](guides/semgrep-rules.md). | behavior | [.specs/behavior-harness.md](../.specs/behavior-harness.md) |
-| `gopherplate new` produces a single generalist template — no flavor per service topology (CRUD / event-processor / data-pipeline). | meta | [.specs/cli-harness-flavors.md](../.specs/cli-harness-flavors.md) |
+| ~~`gopherplate new` produces a single generalist template — no flavor per service topology (CRUD / event-processor / data-pipeline).~~ **Partially resolved by spec cli-harness-flavors** (DONE — MVP ships `--flavor` flag + registry + overlay engine + `crud` flavor). **Follow-up**: event-processor and data-pipeline flavors deferred to `.specs/flavors-event-data.md`. | meta | [.specs/cli-harness-flavors.md](../.specs/cli-harness-flavors.md) |
 
 For the process of identifying new gaps and evolving the harness, see
 [harness-self-steering.md](guides/harness-self-steering.md).
