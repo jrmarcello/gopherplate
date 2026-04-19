@@ -37,7 +37,7 @@ ENV_FILE := $(shell test -f .env && echo "--env-file .env" || echo "")
 .PHONY: help setup tools go-tools-check docker-check k6-check kind-check \
         dev run run-stop build build-cli install-cli clean lint security vulncheck swagger \
         proto proto-lint \
-        test test-unit test-e2e test-coverage \
+        test test-unit test-e2e test-coverage mutation deadcode coverage-delta \
         load-smoke load-test load-stress load-spike load-kind load-clean \
         load-baseline load-regression \
         docker-up docker-down docker-build \
@@ -74,7 +74,7 @@ help: ## Exibe esta mensagem de ajuda
 	@grep -Eh '^proto.*:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "\033[1;33m  Testing\033[0m"
-	@grep -Eh '^(test|test-unit|test-e2e|test-coverage):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -Eh '^(test|test-unit|test-e2e|test-coverage|mutation|deadcode|coverage-delta):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "\033[1;33m  Docker\033[0m"
 	@grep -Eh '^docker-(up|down|build):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -248,6 +248,34 @@ test-coverage: ## Gera relatorio de cobertura (exclui bootstrap/wiring)
 	@go tool cover -func=tests/coverage/coverage.out | tail -1
 	go tool cover -html=tests/coverage/coverage.out -o tests/coverage/coverage.html
 	@echo "Coverage report: tests/coverage/coverage.html"
+
+mutation: ## Roda mutation testing (gremlins) sobre internal/usecases/... — ~minutos, use em CI noturno
+	@which gremlins >/dev/null 2>&1 || go install github.com/go-gremlins/gremlins/cmd/gremlins@latest
+	gremlins unleash ./internal/usecases/...
+
+deadcode: ## Detecta funcoes inalcancaveis em cmd/(api|migrate) e internal/ (cmd/cli/, pkg/ e tests/ sao filtrados)
+	@which deadcode >/dev/null 2>&1 || go install golang.org/x/tools/cmd/deadcode@latest
+	@# Scope: cmd/api + cmd/migrate + internal.
+	@# Excludes: cmd/cli/ (template scaffold uses reflection/dynamic callbacks),
+	@#           pkg/ (library API — exported for consumer services),
+	@#           tests/ (test helpers used only by tests),
+	@#           docs/docs.go + gen/ (generated code, already outside the filter).
+	@out=$$(deadcode -test -filter 'github.com/jrmarcello/gopherplate/(cmd/(api|migrate)|internal)/' ./...); \
+	if [ -n "$$out" ]; then \
+		echo "$$out"; \
+		echo ""; \
+		echo "deadcode: found unreachable code in cmd/(api|migrate) or internal/"; \
+		exit 1; \
+	fi
+	@echo "deadcode: OK — no unreachable code in cmd/(api|migrate) or internal/"
+
+coverage-delta: ## Compara cobertura nas linhas alteradas vs. main (requer diff-cover: pip install diff-cover)
+	@which diff-cover >/dev/null 2>&1 || { echo "diff-cover nao encontrado. Instale com: pip install diff-cover"; exit 1; }
+	@which gocover-cobertura >/dev/null 2>&1 || go install github.com/boumenot/gocover-cobertura@latest
+	@mkdir -p tests/coverage
+	@test -f tests/coverage/coverage.out || $(MAKE) test-coverage
+	gocover-cobertura < tests/coverage/coverage.out > tests/coverage/coverage.xml
+	diff-cover tests/coverage/coverage.xml --compare-branch main --fail-under $${NEW_CODE_COVERAGE_THRESHOLD:-70}
 
 # ============================================
 # DOCKER

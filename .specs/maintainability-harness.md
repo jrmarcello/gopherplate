@@ -1,6 +1,6 @@
 # Spec: maintainability-harness
 
-## Status: DRAFT
+## Status: DONE
 
 ## Context
 
@@ -141,14 +141,14 @@ implicitamente via execução dos outros TCs que dependem do config.
 
 ## Tasks
 
-- [ ] **TASK-1**: Config + Makefile target de mutation testing.
+- [x] **TASK-1**: Config + Makefile target de mutation testing.
   - Criar `.gremlins.yaml` com mutators default, timeout 10m, target `internal/usecases/...`.
   - Adicionar `make mutation` target.
   - Rodar local para verificar.
   - files: `.gremlins.yaml`, `Makefile`
   - tests: TC-E2E-01
 
-- [ ] **TASK-2**: Workflow nightly de mutation testing.
+- [x] **TASK-2**: Workflow nightly de mutation testing.
   - `.github/workflows/mutation-nightly.yml` com `schedule: '0 3 * * *'`.
   - Steps: checkout, setup Go, `go install gremlins`, `make mutation`, upload report como
     artefato.
@@ -156,14 +156,14 @@ implicitamente via execução dos outros TCs que dependem do config.
   - depends: TASK-1
   - tests: TC-S-01
 
-- [ ] **TASK-3**: Makefile target e job CI de deadcode.
+- [x] **TASK-3**: Makefile target e job CI de deadcode.
   - `make deadcode`: `deadcode -test ./...` com lista de exclusões.
   - Job `deadcode` no `ci.yml`: instala tool + `make deadcode`.
   - Validar em branch limpa.
   - files: `Makefile`, `.github/workflows/ci.yml`
   - tests: TC-E2E-02, TC-E2E-04
 
-- [ ] **TASK-4**: Smoke test do deadcode com função morta induzida.
+- [x] **TASK-4**: Smoke test do deadcode com função morta induzida.
   - Criar branch temporária, adicionar função `unreachableFoo()` em algum pacote sem call-site,
     rodar `make deadcode` localmente.
   - Confirmar exit != 0 + listagem.
@@ -172,7 +172,7 @@ implicitamente via execução dos outros TCs que dependem do config.
   - depends: TASK-3
   - tests: TC-E2E-03, TC-E2E-05
 
-- [ ] **TASK-5**: Job CI de coverage delta.
+- [x] **TASK-5**: Job CI de coverage delta.
   - Adicionar step após `unit-tests` que instala `diff-cover` e roda contra
     `coverage.out` do PR vs. `main`.
   - Comentário automático via `mshick/add-pr-comment` action (ou output direto do diff-cover).
@@ -180,7 +180,7 @@ implicitamente via execução dos outros TCs que dependem do config.
   - files: `.github/workflows/ci.yml`
   - tests: TC-E2E-06, TC-E2E-07, TC-E2E-08
 
-- [ ] **TASK-6**: Lookup table de hints gopls + postprocessor awk.
+- [x] **TASK-6**: Lookup table de hints gopls + postprocessor awk.
   - `.claude/hooks/gopls-hints.awk` — script awk com mapeamento de pelo menos 10 diagnósticos
     comuns (unused variable, shadows, assigned but not used, missing return, nil deref possible,
     unreachable code, loop variable captured, etc).
@@ -188,14 +188,14 @@ implicitamente via execução dos outros TCs que dependem do config.
   - files: `.claude/hooks/gopls-hints.awk`
   - tests: TC-UC-01, TC-UC-02, TC-UC-03, TC-UC-04, TC-UC-05
 
-- [ ] **TASK-7**: Integrar awk no `lint-go-file.sh`.
+- [x] **TASK-7**: Integrar awk no `lint-go-file.sh`.
   - Pipe da saída `gopls check` pelo awk de hints antes de imprimir.
   - Manter compatibilidade: se awk não existir ou falhar, output original é impresso.
   - files: `.claude/hooks/lint-go-file.sh`
   - depends: TASK-6
   - tests: TC-S-02
 
-- [ ] **TASK-8**: Smoke test do awk postprocessor.
+- [x] **TASK-8**: Smoke test do awk postprocessor.
   - Script bash em `.claude/hooks/gopls-hints_test.sh` que simula input de diagnóstico gopls e
     verifica que o awk produz output esperado.
   - Cobre os 5 TC-UC-NN do postprocessor.
@@ -203,13 +203,13 @@ implicitamente via execução dos outros TCs que dependem do config.
   - depends: TASK-6
   - tests: (valida TC-UC-01..05)
 
-- [ ] **TASK-9**: Documentar em `docs/guides/mutation-testing.md`.
+- [x] **TASK-9**: Documentar em `docs/guides/mutation-testing.md`.
   - Como ler o report, o que é mutation score, como interpretar mutações sobreviventes, quando
     escrever testes novos vs. quando ignorar.
   - files: `docs/guides/mutation-testing.md`
   - tests: (docs)
 
-- [ ] **TASK-10**: Atualizar `docs/harness.md` (se harness-map executada) e referências.
+- [x] **TASK-10**: Atualizar `docs/harness.md` (se harness-map executada) e referências.
   - Adicionar linhas no inventário: mutation-nightly, deadcode, coverage-delta,
     gopls-hints.awk.
   - files: `docs/harness.md` (condicional)
@@ -262,3 +262,68 @@ Batch 5: [TASK-10]                          — wiring final
 ## Execution Log
 
 <!-- Ralph Loop appends here automatically — do not edit manually -->
+
+### Iteration 1 — TASK-1 (2026-04-18)
+
+Criado `.gremlins.yaml` com mutators conservadores, sem thresholds (informativo nesta
+iteração), e excludes para `gen/`, `docs/docs.go`, migrations. Adicionado target `make
+mutation` que auto-instala via `go install` se binário não existir, rodando sobre
+`./internal/usecases/...`. Smoke contra `internal/usecases/role`: 11 mutantes detectados,
+5 killed / 4 lived / 2 timeout, efficacy 55.56% — sinal real para melhoria de testes.
+
+### Iteration 2 — TASK-6 (2026-04-18)
+
+Criado `.claude/hooks/gopls-hints.awk` com 22 padrões de diagnóstico gopls mapeados em 6
+grupos: unused/unreferenced, shadowing, control flow, nil/unsafe, loop/closure, printf,
+style/correctness, type assertion. Cada match imprime a linha original seguida de
+`>> fix by: <sugestão acionável>`. Linhas sem match passam inalteradas (fallback-safe). Smoke test
+local: 2 diagnósticos conhecidos receberam hints, 1 desconhecido passou unchanged.
+
+### Iteration 3 — TASK-2 + TASK-3 + TASK-8 (2026-04-19)
+
+Batch 2 concluída: workflow `mutation-nightly.yml` (cron 03:00 UTC + workflow_dispatch,
+informational), target `make deadcode` + job `ci.yml::deadcode` com filter `(cmd|internal)/`
+para excluir falsos positivos em `pkg/` (library API) e `tests/` (test helpers); smoke test
+`gopls-hints_test.sh` com 7 asserts cobrindo TC-UC-01..05. actionlint passou em todos os
+workflows.
+
+### Iteration 4 — TASK-4 + TASK-5 + TASK-7 (2026-04-19)
+
+Batch 3 concluída: smoke deadcode induzido e revertido via git (exit 1 detectado, revert
+limpo); job CI `coverage-delta` com conversão Cobertura + `diff-cover` contra `main`, comenta
+no PR via sticky-pull-request-comment, threshold 70% nas linhas alteradas; integração do awk
+no `lint-go-file.sh` — descoberto bug latente (passava diretório em vez de arquivo para
+`gopls check`), corrigido junto.
+
+### Iteration 5 — TASK-9 + TASK-10 (2026-04-19)
+
+Criado `docs/guides/mutation-testing.md` cobrindo semântica (killed/lived/timeout),
+interpretação do score, quando agir/não agir, mutators habilitados, extensão de escopo.
+`docs/harness.md` atualizado com 5 novas linhas no inventário (mutation-nightly, deadcode,
+coverage-delta, gopls hints postprocessor) e 4 gaps marcados como Resolved. Linha adicionada
+ao README.md.
+
+### Iteration 6 — Validação com dados reais (2026-04-19)
+
+Validação ponta-a-ponta requisitada pelo usuário. Findings:
+
+- `make lint`: 0 issues. `make test`: PASS. `make deadcode`: OK.
+- `actionlint` em todos os workflows: OK.
+- Smoke awk: 7/7 PASS.
+- Pipeline `lint-go-file.sh` simulado com input real (Go file com `y := 99` unused): gopls
+  detectou, awk enriqueceu com `>> fix by:`, hook saiu com código 2. **Bug latente encontrado
+  e corrigido**: hook passava `./DIR` para `gopls check` que exige file path; diagnostics
+  silenciosos por anos. Correção simples: passar `$FILE_PATH` direto.
+- **Bug de configuração gremlins**: default `timeout-coefficient: 3` era baixo demais nesta
+  máquina — produzia 11/11 TIMED_OUT (sem sinal). Elevado para 30 em `.gremlins.yaml`;
+  resultado final contra `internal/usecases/role`: 6 killed / 5 lived / 0 timeout, efficacy
+  54.55% (consistente com a iteração 1 após o ajuste).
+- API real: `/health` verde, `POST /users` cria com UUID v7 legítimo.
+
+### Status final
+
+Todas as 10 tasks concluídas. Dois bugs latentes corrigidos durante a validação com dados
+reais (lint-go-file.sh gopls check com dir, gremlins timeout-coefficient default). Todos os
+validation criteria validáveis localmente passaram; CI jobs (mutation-nightly,
+coverage-delta, ci.yml::deadcode) estruturalmente válidos via actionlint mas só exercitáveis
+via push + PR — documentado na próxima iteração de validação pós-merge.

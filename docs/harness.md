@@ -103,6 +103,7 @@ Each row is an artifact (or coherent group) that currently exists in the repo. C
 | --- | --- | --- | --- | --- | --- |
 | Bash guard (PreToolUse) | sensor | C | meta | on-edit | [.claude/hooks/guard-bash.sh](../.claude/hooks/guard-bash.sh) |
 | gopls+goimports (PostToolUse) | sensor | C | maint | on-edit | [.claude/hooks/lint-go-file.sh](../.claude/hooks/lint-go-file.sh) |
+| gopls hints postprocessor | guide | C | maint | on-edit | [.claude/hooks/gopls-hints.awk](../.claude/hooks/gopls-hints.awk) (enriches diagnostics with actionable "fix by:" hints) |
 | Migration validator (PostToolUse) | sensor | C | maint | on-edit | [.claude/hooks/validate-migration.sh](../.claude/hooks/validate-migration.sh) |
 | Ralph-loop continuation (Stop) | guide | C | meta | stop-hook | [.claude/hooks/ralph-loop.sh](../.claude/hooks/ralph-loop.sh) |
 | Post-impl validation gate (Stop) | sensor | C | maint+arch | stop-hook | [.claude/hooks/stop-validate.sh](../.claude/hooks/stop-validate.sh) |
@@ -155,10 +156,13 @@ Config: [.golangci.yml](../.golangci.yml)
 | Workflow / Job | Type | Exec | Category | Stage | Implementation |
 | --- | --- | --- | --- | --- | --- |
 | `ci.yml::lint` | sensor | C | maint | CI | golangci-lint v2.11.4, timeout 5m |
+| `ci.yml::deadcode` | sensor | C | maint | CI | `deadcode -test -filter '(cmd\|internal)/'` — fails on unreachable funcs |
 | `ci.yml::vulncheck` | sensor | C | behavior | CI | `govulncheck -show verbose ./...` |
 | `ci.yml::unit-tests` | sensor | C | behavior | CI | `go test -race -coverprofile=...`, **60% coverage threshold** |
+| `ci.yml::coverage-delta` | sensor | C | maint | CI | `diff-cover` on PR — fails if < 70% coverage on changed lines |
 | `ci.yml::e2e-tests` | sensor | C | behavior | CI | `go test ./tests/e2e/... -count=1` via TestContainers |
-| `perf-regression.yml::regression` | sensor | C | arch-fitness | CI | k6 run + `perfcompare` vs. `tests/load/baselines/<scenario>.json` (p95 15%, p99 30%) |
+| `perf-regression.yml::regression` | sensor | C | arch-fitness | CI | k6 `load` + `perfcompare` vs. `tests/load/baselines/<scenario>.json` (p95 35%, p99 70%) |
+| `mutation-nightly.yml::mutation` | sensor | C | maint | post-integration | gremlins over `./internal/usecases/...`, daily 03:00 UTC, informational |
 | `release.yml` | guide | C | meta | CI | release pipeline |
 
 Files: [.github/workflows/ci.yml](../.github/workflows/ci.yml),
@@ -213,10 +217,10 @@ the sensor or guide. Links may be broken until the corresponding spec ships.
 | Gap | Category | Spec |
 | --- | --- | --- |
 | ~~No performance regression gate: `/load-test` runs but never fails on degradation.~~ **Resolved by spec k6-regression-gate** (DONE) — see `perf-regression.yml` job above and [guides/perf-regression.md](guides/perf-regression.md). | arch-fitness | [.specs/k6-regression-gate.md](../.specs/k6-regression-gate.md) |
-| Coverage measures execution, not verification (no mutation testing). | maint | [.specs/maintainability-harness.md](../.specs/maintainability-harness.md) |
-| `unused` catches unreferenced; no detection of unreachable-but-referenced code. | maint | [.specs/maintainability-harness.md](../.specs/maintainability-harness.md) |
-| Coverage threshold is global 60%, not a delta on changed lines. | maint | [.specs/maintainability-harness.md](../.specs/maintainability-harness.md) |
-| `gopls` diagnostics in `lint-go-file.sh` are not optimized for LLM consumption. | maint | [.specs/maintainability-harness.md](../.specs/maintainability-harness.md) |
+| ~~Coverage measures execution, not verification (no mutation testing).~~ **Resolved by spec maintainability-harness** (DONE) — see `mutation-nightly.yml`, [guides/mutation-testing.md](guides/mutation-testing.md). | maint | [.specs/maintainability-harness.md](../.specs/maintainability-harness.md) |
+| ~~`unused` catches unreferenced; no detection of unreachable-but-referenced code.~~ **Resolved by spec maintainability-harness** (DONE) — see `ci.yml::deadcode`. | maint | [.specs/maintainability-harness.md](../.specs/maintainability-harness.md) |
+| ~~Coverage threshold is global 60%, not a delta on changed lines.~~ **Resolved by spec maintainability-harness** (DONE) — see `ci.yml::coverage-delta` (70% threshold on changed lines). | maint | [.specs/maintainability-harness.md](../.specs/maintainability-harness.md) |
+| ~~`gopls` diagnostics in `lint-go-file.sh` are not optimized for LLM consumption.~~ **Resolved by spec maintainability-harness** (DONE) — see `.claude/hooks/gopls-hints.awk` postprocessor. | maint | [.specs/maintainability-harness.md](../.specs/maintainability-harness.md) |
 | No golden / approved-fixtures pattern for HTTP and gRPC response shapes. | behavior | [.specs/behavior-harness.md](../.specs/behavior-harness.md) |
 | No `buf breaking` check — proto can regress contracts silently. | behavior | [.specs/behavior-harness.md](../.specs/behavior-harness.md) |
 | Organizational patterns (handler must use `httpgin.SendSuccess`, use case must `ClassifyError`, etc.) are convention-only — no Semgrep rules to catch drift. | behavior | [.specs/behavior-harness.md](../.specs/behavior-harness.md) |

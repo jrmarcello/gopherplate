@@ -26,10 +26,16 @@ else
 fi
 
 # 2. gopls diagnostics (type errors, unused imports, missing deps — richer than go vet)
+# Note: gopls check requires a FILE path, not a directory (confirmed with gopls v0.21.1).
 if command -v gopls &>/dev/null; then
-  PKG_DIR=$(dirname "$FILE_PATH")
-  DIAG=$(timeout 10 gopls check "./$PKG_DIR" 2>/dev/null || true)
+  DIAG=$(timeout 10 gopls check "$FILE_PATH" 2>/dev/null || true)
   if [ -n "$DIAG" ]; then
+    # Enrich diagnostics with "fix by:" hints for common patterns.
+    # Fallback-safe: if awk or the hints script is missing, raw gopls output is used.
+    HINTS_SCRIPT="$(dirname "$0")/gopls-hints.awk"
+    if command -v awk &>/dev/null && [ -f "$HINTS_SCRIPT" ]; then
+      DIAG=$(echo "$DIAG" | awk -f "$HINTS_SCRIPT")
+    fi
     ISSUES="${ISSUES}\ngopls diagnostics:\n$DIAG\n"
   fi
 fi

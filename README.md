@@ -445,6 +445,7 @@ O projeto inclui 8 ADRs (Architecture Decision Records) em `docs/adr/` explicand
 | [harness.md](docs/harness.md) | Mapa do harness do projeto (guides e sensors classificados) |
 | [harness-self-steering.md](docs/guides/harness-self-steering.md) | Processo de evolução do harness: quando abrir gap note, revisão mensal |
 | [perf-regression.md](docs/guides/perf-regression.md) | Gate de regressão de performance via k6 baseline |
+| [mutation-testing.md](docs/guides/mutation-testing.md) | Mutation testing (gremlins): testa seus testes |
 
 Para agentes de IA, ver [AGENTS.md](AGENTS.md) e [CLAUDE.md](CLAUDE.md).
 

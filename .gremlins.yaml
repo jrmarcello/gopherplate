@@ -1,0 +1,45 @@
+# Gremlins mutation testing configuration
+# Ref: https://gremlins.dev/
+#
+# Strategy: nightly-CI informational report (not a PR gate).
+# See .specs/maintainability-harness.md and docs/guides/mutation-testing.md.
+
+unleash:
+  # Print killed, lived, covered (not killed = survived), and timed-out mutants.
+  output-statuses: lctkvr
+
+  # Multiply the base test timeout by this factor before killing a mutant run.
+  # Default 3 is too aggressive — tests here run in ~0.3s baseline, and some
+  # mutations (e.g., off-by-one on list pagination) cause extra DB round-trips
+  # that push test time above the default budget and produce spurious TIMED_OUT
+  # mutants (no signal either way). 30 lets those runs complete; adjust down
+  # once tests are faster or you have profiled proof they don't need the slack.
+  timeout-coefficient: 30
+
+  # No thresholds in this iteration — report is informational. Raise once we
+  # have a baseline and want to gate PRs.
+  threshold:
+    efficacy: 0
+    mutant-coverage: 0
+
+  # Files excluded from mutation by regexp. Generated code and migrations
+  # must never be mutated — the mutant would be semantically meaningless.
+  exclude-files:
+    - "^gen/"
+    - "^docs/docs\\.go$"
+    - "^internal/infrastructure/db/postgres/migration/"
+
+  # Mutators: defaults on. Conservative set — aggressive mutators like
+  # invert-assignments can produce false survivors in getter/setter-heavy
+  # code without matching test signal.
+  arithmetic-base: true
+  conditionals-boundary: true
+  conditionals-negation: true
+  increment-decrement: true
+  invert-negatives: true
+  invert-logical: false
+  invert-loopctrl: false
+  invert-assignments: false
+  invert-bitwise: false
+  invert-bwassign: false
+  remove-self-assignments: false

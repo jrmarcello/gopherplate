@@ -167,7 +167,7 @@ Auto-applied by file pattern: Go conventions (`**/*.go`), security (`**/*`), mig
 Three-layer quality enforcement:
 
 - **PreToolUse[Bash]** — `guard-bash.sh`: blocks .env staging, `git add -A`, DROP statements, `--no-verify`
-- **PostToolUse[Edit|Write]** — `lint-go-file.sh`: goimports/gopls diagnostics on every Go file edit
+- **PostToolUse[Edit|Write]** — `lint-go-file.sh`: goimports/gopls diagnostics on every Go file edit (enriched with actionable "fix by:" hints via [gopls-hints.awk](.claude/hooks/gopls-hints.awk))
 - **PostToolUse[Edit|Write]** — `validate-migration.sh`: ensures Up + Down sections in migrations
 - **Stop** — `ralph-loop.sh`: checks spec task progress, returns exit 2 to continue autonomous execution (transparent when no loop active)
 - **Stop** — `stop-validate.sh`: build + fmt + vet + swagger + lint + tests gate (auto-retry with tiered validation; skipped during active ralph-loop)

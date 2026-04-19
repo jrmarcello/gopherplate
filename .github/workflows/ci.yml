@@ -36,6 +36,29 @@ jobs:
           version: v2.11.4
           args: --timeout=5m
 
+  deadcode:
+    name: Dead Code Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Set up Go
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Generate Swagger docs
+        run: |
+          go install github.com/swaggo/swag/cmd/swag@v1.16.6
+          swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal
+
+      - name: Install deadcode
+        run: go install golang.org/x/tools/cmd/deadcode@latest
+
+      - name: Check for unreachable code
+        run: make deadcode
+
   vulncheck:
     name: Vulnerability Scan
     runs-on: ubuntu-latest
@@ -91,6 +114,62 @@ jobs:
           name: coverage
           path: tests/coverage/coverage.out
           retention-days: 7
+
+  coverage-delta:
+    name: Coverage Delta (PR lines only)
+    runs-on: ubuntu-latest
+    # Only on PRs — needs a base to diff against.
+    if: github.event_name == 'pull_request'
+    needs: unit-tests
+    env:
+      NEW_CODE_COVERAGE_THRESHOLD: "70"
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          # Full history so diff-cover can resolve merge-base with main.
+          fetch-depth: 0
+
+      - name: Download coverage artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: coverage
+          path: tests/coverage/
+
+      - name: Convert Go coverage to Cobertura XML
+        run: |
+          go install github.com/boumenot/gocover-cobertura@latest
+          gocover-cobertura < tests/coverage/coverage.out > tests/coverage/coverage.xml
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
+        with:
+          python-version: '3.x'
+
+      - name: Install diff-cover
+        run: pip install diff-cover
+
+      - name: Run diff-cover
+        run: |
+          diff-cover tests/coverage/coverage.xml \
+            --compare-branch origin/${{ github.base_ref }} \
+            --fail-under "$NEW_CODE_COVERAGE_THRESHOLD" \
+            --html-report tests/coverage/diff-cover.html \
+            --markdown-report tests/coverage/diff-cover.md
+
+      - name: Comment diff-cover report on PR
+        if: always()
+        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # v2
+        with:
+          header: coverage-delta
+          path: tests/coverage/diff-cover.md
+
+      - name: Upload diff-cover HTML report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: coverage-delta-${{ github.run_id }}
+          path: tests/coverage/diff-cover.html
+          retention-days: 14
 
   e2e-tests:
     name: E2E Tests

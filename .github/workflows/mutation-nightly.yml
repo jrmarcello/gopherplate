@@ -1,0 +1,48 @@
+name: Mutation Testing (nightly)
+
+on:
+  schedule:
+    # 03:00 UTC daily — after most PRs have merged, before morning review.
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mutation-${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  mutation:
+    name: gremlins report
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Set up Go
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install gremlins
+        run: go install github.com/go-gremlins/gremlins/cmd/gremlins@latest
+
+      - name: Run mutation testing
+        # Informational — nightly report, not a PR gate. Don't fail the
+        # workflow on low efficacy; thresholds in .gremlins.yaml are 0.
+        id: mutation
+        continue-on-error: true
+        run: |
+          mkdir -p tests/mutation
+          gremlins unleash ./internal/usecases/... 2>&1 | tee tests/mutation/report.txt
+
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mutation-report-${{ github.run_id }}
+          path: tests/mutation/
+          retention-days: 30
