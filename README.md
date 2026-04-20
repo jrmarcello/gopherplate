@@ -236,26 +236,28 @@ curl -X GET http://localhost:8080/users \
 O código é organizado em **camadas com responsabilidades claras**. O domínio fica no centro, protegido de detalhes de infraestrutura — exatamente o padrão de dependência da Clean Architecture.
 
 ```text
-               ┌─────────────────────────────┐
-               │      Infrastructure         │
-               │  (Banco, Cache, HTTP, OTel) │
-               │                             │
-               │   ┌─────────────────────┐   │
-               │   │     Use Cases       │   │
-               │   │ (Operações de       │   │
-               │   │  negócio, 1 por     │   │
-               │   │  arquivo)           │   │
-               │   │                     │   │
-               │   │   ┌─────────────┐   │   │
-               │   │   │   Domain    │   │   │
-               │   │   │ (Entidades, │   │   │
-               │   │   │  VOs, Erros)│   │   │
-               │   │   └─────────────┘   │   │
-               │   └─────────────────────┘   │
-               └─────────────────────────────┘
+               ┌────────────────────────────────┐
+               │        Infrastructure          │
+               │   (Banco, Cache, HTTP, OTel)   │
+               │                                │
+               │   ┌────────────────────────┐   │
+               │   │       Use Cases        │   │
+               │   │ (Operações de negócio) │   │
+               │   │                        │   │
+               │   │                        │   │
+               │   │                        │   │
+               │   │    ┌─────────────┐     │   │
+               │   │    │   Domain    │     │   │
+               │   │    │ (Entidades, │     │   │
+               │   │    │  VOs, Erros)│     │   │
+               │   │    └─────────────┘     │   │
+               │   └────────────────────────┘   │
+               └────────────────────────────────┘
 
 Dependências apontam para dentro: Infrastructure → Use Cases → Domain
-Domain não conhece nada das camadas externas.
+Domain não conhece nada das camadas externas — trocar Postgres por DynamoDB,
+Gin por Echo, ou adicionar gRPC ao lado do REST não toca uma linha de domínio.
+Regra de negócio fica testável sem banco, rede ou framework.
 ```
 
 ### Na prática, no código
