@@ -73,6 +73,20 @@ jobs:
         if: env.BASELINE_MISSING != 'true'
         run: make docker-up
 
+      - name: Wait for Postgres
+        if: env.BASELINE_MISSING != 'true'
+        run: |
+          for i in $(seq 1 60); do
+            if docker exec gopherplate-db pg_isready -U user -d gopherplate >/dev/null 2>&1; then
+              echo "Postgres ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::Postgres never became ready within 60s"
+          docker logs gopherplate-db | tail -40
+          exit 1
+
       - name: Run migrations
         if: env.BASELINE_MISSING != 'true'
         run: make migrate-up
