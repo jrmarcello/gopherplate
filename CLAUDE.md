@@ -29,6 +29,7 @@ make proto-lint     # Lint proto files (buf lint)
 make help           # See all available make targets
 
 # Harness sensors (see docs/harness.md)
+make ci-local       # Simulate fresh clone + full CI pipeline in isolated worktree (pre-push gate)
 make deadcode       # Detect unreachable funcs in cmd/(api|migrate) + internal/
 make mutation       # Mutation testing via gremlins (internal/usecases/)
 make coverage-delta # Coverage delta on changed lines vs main (diff-cover, 70% threshold)

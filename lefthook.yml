@@ -14,14 +14,13 @@ pre-commit:
       run: golangci-lint run --new-from-rev=HEAD
 
 pre-push:
-  parallel: true
   commands:
-    build:
-      run: go build ./...
-    test:
-      run: go test ./internal/... -count=1
-    vulncheck:
-      run: govulncheck -show verbose ./...
+    ci-local:
+      # CI-parity sensor: simulates a fresh clone in a detached git worktree and runs the
+      # full CI pipeline (proto, swag, build, vet, lint, test, vulncheck) there. Catches
+      # gitignored-artifact drift (e.g. missing gen/proto/**) that the per-edit hooks
+      # cannot see because they validate the working copy. See docs/guides/ci-parity.md.
+      run: make ci-local
 
 commit-msg:
   commands:

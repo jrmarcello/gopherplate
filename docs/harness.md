@@ -117,9 +117,7 @@ Each row is an artifact (or coherent group) that currently exists in the repo. C
 | --- | --- | --- | --- | --- | --- |
 | pre-commit: fmt | sensor | C | maint | pre-commit | `goimports -w {staged_files}` |
 | pre-commit: lint | sensor | C | maint | pre-commit | `golangci-lint run --new-from-rev=HEAD` |
-| pre-push: build | sensor | C | maint | pre-push | `go build ./...` |
-| pre-push: test | sensor | C | behavior | pre-push | `go test ./internal/... -count=1` |
-| pre-push: vulncheck | sensor | C | behavior | pre-push | `govulncheck -show verbose ./...` |
+| pre-push: ci-local | sensor | C | maint+behavior | pre-push | `make ci-local` — CI-parity simulation in isolated worktree, subsumes prior build/test/vulncheck commands (see [guides/ci-parity.md](guides/ci-parity.md)) |
 | commit-msg: conventional | sensor | C | meta | pre-commit | regex `^(feat\|fix\|...)(\(.+\))?: .+` |
 
 Config: [lefthook.yml](../lefthook.yml)

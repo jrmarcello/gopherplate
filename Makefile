@@ -38,7 +38,7 @@ ENV_FILE := $(shell test -f .env && echo "--env-file .env" || echo "")
         dev run run-stop build build-cli install-cli clean lint security vulncheck swagger \
         proto proto-lint \
         test test-unit test-e2e test-coverage mutation deadcode coverage-delta golden-update \
-        semgrep semgrep-test buf-breaking \
+        semgrep semgrep-test buf-breaking ci-local \
         load-smoke load-test load-stress load-spike load-kind load-clean \
         load-baseline load-regression \
         docker-up docker-down docker-build \
@@ -75,7 +75,7 @@ help: ## Exibe esta mensagem de ajuda
 	@grep -Eh '^proto.*:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "\033[1;33m  Testing\033[0m"
-	@grep -Eh '^(test|test-unit|test-e2e|test-coverage|mutation|deadcode|coverage-delta|golden-update|semgrep|semgrep-test|buf-breaking):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -Eh '^(test|test-unit|test-e2e|test-coverage|mutation|deadcode|coverage-delta|golden-update|semgrep|semgrep-test|buf-breaking|ci-local):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "\033[1;33m  Docker\033[0m"
 	@grep -Eh '^docker-(up|down|build):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -273,6 +273,9 @@ deadcode: ## Detecta funcoes inalcancaveis em cmd/(api|migrate) e internal/ (cmd
 buf-breaking: ## Checa se as mudancas atuais em proto/ sao breaking vs. main
 	@which buf >/dev/null 2>&1 || { echo "buf nao encontrado. Instale com: go install github.com/bufbuild/buf/cmd/buf@latest"; exit 1; }
 	buf breaking --against ".git#branch=main,subdir=."
+
+ci-local: ## Simula clone fresh + pipeline CI inteiro (proto, swag, build, vet, lint, test, vulncheck) num worktree isolado
+	@bash .claude/hooks/ci-local.sh
 
 semgrep: ## Roda regras semgrep customizadas do projeto (.semgrep/)
 	@which semgrep >/dev/null 2>&1 || { echo "semgrep nao encontrado. Instale com: pip install semgrep  (ou: brew install semgrep)"; exit 1; }
