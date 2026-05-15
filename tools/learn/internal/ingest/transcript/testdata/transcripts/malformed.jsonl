@@ -1,0 +1,3 @@
+{"type":"user","message":{"role":"user","content":[{"type":"text","text":"hello"}]},"timestamp":"2026-05-14T10:00:00Z"}
+{not json
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_99","name":"Grep","input":{"pattern":"foo"}}]},"timestamp":"2026-05-14T10:00:02Z"}

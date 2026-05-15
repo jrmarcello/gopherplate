@@ -1,0 +1,6 @@
+{
+  "tool_name": "Edit",
+  "tool_input": {
+    "file_path": ".claude/skills/foo/SKILL.md"
+  }
+}

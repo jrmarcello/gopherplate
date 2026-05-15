@@ -189,6 +189,11 @@ Per-sensor deep-dive guides live in `docs/guides/`:
 | `/spec` | Author + self-review SDD specification, present for approval | Before implementing a new feature or complex change |
 | `/ralph-loop` | Autonomous single-pass execution of an approved spec (parallel via worktrees, self-reviewed, present-before-commit) | After `/spec` approval, for autonomous implementation |
 | `/spec-review` | Independent audit of implementation against specification | After `/ralph-loop` completes (or manual implementation) |
+| `/learn-extract` | Triage `candidates.jsonl` into new skills, memory entries, updates, or discards | After extract runs (manually or via `/learn-nudge`) |
+| `/learn-refine` | Propose merges/deprecations for similar skills/memory (presents diff, waits for approval) | When `/learn-extract` flags overlap, or after `/learn-audit-skills` |
+| `/learn-nudge` | Periodic autoavaliação — surfaces TTL-based deprecation candidates, proposes consolidations, resets counter | Triggered after N spec DONEs, or manually |
+| `/learn-recall <query>` | Manual FTS5 retrieval over skills/memory/patterns with filters | When you want to consult the KB without the auto-injected hook |
+| `/learn-audit-skills` | One-shot non-prescriptive audit of every skill against `.claude/rules/skill-quality.md` | After a batch of skill changes or before tagging a release |
 
 ### Agent Teams and Subagents
 
@@ -211,6 +216,26 @@ Three-layer quality enforcement:
 - **PostToolUse[Edit|Write]** — `validate-migration.sh`: ensures Up + Down sections in migrations
 - **Stop** — `stop-validate.sh`: build + fmt + vet + swagger + lint + tests gate (auto-retry with tiered validation)
 - **WorktreeCreate/Remove** — automated git worktree setup and cleanup
+- **Stop** — `stop-learn.sh`: records spec-DONE events into the learning-loop store; surfaces non-blocking `Learning nudge due` advisory when counter crosses `NUDGE_THRESHOLD`. Always exits 0 (best-effort).
+- **UserPromptSubmit** — `user-prompt-submit-recall.sh`: queries the learning-loop FTS5 index for the incoming prompt; if matches exist, injects a `<system-reminder>` listing relevant skill/memory paths. Wraps `learn recall` in `timeout 2`.
+- **PostToolUse[Edit|Write]** — `reindex-learning.sh`: incrementally re-indexes `.claude/skills/<name>/SKILL.md` or `memory/*.md` after edits. Best-effort.
+- **Sourced helper** — `learn-hook-helpers.sh`: binary lookup (asdf shim), structured JSON logging to `.claude/learning/learn.log`, safe jq, db-path resolution.
+
+### Learning loop
+
+Closed-loop knowledge system inspired by the Hermes Agent. Five stages:
+
+1. **Task completion** — `stop-learn.sh` records `events` when a spec hits DONE.
+2. **Pattern extraction** — `learn extract` mines transcripts / specs / git / memory into `candidates.jsonl`, deterministic.
+3. **Skill creation** — `/learn-extract` triage applies the rubric in `.claude/rules/skill-quality.md` to each candidate, decides new-skill / new-memory / update / discard; records every decision.
+4. **Refinement** — `/learn-refine` uses FTS5 + edit distance to find merge candidates; presents diff, waits for approval; movements go to `_deprecated/` (anti-deletion).
+5. **Periodic nudge** — `/learn-nudge` fires when spec-completion counter crosses threshold; proposes TTL-based deprecations and consolidations. Counter reset is deterministic (binary), not LLM.
+
+**Closure**: `user-prompt-submit-recall.sh` queries FTS5 and injects top matches as a `<system-reminder>` on every prompt. Manual counterpart: `/learn-recall <query>`. Usage tracked via `learn track-use` from the hook, feeding TTL decisions in stage 5.
+
+**Storage**: SQLite + FTS5 at `.claude/learning/db.sqlite` (gitignored). Skills/memory/decisions versioned; index local-only. Sanitization (AWS, OpenAI/Anthropic/GitHub/Slack tokens, SSH paths, `.env`) happens in-memory before any write.
+
+**Binary**: `tools/learn/` (separate go.mod, pure-Go via `modernc.org/sqlite`). Operational targets: `make learn-build / learn-setup / learn-reindex / learn-stats / learn-smoke / learn-lint / learn-test`. See [docs/guides/learning-loop.md](docs/guides/learning-loop.md) and [docs/harness.md § Learning loop tooling](docs/harness.md).
 
 ### Execution Directives
 

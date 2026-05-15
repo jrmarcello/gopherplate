@@ -154,6 +154,12 @@
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/validate-migration.sh",
             "timeout": 5,
             "statusMessage": "Validating migration..."
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/reindex-learning.sh",
+            "timeout": 5,
+            "statusMessage": "Updating learning index..."
           }
         ]
       }
@@ -166,6 +172,12 @@
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/stop-validate.sh",
             "timeout": 120,
             "statusMessage": "Running post-implementation validation..."
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/stop-learn.sh",
+            "timeout": 30,
+            "statusMessage": "Recording learning-loop event..."
           }
         ]
       }
@@ -189,6 +201,18 @@
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/worktree-remove.sh",
             "timeout": 15
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/user-prompt-submit-recall.sh",
+            "timeout": 5,
+            "statusMessage": "Retrieving learning-loop context..."
           }
         ]
       }

@@ -52,6 +52,36 @@ ENV_FILE := $(shell test -f .env && echo "--env-file .env" || echo "")
 .DEFAULT_GOAL := help
 
 # ============================================
+# LEARNING LOOP
+# ============================================
+
+.PHONY: learn-build learn-setup learn-reindex learn-smoke learn-stats learn-lint learn-test
+
+learn-build: ## Compile tools/learn into bin/learn
+	$(MAKE) -C tools/learn build LEARN_BIN=$(CURDIR)/bin/learn
+
+learn-setup: learn-build ## Initialize the learning-loop store and config under .claude/learning/
+	$(CURDIR)/bin/learn init --dir $(CURDIR)/.claude/learning
+
+learn-reindex: learn-build ## Full reindex of skills + memory FTS5 index
+	$(CURDIR)/bin/learn reindex \
+		--skills-dir $(CURDIR)/.claude/skills \
+		--memory-dir $(CURDIR)/memory \
+		--db-path $(CURDIR)/.claude/learning/db.sqlite
+
+learn-stats: learn-build ## Print learning-loop KB stats as JSON
+	$(CURDIR)/bin/learn stats --db-path $(CURDIR)/.claude/learning/db.sqlite
+
+learn-smoke: learn-build ## Run learning-loop end-to-end smoke (fixtures)
+	$(MAKE) -C tools/learn smoke
+
+learn-lint: ## golangci-lint over the tools/learn module
+	$(MAKE) -C tools/learn lint
+
+learn-test: ## go test over the tools/learn module
+	$(MAKE) -C tools/learn test
+
+# ============================================
 # AJUDA
 # ============================================
 

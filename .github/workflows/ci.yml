@@ -47,6 +47,17 @@ jobs:
           version: v2.11.4
           args: --timeout=5m
 
+      - name: Lint tools/learn module
+        run: |
+          cd tools/learn
+          # Reuse the same golangci-lint binary installed by the previous step.
+          golangci-lint run --timeout=5m ./...
+
+      - name: Test tools/learn module
+        run: |
+          cd tools/learn
+          go test -count=1 ./...
+
   buf-breaking:
     name: Proto Breaking Changes
     runs-on: ubuntu-latest

@@ -69,6 +69,8 @@ Each row is an artifact (or coherent group) that currently exists in the repo. C
 | SDD ralph-loop guide | guide | I | meta | on-read | [docs/guides/sdd-ralph-loop.md](guides/sdd-ralph-loop.md) |
 | Template CLI guide | guide | I | meta | on-read | [docs/guides/template-cli.md](guides/template-cli.md) |
 | ADRs (001–009) | guide | I | arch-fitness | on-read | [docs/adr/](adr/) |
+| Skill quality rubric | guide | I | meta | on-read | [.claude/rules/skill-quality.md](../.claude/rules/skill-quality.md) |
+| Learning loop guide | guide | I | meta | on-read | [docs/guides/learning-loop.md](guides/learning-loop.md) |
 
 ### Skills (slash commands)
 
@@ -88,6 +90,11 @@ Each row is an artifact (or coherent group) that currently exists in the repo. C
 | `/ralph-loop` | guide | I | meta | scaffold-time | [.claude/skills/ralph-loop/](../.claude/skills/ralph-loop/) |
 | `/spec-review` | sensor | I | meta | review-time | [.claude/skills/spec-review/](../.claude/skills/spec-review/) |
 | `/atlassian` | guide | I | meta | on-demand | [.claude/skills/atlassian/](../.claude/skills/atlassian/) |
+| `/learn-audit-skills` | sensor | I | meta | review-time | [.claude/skills/learn-audit-skills/](../.claude/skills/learn-audit-skills/) |
+| `/learn-extract` | sensor | I | meta+maint | review-time | [.claude/skills/learn-extract/](../.claude/skills/learn-extract/) |
+| `/learn-nudge` | sensor | I | meta | review-time | [.claude/skills/learn-nudge/](../.claude/skills/learn-nudge/) |
+| `/learn-recall` | guide | I | meta | on-demand | [.claude/skills/learn-recall/](../.claude/skills/learn-recall/) |
+| `/learn-refine` | sensor | I | meta+maint | review-time | [.claude/skills/learn-refine/](../.claude/skills/learn-refine/) |
 
 ### Subagents (inferential sensors with persistent memory)
 
@@ -109,6 +116,10 @@ Each row is an artifact (or coherent group) that currently exists in the repo. C
 | Post-impl validation gate (Stop) | sensor | C | maint+arch | stop-hook | [.claude/hooks/stop-validate.sh](../.claude/hooks/stop-validate.sh) |
 | Worktree setup (WorktreeCreate) | guide | C | meta | scaffold-time | [.claude/hooks/worktree-create.sh](../.claude/hooks/worktree-create.sh) |
 | Worktree teardown (WorktreeRemove) | guide | C | meta | scaffold-time | [.claude/hooks/worktree-remove.sh](../.claude/hooks/worktree-remove.sh) |
+| Stop learn (Stop) | guide | C | meta | stop-hook | [.claude/hooks/stop-learn.sh](../.claude/hooks/stop-learn.sh) |
+| UserPromptSubmit recall (UserPromptSubmit) | guide | I | meta | on-prompt | [.claude/hooks/user-prompt-submit-recall.sh](../.claude/hooks/user-prompt-submit-recall.sh) |
+| Reindex learning (PostToolUse) | sensor | C | meta | on-edit | [.claude/hooks/reindex-learning.sh](../.claude/hooks/reindex-learning.sh) |
+| Hook helpers (sourced) | guide | C | meta | on-source | [.claude/hooks/learn-hook-helpers.sh](../.claude/hooks/learn-hook-helpers.sh) |
 
 ### lefthook.yml
 
@@ -191,6 +202,25 @@ Files: [.github/workflows/ci.yml](../.github/workflows/ci.yml),
 
 Reference: [docs/guides/template-cli.md](guides/template-cli.md)
 
+### Learning loop tooling
+
+| Command | Type | Exec | Category | Stage | Implementation |
+| --- | --- | --- | --- | --- | --- |
+| `learn init` | guide | C | meta | scaffold-time | [tools/learn/](../tools/learn/) |
+| `learn complete-task` | guide | C | meta | stop-hook | [tools/learn/](../tools/learn/) |
+| `learn extract` | sensor | C | meta | continuous | [tools/learn/](../tools/learn/) |
+| `learn reindex` | sensor | C | meta | on-edit | [tools/learn/](../tools/learn/) |
+| `learn similar` | sensor | C | meta | on-demand | [tools/learn/](../tools/learn/) |
+| `learn recall` | guide | C | meta | on-prompt | [tools/learn/](../tools/learn/) |
+| `learn track-use` | sensor | C | meta | on-prompt | [tools/learn/](../tools/learn/) |
+| `learn nudge-tick` | sensor | C | meta | continuous | [tools/learn/](../tools/learn/) |
+| `learn stats` | sensor | C | meta | on-demand | [tools/learn/](../tools/learn/) |
+| `learn validate-skill` | sensor | C | meta | on-edit | [tools/learn/](../tools/learn/) |
+| `learn record-decision` / `learn apply-decision` | guide | C | meta | review-time | [tools/learn/](../tools/learn/) |
+| `learn audit-skills-prep` | guide | C | meta | review-time | [tools/learn/](../tools/learn/) |
+
+Reference: [docs/guides/learning-loop.md](guides/learning-loop.md)
+
 ### OpenTelemetry / business metrics (continuous sensors)
 
 | Artifact | Type | Exec | Category | Stage | Implementation |
@@ -227,6 +257,7 @@ the sensor or guide. Links may be broken until the corresponding spec ships.
 | ~~No `buf breaking` check — proto can regress contracts silently.~~ **Resolved by spec behavior-harness** (DONE) — see `ci.yml::buf-breaking`. | behavior | [.specs/behavior-harness.md](../.specs/behavior-harness.md) |
 | ~~Organizational patterns (handler must use `httpgin.SendSuccess`, use case must `ClassifyError`, etc.) are convention-only — no Semgrep rules to catch drift.~~ **Resolved by spec behavior-harness** (DONE) — see `.semgrep/*.yml` + [guides/semgrep-rules.md](guides/semgrep-rules.md). | behavior | [.specs/behavior-harness.md](../.specs/behavior-harness.md) |
 | ~~`gopherplate new` produces a single generalist template — no flavor per service topology (CRUD / event-processor / data-pipeline).~~ **Partially resolved by spec cli-harness-flavors** (DONE — MVP ships `--flavor` flag + registry + overlay engine + `crud` flavor). **Follow-up**: event-processor and data-pipeline flavors deferred to `.specs/flavors-event-data.md`. | meta | [.specs/cli-harness-flavors.md](../.specs/cli-harness-flavors.md) |
+| ~~No closed-loop learning system — harness improvements are 100% manual; patterns surfaced by transcripts/specs/git are never extracted, indexed, or surfaced back to the agent.~~ **Resolved by spec learning-loop-harness** (DONE) — see [tools/learn/](../tools/learn/), the 5 `/learn-*` skills, 3 hooks, rubric `.claude/rules/skill-quality.md`, and [docs/guides/learning-loop.md](guides/learning-loop.md). | meta | [.specs/learning-loop-harness.md](../.specs/learning-loop-harness.md) |
 
 For the process of identifying new gaps and evolving the harness, see
 [harness-self-steering.md](guides/harness-self-steering.md).

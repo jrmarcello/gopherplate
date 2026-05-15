@@ -3,6 +3,12 @@
 /gopherplate
 /perfcompare
 /tests/load/cmd/perfcompare/perfcompare
+
+# Learning loop (local-only — privado por dev)
+.claude/learning/db.sqlite
+.claude/learning/db.sqlite-*
+.claude/learning/learn.log
+.claude/learning/state/
 *.exe
 *.exe~
 *.dll
