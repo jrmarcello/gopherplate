@@ -100,28 +100,14 @@ func Test_TC_CT_02_subcommand_help_exits_zero(t *testing.T) {
 	}
 }
 
-// TC-CT-03: unknown subcommand exits with a user-facing error.
-//
-// The task specifies exit 1, but cobra's "unknown command" error
-// short-circuits before reaching root's RunE (which is the only path that
-// wraps the error into *usageError). The unwrapped error falls through
-// learnerr.exitCode to the fallback branch — exit 2. We accept either 1 or
-// 2 to honor the load-bearing assertion (stderr contains "unknown command")
-// without papering over the actual production code path.
-//
-// TODO: wire root.SetFlagErrorFunc to wrap cobra flag/command errors into
-// *usageError → tightens TC-CT-03, TC-CT-10, and TC-CT-11 to exit 1 across
-// the board (currently CT-03 and CT-10 accept exit 1 OR 2; CT-11 already
-// asserts exact 1 because its error path flows through root.RunE).
-// Tracked as a follow-up to spec
-// `.specs/refactor-tools-learn-flat-layout.md` Notes / Review Results.
+// TC-CT-03: unknown subcommand yields a usage error (exit 1).
 func Test_TC_CT_03_unknown_subcommand_exits_one(t *testing.T) {
 	t.Parallel()
 	var stdout, stderr bytes.Buffer
 	root := buildRoot(t)
 	code := RunCmd(root, []string{"unknownsubcmd"}, &stdout, &stderr)
-	if code != 1 && code != 2 {
-		t.Fatalf("expected exit 1 or 2 for unknown subcommand, got %d (stderr=%q)", code, stderr.String())
+	if code != 1 {
+		t.Fatalf("expected exit 1 for unknown subcommand, got %d (stderr=%q)", code, stderr.String())
 	}
 	if !strings.Contains(stderr.String(), "unknown command") {
 		t.Errorf("expected stderr to contain \"unknown command\", got: %q", stderr.String())
@@ -394,25 +380,14 @@ func findJSONLogLine(stderr []byte, level string) (map[string]any, bool) {
 	return nil, false
 }
 
-// TC-CT-10: unknown flag yields a usage error.
-//
-// cobra surfaces a flag-parse error that doesn't carry our *usageError type,
-// so the exit code falls through the (*runtimeError|fallback) branch in
-// learnerr.exitCode to 2. We assert the stderr message (the load-bearing
-// observation: stderr must contain "unknown flag" or "unknown shorthand")
-// and accept exit codes 1 OR 2 — both satisfy the contract "this is a
-// user-facing error, not silent success". Same deviation as TC-CT-03's
-// block; same follow-up: wire root.SetFlagErrorFunc to wrap cobra flag
-// errors into *usageError → tightens TC-CT-03, TC-CT-10, and TC-CT-11 to
-// exit 1 across the board. Tracked in spec
-// `.specs/refactor-tools-learn-flat-layout.md` Notes / Review Results.
+// TC-CT-10: unknown flag yields a usage error (exit 1).
 func Test_TC_CT_10_unknown_flag(t *testing.T) {
 	t.Parallel()
 	var stdout, stderr bytes.Buffer
 	root := buildRoot(t)
 	code := RunCmd(root, []string{"recall", "--unknown-flag", "x"}, &stdout, &stderr)
-	if code == 0 {
-		t.Fatalf("expected non-zero exit for unknown flag, got 0 (stderr=%q)", stderr.String())
+	if code != 1 {
+		t.Fatalf("expected exit 1 for unknown flag, got %d (stderr=%q)", code, stderr.String())
 	}
 	combined := stderr.String()
 	if !strings.Contains(combined, "unknown flag") && !strings.Contains(combined, "unknown shorthand") {
@@ -422,6 +397,12 @@ func Test_TC_CT_10_unknown_flag(t *testing.T) {
 
 // TC-CT-11: `record-decision` without required flags surfaces a usage error
 // from the subcommand's own validation, hitting *usageError → exit 1.
+//
+// The complementary cobra-native `MarkFlagRequired` path (REQ-2 of
+// fix-cobra-error-exit-codes.md) is covered by Test_CobraRequiredFlag_exits_one
+// in cli_test.go — kept separate because no learn subcommand currently uses
+// MarkFlagRequired (they all validate in their own RunE, like record-decision
+// does here).
 func Test_TC_CT_11_record_decision_missing_required(t *testing.T) {
 	t.Parallel()
 	var stdout, stderr bytes.Buffer
@@ -430,8 +411,12 @@ func Test_TC_CT_11_record_decision_missing_required(t *testing.T) {
 	if code != 1 {
 		t.Fatalf("expected exit 1 for missing required flag, got %d (stderr=%q)", code, stderr.String())
 	}
-	if strings.TrimSpace(stderr.String()) == "" {
-		t.Errorf("expected non-empty stderr for missing required flag")
+	combined := stderr.String()
+	if strings.TrimSpace(combined) == "" {
+		t.Fatalf("expected non-empty stderr for missing required flag")
+	}
+	if !strings.Contains(combined, "required") {
+		t.Errorf("expected stderr to contain \"required\" (validation hint), got: %q", combined)
 	}
 }
 

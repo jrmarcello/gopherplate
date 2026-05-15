@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/spf13/cobra"
 )
 
 // TC-UC-30: unknown subcommand exits 1.
@@ -36,5 +38,44 @@ func TestNewRootCmd_useNameIsLearn(t *testing.T) {
 	cmd := NewRootCmd()
 	if cmd.Use != "learn" {
 		t.Errorf("expected root command Use=\"learn\", got %q", cmd.Use)
+	}
+}
+
+// Test_CobraRequiredFlag_exits_one verifies REQ-2 of fix-cobra-error-exit-codes:
+// a subcommand that uses cobra.MarkFlagRequired must exit with code 1 when the
+// flag is omitted (wrapped into *usageError by wrapCobraError's "required flag"
+// match), not exit 2 via the fallback branch.
+//
+// No current learn subcommand uses MarkFlagRequired (they all validate inside
+// their own RunE and return *usageError directly — exercised by TC-CT-11). This
+// test installs a synthetic subcommand with cobra.MarkFlagRequired so the
+// wrapCobraError "required flag" path is actually exercised and protected
+// against mutation regressions.
+func Test_CobraRequiredFlag_exits_one(t *testing.T) {
+	t.Parallel()
+	root := NewRootCmd()
+	// SilenceUsage/SilenceErrors are NOT set on the subcommand — cobra
+	// inherits both from root (NewRootCmd sets them). Setting them here
+	// would create false parity with production subcommands and obscure
+	// how silence propagation actually works.
+	sub := &cobra.Command{
+		Use: "synthetic",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return nil
+		},
+	}
+	sub.Flags().String("required-flag", "", "a synthetic required flag")
+	if markErr := sub.MarkFlagRequired("required-flag"); markErr != nil {
+		t.Fatalf("MarkFlagRequired: %v", markErr)
+	}
+	root.AddCommand(sub)
+
+	var stdout, stderr bytes.Buffer
+	code := RunCmd(root, []string{"synthetic"}, &stdout, &stderr)
+	if code != 1 {
+		t.Fatalf("expected exit 1 for missing required flag, got %d (stderr=%q)", code, stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "required flag") {
+		t.Errorf("expected stderr to contain \"required flag\", got: %q", stderr.String())
 	}
 }
