@@ -4,7 +4,13 @@
 /perfcompare
 /tests/load/cmd/perfcompare/perfcompare
 
-# Learning loop (local-only — privado por dev)
+# Learning loop (local-only — privado por dev). The whole .claude/learning/
+# directory is per-dev runtime state: SQLite DB, JSONL audit log, generated
+# config.yml, and an internal .gitignore created by `learn init`. None of
+# these belong in the repo. The legacy specific-file patterns (db.sqlite,
+# learn.log, state/) are kept below as a defense-in-depth in case someone
+# `git add`s a child explicitly.
+.claude/learning/
 .claude/learning/db.sqlite
 .claude/learning/db.sqlite-*
 .claude/learning/learn.log
