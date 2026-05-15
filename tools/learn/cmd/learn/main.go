@@ -6,19 +6,18 @@
 //	1  usage error (unknown subcommand, invalid flag, validation failure)
 //	2  runtime error (DB corruption, IO failure, etc.)
 //
-// Subcommands self-register into the internal/cmd package via init(); main
-// only needs to call cmd.RegisterAll on the root before dispatching.
+// Subcommands self-register into the learn package via init(); main only needs
+// to call learn.RegisterAll on the root before dispatching.
 package main
 
 import (
 	"os"
 
-	"github.com/jrmarcello/gopherplate/tools/learn/internal/cli"
-	"github.com/jrmarcello/gopherplate/tools/learn/internal/cmd"
+	"github.com/jrmarcello/gopherplate/tools/learn"
 )
 
 func main() {
-	root := cli.NewRootCmd()
-	cmd.RegisterAll(root)
-	os.Exit(cli.RunCmd(root, os.Args[1:], os.Stdout, os.Stderr))
+	root := learn.NewRootCmd()
+	learn.RegisterAll(root)
+	os.Exit(learn.RunCmd(root, os.Args[1:], os.Stdout, os.Stderr))
 }

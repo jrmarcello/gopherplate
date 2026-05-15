@@ -140,6 +140,18 @@ Matches are replaced with `<REDACTED:<kind>>`. The policy is **conservative**
 — we accept false positives in exchange for zero false negatives of known
 classes.
 
+## Module structure
+
+The `tools/learn` module uses a flat single-package layout (`package learn` at
+the root). It was refactored from a 14-package Clean-Architecture style on
+2026-05-15 (see [`.specs/refactor-tools-learn-flat-layout.md`](../../.specs/refactor-tools-learn-flat-layout.md)
+for the full rationale and migration plan). The rationale in short: a CLI binary
+has no layer boundaries to defend; the previous layout was a stylistic mirror of
+the main server's conventions without delivering the boundary protection that
+Clean Architecture earns in domain-rich code. All files now live directly under
+`tools/learn/` (e.g. `tools/learn/store.go`, `tools/learn/sanitize.go`), and the
+binary entrypoint stays at `tools/learn/cmd/learn/main.go`.
+
 ## Operational commands
 
 ```bash
