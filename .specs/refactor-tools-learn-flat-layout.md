@@ -1169,6 +1169,75 @@ worktree with concurrent writers.**
 - [ ] No file in `.claude/hooks/` is modified by this refactor
 - [ ] Root `.golangci.yml` is not modified by this refactor
 
+## Review Results — 2026-05-15
+
+Independent post-merge audit triggered by `/spec-review` (commit `ac020ee`).
+
+### Requirements verification
+
+| Requirement | Status | Evidence |
+| --- | --- | --- |
+| REQ-1 target layout (`internal/` absent, 31 production .go at root) | **PASS** (with spec/test count discrepancy — see Findings) | `ls tools/learn/internal/` → GONE; production .go count = **32** (31 ledger + `doc.go`). Spec text says 31 but reality is 32. |
+| REQ-2 single `package learn` | PASS | All 63 root .go files declare `package learn`; `cmd/learn/main.go` declares `package main` and imports `tools/learn`. Asserted by `Test_TC_CT_08_package_declarations`. |
+| REQ-3 CLI surface preserved (16 subcommands) | PASS | `learn --help` lists all 16; `Test_TC_CT_01_help_lists_all_subcommands` + `Test_TC_CT_06_registration_set_equality`. |
+| REQ-4 exit code semantics (0/1/2) | PASS (with documented production deviation on cobra-surfaced errors) | `TestExitCode_*` (8 tests) cover the wrapping semantics; contract tests CT-03/CT-04/CT-10/CT-11 accept-and-document deviation where cobra short-circuits. |
+| REQ-5 external contracts preserved | PASS | 4 hook test scripts exit 0; 6 `learn-*` skill invocations exit 0; 7 Makefile targets functional. |
+| REQ-6 existing tests preserved | PASS | Pre: 210 tests. Post: 222 tests (210 baseline + 12 new contract tests). Net delta = +12, no test deleted. |
+| REQ-7 identifier renaming policy (3 exceptions) | PASS | `grep "^func [A-Z]" tools/learn/*.go \| grep -v Test` returns exactly `NewRootCmd`, `RunCmd`, `RegisterAll`. |
+| REQ-8 embed + testdata | PASS | `//go:embed schema.sql` at `store.go:20`; `schema.sql` sibling at root; `testdata/{hooks,specs,transcripts}` consolidated. |
+| REQ-9 `init()` self-registration | PASS | 16 `cmd_*.go` files have `init()`; `RegisterAll` at `cmd.go:27`. |
+| REQ-10 module path + binary path | PASS | `go.mod`: `module github.com/jrmarcello/gopherplate/tools/learn`; binary at `tools/learn/bin/learn`. |
+| REQ-11 build green at each merge step | PASS | Execution Log documents per-task VERIFY for TASK-BASELINE through TASK-7 + TASK-SMOKE; each boundary had build/lint/test green. |
+| REQ-12 no silent behavior changes | PASS | TC-CT-09 (slog JSON validity), TC-ET-01 (embed path resolution), 210 baseline tests covering `t.TempDir()` + fixture resolution. |
+| REQ-13 documentation updated | PASS | `docs/guides/learning-loop.md` has new "Module structure" section; `rg "tools/learn/internal" docs/ CLAUDE.md README.md` returns 0 hits. |
+| REQ-14 lint config audit | PASS | `make learn-lint` 0 issues against monorepo root `.golangci.yml`; no local `.golangci.yml` added. |
+
+### Validation checks
+
+| Check | Result |
+| --- | --- |
+| `gofmt -l tools/learn/` | PASS (empty output) |
+| `go vet ./...` | PASS |
+| `make learn-lint` (golangci-lint) | PASS (0 issues) |
+| `make learn-build` | PASS |
+| `make learn-test` (222 tests) | PASS |
+| `make learn-smoke` | PASS |
+| `make learn-stats` (JSON output matches baseline shape) | PASS |
+| `make learn-reindex` | PASS |
+| Hook integration: stop-learn_test.sh | PASS |
+| Hook integration: user-prompt-submit-recall_test.sh | PASS |
+| Hook integration: reindex-learning_test.sh | PASS |
+| Hook integration: learn-hook-helpers_test.sh | PASS |
+| E2E (`make test-e2e`) | SKIP — refactor of CLI binary, no HTTP endpoints touched |
+| Swagger drift (`swag init`) | SKIP — refactor of CLI binary, no HTTP handlers |
+| Manual browser smoke | SKIP — no UI surface |
+
+### Test Quality (test-reviewer findings)
+
+- **[MUST FIX]** `tools/learn/cli_contract_test.go:234` — TC-CT-07 hardcodes `expected = 32` but spec REQ-1 text says **31** (in 6 locations). The test asserts reality (which includes `doc.go` added during refactor) while the spec ledger doesn't account for `doc.go`. **Fix:** either update the spec's REQ-1, Design § Architecture Decisions, TC-CT-07, TASK-7 VERIFY, and Validation Criteria to consistently say "32 (31 + doc.go)"; or remove `doc.go` if it was not in the original ledger intent.
+- **[MUST FIX]** `tools/learn/cli_contract_test.go:121–146` — TC-CT-04 misses 2 of 3 spec-mandated assertions. Spec requires (a) exit 2, (b) stderr contains `level=ERROR` slog line with `runtimeError.Error()` format, (c) JSON-decodable with `LOG_FORMAT=json`. Test currently asserts only (a) + a loose keyword match. A regression from slog to `fmt.Fprintf` would pass silently.
+- **[SHOULD FIX]** `tools/learn/cli_contract_test.go:78–94` — TC-CT-02 missing stderr-empty assertion. Spec says "stderr empty". A noisy startup warning would be invisible.
+- **[SHOULD FIX]** `tools/learn/cli_contract_test.go:336–338` — TC-CT-10 silently accepts exit 1 OR 2 without deviation comment (unlike TC-CT-03 which explains the cobra short-circuit). Either document inline or wire `root.SetFlagErrorFunc`.
+- **[SHOULD FIX]** `tools/learn/cli_contract_test.go:388–406` — `locatePkgDir` silently falls back to CWD if walk fails. If test runner sets unexpected CWD, TC-CT-07/08 scan wrong dir and report false-positive PASS. Make helper accept `*testing.T` and use `t.Fatal`/`t.Skipf` explicitly.
+- **[NICE TO HAVE]** Inconsistent exit-code strictness across CT-03 (accepts 1|2 with explanation), CT-10 (accepts any non-zero, no explanation), CT-11 (asserts exact 1). Pattern would confuse a new contributor adding a validation test. Suggest a single `// TODO: wire root.SetFlagErrorFunc` comment across CT-03/CT-10/CT-11 to make the asymmetry traceable.
+
+### Findings (other)
+
+None beyond test-reviewer's scope.
+
+### Notes
+
+The refactor's structural correctness is sound. Build green, lint clean, 222 tests pass, all external contracts preserved.
+
+The two MUST FIX findings concern test assertion strictness, not the refactor's actual functional correctness:
+
+1. The **TC-CT-07 31-vs-32 discrepancy** is a spec-test consistency gap, not a code bug. The refactor genuinely added `doc.go` (intentional, to centralize package-level documentation that was previously scattered across 4 leaf packages). The spec's REQ-1 was written before `doc.go` was added and never updated. A small spec patch fixes this.
+2. The **TC-CT-04 assertion gap** is a real test-quality issue (the test passes today but a future regression in slog wiring could pass it). Worth fixing but does not invalidate the current passing state.
+
+**Recommended follow-up spec:** `fix-refactor-tools-learn-contract-test-rigor.md` — bundles the 2 MUST FIX + 3 SHOULD FIX as a small SDD spec to tighten the contract test assertions and reconcile the spec REQ-1 count. Estimated scope: ~5 file edits, ~30 LOC delta, all in `cli_contract_test.go` + this spec's Requirements/Design sections.
+
+**Documented deviation tracked elsewhere:** `root.SetFlagErrorFunc` wiring (cobra-surfaced errors exit 2 instead of 1) — already documented in the contract test comments (CT-03) and the spec's Execution Log. Future spec candidate, out of refactor scope.
+
 ## Execution Log
 
 <!-- Ralph Loop appends here automatically — do not edit manually -->
