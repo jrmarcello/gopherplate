@@ -227,7 +227,7 @@ type targetSkill struct {
 // readTargetSkill reads the target SKILL.md file and extracts frontmatter
 // (title, tags) + body using the same extractor as reindex.go.
 func readTargetSkill(path string) (targetSkill, error) {
-	raw, readErr := os.ReadFile(path)
+	raw, readErr := os.ReadFile(path) //nolint:gosec // caller-supplied skill path
 	if readErr != nil {
 		if errors.Is(readErr, os.ErrNotExist) {
 			return targetSkill{}, learnerr.Usagef("similar: --skill %q: file does not exist", path)

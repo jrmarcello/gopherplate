@@ -8,6 +8,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -133,11 +134,14 @@ func runAuditSkillsPrep(o auditSkillsPrepOpts) error {
 	})
 	if walkErr != nil {
 		// Distinguish "dir missing" (usage) from other walk errors (runtime).
-		if pe, ok := walkErr.(*fs.PathError); ok && os.IsNotExist(pe) {
+		// errors.As traverses wrapping so a *fs.PathError nested under
+		// fmt.Errorf still surfaces here — the bare type assertion would miss it.
+		var pe *fs.PathError
+		if errors.As(walkErr, &pe) && os.IsNotExist(pe) {
 			return learnerr.Usagef("audit-skills-prep: --skills-dir %q does not exist", o.SkillsDir)
 		}
 		var le *learnerr.UsageError
-		if asUsage(walkErr, &le) {
+		if errors.As(walkErr, &le) {
 			return walkErr
 		}
 		return learnerr.Runtimef("audit-skills-prep: walk %q: %w", o.SkillsDir, walkErr)
@@ -160,7 +164,7 @@ func runAuditSkillsPrep(o auditSkillsPrepOpts) error {
 // whitespace. The full body size (in bytes) is reported separately so the
 // agent can decide whether to read more.
 func summariseSkillFile(path string, maxBodyChars int, san *sanitize.Sanitizer) (skillSummary, error) {
-	raw, readErr := os.ReadFile(path)
+	raw, readErr := os.ReadFile(path) //nolint:gosec // path comes from filepath.WalkDir inside the operator-supplied --skills-dir
 	if readErr != nil {
 		return skillSummary{}, learnerr.Runtimef("audit-skills-prep: read %q: %w", path, readErr)
 	}
@@ -189,7 +193,7 @@ func summariseSkillFile(path string, maxBodyChars int, san *sanitize.Sanitizer) 
 // splitFrontmatterAndBody splits `---\n<yaml>\n---\n<body>` into its parts.
 // Missing frontmatter is an error — every SKILL.md in this project is
 // expected to carry one.
-func splitFrontmatterAndBody(raw []byte) (map[string]any, string, error) {
+func splitFrontmatterAndBody(raw []byte) (frontmatter map[string]any, body string, err error) {
 	text := string(raw)
 	if !strings.HasPrefix(text, "---") {
 		return nil, "", fmt.Errorf("missing frontmatter")
@@ -204,7 +208,7 @@ func splitFrontmatterAndBody(raw []byte) (map[string]any, string, error) {
 		return nil, "", fmt.Errorf("missing frontmatter: no closing '---'")
 	}
 	yamlBlock := rest[:closeIdx]
-	body := strings.TrimPrefix(rest[closeIdx+len("\n---"):], "\n")
+	body = strings.TrimPrefix(rest[closeIdx+len("\n---"):], "\n")
 	m := make(map[string]any)
 	if unmarshalErr := yaml.Unmarshal([]byte(yamlBlock), &m); unmarshalErr != nil {
 		return nil, "", fmt.Errorf("invalid YAML: %w", unmarshalErr)
@@ -263,23 +267,4 @@ func truncateUTF8(s string, n int) string {
 		count++
 	}
 	return s
-}
-
-// asUsage reports whether err is (or wraps) a *learnerr.UsageError. Local
-// helper because we cannot call errors.As inline on the type assertion path
-// above without polluting the WalkDir callback signature.
-func asUsage(err error, target **learnerr.UsageError) bool {
-	for cur := err; cur != nil; {
-		if ue, ok := cur.(*learnerr.UsageError); ok {
-			*target = ue
-			return true
-		}
-		type unwrapper interface{ Unwrap() error }
-		if u, ok := cur.(unwrapper); ok {
-			cur = u.Unwrap()
-			continue
-		}
-		return false
-	}
-	return false
 }

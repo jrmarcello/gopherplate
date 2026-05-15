@@ -91,7 +91,7 @@ func runSmoke(ctx context.Context, o smokeOpts) error {
 
 	// 2. seed 3 fake specs + verify complete-task increments counter.
 	specsDir := filepath.Join(dir, "specs")
-	if mkErr := os.MkdirAll(specsDir, 0o755); mkErr != nil {
+	if mkErr := os.MkdirAll(specsDir, 0o750); mkErr != nil {
 		return learnerr.Runtimef("smoke: mkdir specs: %w", mkErr)
 	}
 	for i := 1; i <= 3; i++ {
@@ -115,7 +115,7 @@ TDD: RED(2) → GREEN(2) → REFACTOR(clean)
 ### TASK-2 (2026-05-14 10:1%d)
 TDD: RED(2) → GREEN(2) → REFACTOR(clean)
 `, i, specsDir, specsDir, i, i)
-		if writeErr := os.WriteFile(specPath, []byte(body), 0o644); writeErr != nil {
+		if writeErr := os.WriteFile(specPath, []byte(body), 0o600); writeErr != nil {
 			return learnerr.Runtimef("smoke: write spec %d: %w", i, writeErr)
 		}
 		// Call complete-task; uses default config (nudge_threshold=5 → won't fire).
@@ -177,7 +177,7 @@ TDD: RED(2) → GREEN(2) → REFACTOR(clean)
 
 	// 4. reindex — seed a fake skill, then reindex.
 	skillDir := filepath.Join(dir, "skills", "smoke-skill")
-	if mkErr := os.MkdirAll(skillDir, 0o755); mkErr != nil {
+	if mkErr := os.MkdirAll(skillDir, 0o750); mkErr != nil {
 		return learnerr.Runtimef("smoke: mkdir skill: %w", mkErr)
 	}
 	skillPath := filepath.Join(skillDir, "SKILL.md")
@@ -194,7 +194,7 @@ last_reviewed_at: 2026-05-14T10:00:00Z
 This skill exists only inside the smoke test temp dir. It contains the
 keyword refactor-user-cache used by recall to verify the retrieval pipeline.
 `
-	if writeErr := os.WriteFile(skillPath, []byte(skillBody), 0o644); writeErr != nil {
+	if writeErr := os.WriteFile(skillPath, []byte(skillBody), 0o600); writeErr != nil {
 		return learnerr.Runtimef("smoke: write skill: %w", writeErr)
 	}
 	rxOpts := reindexOpts{
@@ -246,8 +246,8 @@ keyword refactor-user-cache used by recall to verify the retrieval pipeline.
 		return learnerr.Runtimef("smoke: stats output not JSON: %w", jsonErr)
 	}
 
-	fmt.Fprintln(o.Stdout, "SMOKE OK")
-	fmt.Fprintln(o.Stdout, statsBuf.String())
+	_, _ = fmt.Fprintln(o.Stdout, "SMOKE OK")
+	_, _ = fmt.Fprintln(o.Stdout, statsBuf.String())
 	return nil
 }
 

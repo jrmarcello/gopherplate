@@ -121,7 +121,10 @@ func ParseLog(ctx context.Context, repoDir string, opts Options, san *sanitize.S
 		args = append(args, "-n", itoa(opts.MaxCommits))
 	}
 
-	cmd := exec.CommandContext(ctx, "git", args...)
+	// args is built from constant flags + caller-supplied --since/--max-commits
+	// values that pass through `time.ParseDuration` and `itoa`; no shell, no
+	// user-typed strings reach the subprocess.
+	cmd := exec.CommandContext(ctx, "git", args...) //nolint:gosec // args is built from a controlled allowlist of git flags
 	var stderrBuf strings.Builder
 	cmd.Stderr = &stderrBuf
 	out, runErr := cmd.Output()
@@ -293,7 +296,7 @@ func parseNumstat(lines []string) ([]string, bool) {
 // extractTypeScope applies conventionalRe to subject. Non-matching subjects
 // yield ("unconventional", "") so downstream ngram code can rely on a
 // fixed-shape prefix of length 2 in every Record's Tokens slice.
-func extractTypeScope(subject string) (string, string) {
+func extractTypeScope(subject string) (typ, scope string) {
 	subject = strings.TrimSpace(subject)
 	if m := conventionalRe.FindStringSubmatch(subject); m != nil {
 		return m[1], m[2]

@@ -40,7 +40,7 @@ func RunCmd(root *cobra.Command, args []string, stdout, stderr io.Writer) int {
 	if execErr := root.Execute(); execErr != nil {
 		// Cobra is set to SilenceErrors; we own the stderr emission.
 		if stderr != nil {
-			fmt.Fprintln(stderr, "Error:", execErr)
+			_, _ = fmt.Fprintln(stderr, "Error:", execErr)
 		}
 		return learnerr.ExitCode(execErr)
 	}

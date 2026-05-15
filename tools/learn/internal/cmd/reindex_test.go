@@ -28,6 +28,12 @@ func openStoreForTest(t *testing.T, dbPath string) (*store.Store, error) {
 //	<root>/memory/<name>.md
 //
 // It returns the root path along with the resolved dbPath, skillsDir, and memoryDir.
+// root is part of the contract for future callers that need to walk siblings
+// of the learning dir (e.g. wiring fragment tests). Linters flag it as unused
+// by current callers, but exposing it keeps the helper extensible without
+// reshuffling 9 call sites.
+//
+//nolint:unparam // root retained for callers that may need the temp root
 func setupTempLearningDir(t *testing.T) (root, dbPath, skillsDir, memoryDir, configPath string) {
 	t.Helper()
 	root = t.TempDir()

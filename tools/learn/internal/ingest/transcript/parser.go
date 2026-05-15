@@ -28,6 +28,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -164,7 +165,7 @@ func ParseFile(ctx context.Context, path string, san *sanitize.Sanitizer) ([]Rec
 		}
 		out = append(out, recs...)
 	}
-	if scanErr := scanner.Err(); scanErr != nil && scanErr != io.EOF {
+	if scanErr := scanner.Err(); scanErr != nil && !errors.Is(scanErr, io.EOF) {
 		return nil, &learnerr.RuntimeError{
 			Msg: fmt.Sprintf("transcript: scan %s", path),
 			Err: scanErr,

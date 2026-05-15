@@ -164,7 +164,7 @@ func loadDecisionRow(ctx context.Context, db *sql.DB, id int64) (applyDecisionRo
 // REQ-10: timestamp is UTC, format `YYYYMMDDTHHMMSSZ` (basic ISO without
 // punctuation) — chosen so filenames remain shell-friendly.
 func moveToDeprecated(sourcePath, mergedInto string, now time.Time) (string, error) {
-	content, readErr := os.ReadFile(sourcePath)
+	content, readErr := os.ReadFile(sourcePath) //nolint:gosec // sourcePath comes from a decision row our subcommand inserted
 	if readErr != nil {
 		return "", learnerr.Runtimef("apply-decision: read source %q: %w", sourcePath, readErr)
 	}
@@ -179,7 +179,7 @@ func moveToDeprecated(sourcePath, mergedInto string, now time.Time) (string, err
 
 	stamp := now.UTC().Format("20060102T150405Z")
 	deprecatedDir := filepath.Join(dir, "_deprecated")
-	if mkErr := os.MkdirAll(deprecatedDir, 0o755); mkErr != nil {
+	if mkErr := os.MkdirAll(deprecatedDir, 0o750); mkErr != nil {
 		return "", learnerr.Runtimef("apply-decision: mkdir %q: %w", deprecatedDir, mkErr)
 	}
 
@@ -194,12 +194,15 @@ func moveToDeprecated(sourcePath, mergedInto string, now time.Time) (string, err
 	// half-deprecated state — under any failure mode there's exactly one
 	// live copy (either at the source or under _deprecated/).
 	if renameErr := os.Rename(sourcePath, newPath); renameErr == nil {
-		if writeErr := os.WriteFile(newPath, newContent, 0o600); writeErr != nil {
+		// newPath is built from filepath.Join(filepath.Dir(sourcePath), ...).
+		// sourcePath comes from a DB row our own subcommands inserted; not
+		// directly user-typed at the boundary.
+		if writeErr := os.WriteFile(newPath, newContent, 0o600); writeErr != nil { //nolint:gosec // newPath is derived from a decision row we wrote
 			// We renamed but failed to stamp the header. Restore the
 			// original content (without header) so the file isn't left
 			// corrupted. This is best-effort: if the WriteFile failed
 			// the underlying FS is misbehaving.
-			_ = os.WriteFile(newPath, content, 0o600)
+			_ = os.WriteFile(newPath, content, 0o600) //nolint:gosec // same controlled-path provenance
 			return newPath, learnerr.Runtimef("apply-decision: write header to %q: %w", newPath, writeErr)
 		}
 		return newPath, nil
@@ -209,7 +212,7 @@ func moveToDeprecated(sourcePath, mergedInto string, now time.Time) (string, err
 	// still avoid the "two live copies" trap by using a fresh inode in
 	// _deprecated/ that mirrors the source content — operators can
 	// dedupe manually if remove fails.
-	if writeErr := os.WriteFile(newPath, newContent, 0o600); writeErr != nil {
+	if writeErr := os.WriteFile(newPath, newContent, 0o600); writeErr != nil { //nolint:gosec // same controlled-path provenance
 		return "", learnerr.Runtimef("apply-decision: write %q: %w", newPath, writeErr)
 	}
 	if rmErr := os.Remove(sourcePath); rmErr != nil {

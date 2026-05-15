@@ -42,7 +42,7 @@ func Load(path string) (*Config, error) {
 	cfg := DefaultConfig()
 
 	if path != "" {
-		data, readErr := os.ReadFile(path)
+		data, readErr := os.ReadFile(path) //nolint:gosec // caller-supplied config path; the entire purpose of Load is to read from this path
 		switch {
 		case readErr == nil:
 			if unmarshalErr := yaml.Unmarshal(data, cfg); unmarshalErr != nil {

@@ -129,7 +129,6 @@ func TestSanitize_Defaults(t *testing.T) {
 
 	s := builtin(t)
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.tcID+"_"+tc.name, func(t *testing.T) {
 			t.Parallel()
 			got := s.Sanitize(tc.input)

@@ -125,7 +125,7 @@ func writeDefaultConfigIfAbsent(path string) error {
 	if len(body) == 0 || body[len(body)-1] != '\n' {
 		body = append(body, '\n')
 	}
-	if writeErr := os.WriteFile(path, body, 0o644); writeErr != nil {
+	if writeErr := os.WriteFile(path, body, 0o600); writeErr != nil {
 		return learnerr.Runtimef("init: write %q: %w", path, writeErr)
 	}
 	return nil
@@ -143,7 +143,7 @@ func writeLocalGitignoreIfAbsent(learningDir string) error {
 		return learnerr.Runtimef("init: stat %q: %w", path, statErr)
 	}
 	const body = "db.sqlite\nlearn.log\n"
-	if writeErr := os.WriteFile(path, []byte(body), 0o644); writeErr != nil {
+	if writeErr := os.WriteFile(path, []byte(body), 0o600); writeErr != nil {
 		return learnerr.Runtimef("init: write %q: %w", path, writeErr)
 	}
 	return nil

@@ -28,7 +28,6 @@ func TestDistance(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			if got := Distance(tc.a, tc.b); got != tc.want {
@@ -69,7 +68,6 @@ func TestNormalizedDistance(t *testing.T) {
 
 	const eps = 1e-9
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			got := NormalizedDistance(tc.a, tc.b)

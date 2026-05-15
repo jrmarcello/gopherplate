@@ -113,7 +113,7 @@ func ParseFile(ctx context.Context, path string, deprecatedRoots []string, san *
 		return nil, learnerr.Runtimef("memory.ParseFile: %w", ctxErr)
 	}
 
-	raw, readErr := os.ReadFile(path)
+	raw, readErr := os.ReadFile(path) //nolint:gosec // caller-supplied memory path; package purpose is to read it
 	if readErr != nil {
 		return nil, learnerr.Runtimef("memory.ParseFile: read %q: %w", path, readErr)
 	}

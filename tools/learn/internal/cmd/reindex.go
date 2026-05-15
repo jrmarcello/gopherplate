@@ -397,7 +397,7 @@ func parseSkillFile(path string, san *sanitize.Sanitizer) (*parsedSkill, error) 
 	if san == nil {
 		return nil, learnerr.Usagef("reindex: parseSkillFile: sanitizer is nil")
 	}
-	raw, readErr := os.ReadFile(path)
+	raw, readErr := os.ReadFile(path) //nolint:gosec // path comes from filepath.WalkDir inside the operator-supplied --skills-dir
 	if readErr != nil {
 		return nil, learnerr.Runtimef("reindex: read %q: %w", path, readErr)
 	}
@@ -485,17 +485,17 @@ func pruneOrphanSkills(ctx context.Context, st *store.Store, skillsDir string) e
 	if queryErr != nil {
 		return learnerr.Runtimef("reindex: list skill_index: %w", queryErr)
 	}
+	defer func() { _ = rows.Close() }()
 	var paths []string
 	for rows.Next() {
 		var p string
 		if scanErr := rows.Scan(&p); scanErr != nil {
-			_ = rows.Close()
 			return learnerr.Runtimef("reindex: scan skill_index: %w", scanErr)
 		}
 		paths = append(paths, p)
 	}
-	if closeErr := rows.Close(); closeErr != nil {
-		return learnerr.Runtimef("reindex: close skill_index rows: %w", closeErr)
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return learnerr.Runtimef("reindex: iterate skill_index: %w", rowsErr)
 	}
 
 	for _, p := range paths {
@@ -519,17 +519,17 @@ func pruneOrphanMemory(ctx context.Context, st *store.Store, memoryDir string) e
 	if queryErr != nil {
 		return learnerr.Runtimef("reindex: list memory_index: %w", queryErr)
 	}
+	defer func() { _ = rows.Close() }()
 	var paths []string
 	for rows.Next() {
 		var p string
 		if scanErr := rows.Scan(&p); scanErr != nil {
-			_ = rows.Close()
 			return learnerr.Runtimef("reindex: scan memory_index: %w", scanErr)
 		}
 		paths = append(paths, p)
 	}
-	if closeErr := rows.Close(); closeErr != nil {
-		return learnerr.Runtimef("reindex: close memory_index rows: %w", closeErr)
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return learnerr.Runtimef("reindex: iterate memory_index: %w", rowsErr)
 	}
 
 	for _, p := range paths {

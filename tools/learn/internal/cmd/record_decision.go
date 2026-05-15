@@ -161,7 +161,7 @@ func runRecordDecision(ctx context.Context, o recordDecisionOpts) error {
 		orig := original
 		fileRollback = func() {
 			if hadOriginal {
-				_ = os.WriteFile(target, orig, 0o644)
+				_ = os.WriteFile(target, orig, 0o600) //nolint:gosec // target captured pre-update; same provenance
 			} else {
 				_ = os.Remove(target)
 			}
@@ -220,12 +220,14 @@ func writeNewLearningFile(o recordDecisionOpts) error {
 	now := o.Now().UTC().Format(time.RFC3339)
 
 	header := buildFrontmatter(name, o.Description, o.CandidateSignature, now)
-	if mkErr := os.MkdirAll(filepath.Dir(o.TargetPath), 0o755); mkErr != nil {
+	if mkErr := os.MkdirAll(filepath.Dir(o.TargetPath), 0o750); mkErr != nil {
 		return learnerr.Runtimef("record-decision: mkdir parent of %q: %w", o.TargetPath, mkErr)
 	}
 
 	final := header + ensureTrailingNewline(string(body))
-	if writeErr := os.WriteFile(o.TargetPath, []byte(final), 0o644); writeErr != nil {
+	// o.TargetPath comes from --target-path CLI flag — caller-controlled by
+	// design (purpose of new-skill/new-memory subcommand).
+	if writeErr := os.WriteFile(o.TargetPath, []byte(final), 0o600); writeErr != nil { //nolint:gosec
 		return learnerr.Runtimef("record-decision: write %q: %w", o.TargetPath, writeErr)
 	}
 	return nil
@@ -272,7 +274,9 @@ func applyUpdateToLearningFile(o recordDecisionOpts) error {
 		return learnerr.Runtimef("record-decision: marshal frontmatter: %w", marshalErr)
 	}
 	final := header + newBody
-	if writeErr := os.WriteFile(o.TargetPath, []byte(final), 0o644); writeErr != nil {
+	// o.TargetPath validated above; comes from --target-path CLI flag
+	// (caller-controlled by design — purpose of the subcommand).
+	if writeErr := os.WriteFile(o.TargetPath, []byte(final), 0o600); writeErr != nil { //nolint:gosec
 		return learnerr.Runtimef("record-decision: write %q: %w", o.TargetPath, writeErr)
 	}
 	return nil
@@ -321,7 +325,7 @@ func deriveNameFromPath(path string) string {
 // splitFrontmatterRaw parses a markdown file that begins with `---\n...\n---\n`
 // and returns the frontmatter as an unstructured map (preserving unknown
 // fields) plus the remaining body. Files without frontmatter return an error.
-func splitFrontmatterRaw(raw []byte) (map[string]any, string, error) {
+func splitFrontmatterRaw(raw []byte) (frontmatter map[string]any, body string, err error) {
 	text := string(raw)
 	if !strings.HasPrefix(text, "---") {
 		return nil, "", errors.New("missing frontmatter: file does not start with '---'")
@@ -336,7 +340,7 @@ func splitFrontmatterRaw(raw []byte) (map[string]any, string, error) {
 		return nil, "", errors.New("missing frontmatter: closing '---' not found")
 	}
 	yamlBlock := rest[:closeIdx]
-	body := strings.TrimPrefix(rest[closeIdx+len("\n---"):], "\n")
+	body = strings.TrimPrefix(rest[closeIdx+len("\n---"):], "\n")
 	m := make(map[string]any)
 	if unmarshalErr := yaml.Unmarshal([]byte(yamlBlock), &m); unmarshalErr != nil {
 		return nil, "", fmt.Errorf("invalid YAML frontmatter: %w", unmarshalErr)

@@ -204,7 +204,6 @@ func TestRunCompleteTask_concurrentIncrements_noLostUpdate(t *testing.T) {
 	)
 	wg.Add(2)
 	for i := 0; i < 2; i++ {
-		i := i
 		go func() {
 			defer wg.Done()
 			var buf bytes.Buffer

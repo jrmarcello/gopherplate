@@ -85,14 +85,14 @@ func Parse(ctx context.Context, specPath string, san *sanitize.Sanitizer) ([]Rec
 		panic("spec.Parse: sanitizer must not be nil")
 	}
 
-	f, openErr := os.Open(specPath)
+	f, openErr := os.Open(specPath) //nolint:gosec // caller-supplied spec path; package purpose is to read it
 	if openErr != nil {
 		return nil, &learnerr.RuntimeError{
 			Msg: fmt.Sprintf("spec: open %s", specPath),
 			Err: openErr,
 		}
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	source := canonicalSource(specPath)
 	now := time.Now().UTC()
@@ -122,7 +122,8 @@ func Parse(ctx context.Context, specPath string, san *sanitize.Sanitizer) ([]Rec
 		if !inTaskBlock {
 			return
 		}
-		tokens := []string{taskID}
+		tokens := make([]string, 0, 1+len(taskFiles))
+		tokens = append(tokens, taskID)
 		tokens = append(tokens, taskFiles...)
 		// Sanitize body + each token before exposing.
 		body := san.Sanitize(strings.TrimRight(taskBodyB.String(), "\n"))

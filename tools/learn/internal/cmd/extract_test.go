@@ -25,8 +25,11 @@ func writeF(t *testing.T, path, content string) {
 	}
 }
 
-// minimalConfig returns a *config.Config with min_pattern_freq=2 so test
-// fixtures triggering a 3-repeat pattern reliably surface.
+// minimalConfig returns a *config.Config with the supplied min_pattern_freq.
+// All current callers pass 2 — the parameter is kept so future tests can
+// inject a different floor without a helper-rename churn.
+//
+//nolint:unparam // min is intentionally parameterizable for future test fixtures
 func minimalConfig(min int) *config.Config {
 	cfg := config.DefaultConfig()
 	cfg.MinPatternFreq = min
@@ -51,6 +54,8 @@ func makeTranscriptJSONL(start time.Time, tools []string) string {
 
 // setupExtractEnv builds a temp dir tree with .specs/, transcripts/, memory/,
 // and a learning dir (db + config). Returns paths for runExtract opts.
+//
+//nolint:unparam // root retained for future callers that need the temp root
 func setupExtractEnv(t *testing.T) (root, dbPath, specsDir, transcriptsDir, memoryDir, outPath string) {
 	t.Helper()
 	root = t.TempDir()

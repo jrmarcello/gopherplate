@@ -82,8 +82,9 @@ func Query(ctx context.Context, db *sql.DB, opts QueryOpts) ([]Match, error) {
 	}
 
 	// Order by bm25() ascending (most negative first = best match), then by
-	// Path ascending for tie-break determinism.
-	queryStr := fmt.Sprintf(
+	// Path ascending for tie-break determinism. table is allowlisted above
+	// via isKnownIndex; pathExpr is either "path" or "''" (constants).
+	queryStr := fmt.Sprintf( //nolint:gosec // table is allowlisted (isKnownIndex); no caller input reaches the SQL
 		`SELECT %s, bm25(%s) FROM %s WHERE %s MATCH ? ORDER BY bm25(%s) ASC, %s ASC LIMIT ?`,
 		pathExpr, table, table, table, table, pathExpr,
 	)
