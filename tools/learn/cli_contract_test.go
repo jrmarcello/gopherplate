@@ -74,7 +74,11 @@ func Test_TC_CT_01_help_lists_all_subcommands(t *testing.T) {
 	}
 }
 
-// TC-CT-02: every canonical subcommand's `--help` exits 0 with non-empty body.
+// TC-CT-02: every canonical subcommand's `--help` exits 0 with non-empty
+// stdout AND empty stderr (per parent-spec TC-CT-02). A subcommand that
+// emits a startup warning or stray log line to stderr while reporting
+// --help would silently degrade the operator UX and is a regression we
+// want this TC to surface.
 func Test_TC_CT_02_subcommand_help_exits_zero(t *testing.T) {
 	t.Parallel()
 	for _, name := range canonicalSubcommands {
@@ -89,18 +93,28 @@ func Test_TC_CT_02_subcommand_help_exits_zero(t *testing.T) {
 			if strings.TrimSpace(stdout.String()) == "" {
 				t.Errorf("%s --help: expected non-empty stdout", name)
 			}
+			if s := strings.TrimSpace(stderr.String()); s != "" {
+				t.Errorf("%s --help: expected empty stderr, got %q", name, s)
+			}
 		})
 	}
 }
 
 // TC-CT-03: unknown subcommand exits with a user-facing error.
 //
-// The task specifies exit 1, but cobra's "unknown command" error short-circuits
-// before reaching root's RunE (which is the only path that wraps the error
-// into *usageError). The unwrapped error falls through learnerr.exitCode to
-// the fallback branch — exit 2. We accept either 1 or 2 to honor the
-// load-bearing assertion (stderr contains "unknown command") without papering
-// over the actual production code path. See report DEVIATION.
+// The task specifies exit 1, but cobra's "unknown command" error
+// short-circuits before reaching root's RunE (which is the only path that
+// wraps the error into *usageError). The unwrapped error falls through
+// learnerr.exitCode to the fallback branch — exit 2. We accept either 1 or
+// 2 to honor the load-bearing assertion (stderr contains "unknown command")
+// without papering over the actual production code path.
+//
+// TODO: wire root.SetFlagErrorFunc to wrap cobra flag/command errors into
+// *usageError → tightens TC-CT-03, TC-CT-10, and TC-CT-11 to exit 1 across
+// the board (currently CT-03 and CT-10 accept exit 1 OR 2; CT-11 already
+// asserts exact 1 because its error path flows through root.RunE).
+// Tracked as a follow-up to spec
+// `.specs/refactor-tools-learn-flat-layout.md` Notes / Review Results.
 func Test_TC_CT_03_unknown_subcommand_exits_one(t *testing.T) {
 	t.Parallel()
 	var stdout, stderr bytes.Buffer
@@ -114,34 +128,84 @@ func Test_TC_CT_03_unknown_subcommand_exits_one(t *testing.T) {
 	}
 }
 
-// TC-CT-04: runtime error path exits 2. `recall` against an unreachable DB
-// parent directory yields a *runtimeError wrapped via runtimef. The prompt
-// must be at least MinPromptLenForRecall (20 chars default) to bypass the
-// short-prompt silent short-circuit in cmd_recall.go.
+// TC-CT-04: runtime error path exits 2 AND emits a level=ERROR slog record
+// whose JSON envelope describes the failure cause. `stats` against an
+// unreachable DB parent directory triggers cmd_stats.go's structured
+// slog.Error() call BEFORE the *runtimeError bubbles up to RunCmd's
+// fmt.Fprintln. We use `stats` here (not `recall`) because cmd_recall.go's
+// runtime-error path emits no slog record — only RunCmd's raw stderr
+// fallback — and exercising the slog wiring is the load-bearing
+// assertion this TC owns.
+//
+// Three load-bearing assertions per parent-spec TC-CT-04 / fix-spec REQ-2:
+//
+//  1. exit code == 2
+//  2. stderr contains ≥ 1 JSON line where `level` == "ERROR" AND `msg` is
+//     a non-empty string
+//  3. the runtime-error keyword set {runtime, open, unable, no such}
+//     appears in EITHER obj["msg"] OR obj["err"] — the slog convention is
+//     `msg` = human-readable operation label, `err` = wrapped error
+//     chain (runtimeError.Error() string lives in `err`, not `msg`)
+//
+// Interpretation note: parent-spec TC-CT-04 originally said "msg matches
+// runtimeError.Error() format". That assumed slog would put the wrapped
+// error string into the `msg` field. The actual production wiring puts
+// the operation label in `msg` and the error chain in `err`. The keyword
+// check applied to BOTH fields keeps the spec's INTENT (verify structured
+// error logging) without forcing a literal field-name interpretation that
+// the implementation never satisfied. See fix-spec `Notes` after merge.
+//
+// NOT parallel: mutates process env via t.Setenv. t.Setenv panics if
+// t.Parallel was called, so this function MUST stay non-parallel.
 func Test_TC_CT_04_runtime_error_exits_two(t *testing.T) {
-	t.Parallel()
+	t.Setenv("LOG_FORMAT", "json")
+
 	var stdout, stderr bytes.Buffer
 	root := buildRoot(t)
 	code := RunCmd(root, []string{
-		"recall",
+		"stats",
 		"--db-path", "/nonexistent/dir/that/does/not/exist/db.sqlite",
-		"--prompt", "this is a sufficiently long prompt to bypass the short-prompt short-circuit",
 	}, &stdout, &stderr)
 	if code != 2 {
 		t.Fatalf("expected exit 2 for runtime DB error, got %d (stderr=%q)", code, stderr.String())
 	}
-	// Assert stderr carries a non-empty, *runtimeError-shaped message. An
-	// empty or "exit 2 with nothing useful" outcome would silently break
-	// the hook scripts that grep stderr for failure cause.
-	combined := stderr.String()
-	if strings.TrimSpace(combined) == "" {
-		t.Fatalf("expected non-empty stderr for runtime error, got empty")
+
+	obj, ok := findJSONLogLine(stderr.Bytes(), "ERROR")
+	if !ok {
+		t.Fatalf("expected ≥1 JSON line on stderr with level=ERROR; full stderr:\n%s", stderr.String())
 	}
-	if !strings.Contains(combined, "runtime") &&
-		!strings.Contains(combined, "open") &&
-		!strings.Contains(combined, "unable") &&
-		!strings.Contains(combined, "no such") {
-		t.Errorf("expected stderr to describe a runtime/IO error (runtime|open|unable|no such); got: %q", combined)
+	// slog convention: `msg` is a short human-readable operation label;
+	// `err` carries the wrapped error chain. They have distinct roles, so we
+	// assert each separately (per test-reviewer SHOULD FIX 2026-05-15):
+	//
+	//   (a) `msg` must be a non-empty string — verifies slog WAS invoked
+	//       with an operation label (a fmt.Fprintf fallback would omit
+	//       any `msg` field entirely).
+	//   (b) `err` must contain at least one runtime/IO keyword from
+	//       {runtime, open, unable, no such} — verifies the WRAPPED ERROR
+	//       chain is captured, not just a generic label.
+	//
+	// The original parent-spec wording ("msg matches runtimeError.Error()
+	// format `runtime: <msg>`") assumed slog records would put the wrapped
+	// error string into `msg`. Production slog wiring puts the operation
+	// label in `msg` and the chain in `err`. See spec
+	// `.specs/fix-refactor-tools-learn-contract-test-rigor.md` Notes for
+	// the interpretation note.
+	msg, _ := obj["msg"].(string)
+	if msg == "" {
+		t.Fatalf("expected obj[\"msg\"] to be a non-empty string (slog operation label); got obj=%v; full stderr:\n%s", obj, stderr.String())
+	}
+	errField, _ := obj["err"].(string)
+	if errField == "" {
+		t.Fatalf("expected obj[\"err\"] to be a non-empty string (wrapped error chain); got obj=%v; full stderr:\n%s", obj, stderr.String())
+	}
+	if !strings.Contains(errField, "runtime") &&
+		!strings.Contains(errField, "open") &&
+		!strings.Contains(errField, "unable") &&
+		!strings.Contains(errField, "no such") {
+		t.Errorf("expected slog record's err field to contain one of "+
+			"{runtime, open, unable, no such}; got msg=%q err=%q; full stderr:\n%s",
+			msg, errField, stderr.String())
 	}
 }
 
@@ -203,10 +267,7 @@ func Test_TC_CT_06_registration_set_equality(t *testing.T) {
 // Adjusting the expected count requires a deliberate spec update.
 func Test_TC_CT_07_layout_invariant(t *testing.T) {
 	t.Parallel()
-	pkgDir, locErr := locatePkgDir()
-	if locErr != nil {
-		t.Fatalf("locate package dir: %v", locErr)
-	}
+	pkgDir := locatePkgDir(t)
 
 	internalDir := filepath.Join(pkgDir, "internal")
 	if info, statErr := os.Stat(internalDir); statErr == nil && info.IsDir() {
@@ -243,10 +304,7 @@ func Test_TC_CT_07_layout_invariant(t *testing.T) {
 // `package learn_test`; `cmd/learn/main.go` declares `package main`.
 func Test_TC_CT_08_package_declarations(t *testing.T) {
 	t.Parallel()
-	pkgDir, locErr := locatePkgDir()
-	if locErr != nil {
-		t.Fatalf("locate package dir: %v", locErr)
-	}
+	pkgDir := locatePkgDir(t)
 
 	entries, readErr := os.ReadDir(pkgDir)
 	if readErr != nil {
@@ -286,12 +344,11 @@ func Test_TC_CT_08_package_declarations(t *testing.T) {
 // Sets LOG_FORMAT=json defensively even though the current handler is JSON by
 // default — keeps the test honest if the env knob is ever added.
 //
-// NOT parallel: mutates process env.
+// NOT parallel: mutates process env via t.Setenv. t.Setenv forbids it.
+//
+// Uses the shared findJSONLogLine helper (also used by TC-CT-04) to honor the
+// DRY motivation behind the helper extraction; level="" means "any level".
 func Test_TC_CT_09_stderr_is_json(t *testing.T) {
-	// t.Setenv rolls back automatically on test exit (even t.Fatal) and is the
-	// idiomatic Go API for env mutation in tests — avoids the leak risk of
-	// raw os.Setenv with manual t.Cleanup. Test is intentionally NOT parallel
-	// because t.Setenv forbids it.
 	t.Setenv("LOG_FORMAT", "json")
 
 	var stdout, stderr bytes.Buffer
@@ -304,30 +361,51 @@ func Test_TC_CT_09_stderr_is_json(t *testing.T) {
 		t.Fatalf("expected non-zero exit triggering a log line, got 0 (stderr=%q)", stderr.String())
 	}
 
-	scanner := bufio.NewScanner(bytes.NewReader(stderr.Bytes()))
+	if _, ok := findJSONLogLine(stderr.Bytes(), ""); !ok {
+		t.Errorf("expected at least one JSON line on stderr; got:\n%s", stderr.String())
+	}
+}
+
+// findJSONLogLine scans the given stderr buffer line-by-line and returns
+// the first line that is valid JSON AND (if level is non-empty) has
+// obj["level"] == level. Lines that don't start with '{' are skipped.
+// Callers should pass the full stderr to t.Errorf on miss for diagnostics.
+//
+// Shared between TC-CT-04 (asserts level=ERROR) and TC-CT-09 (any JSON line).
+func findJSONLogLine(stderr []byte, level string) (map[string]any, bool) {
+	scanner := bufio.NewScanner(bytes.NewReader(stderr))
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
-	parsedAny := false
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" || !strings.HasPrefix(line, "{") {
 			continue
 		}
 		var obj map[string]any
-		if jsonErr := json.Unmarshal([]byte(line), &obj); jsonErr == nil {
-			parsedAny = true
-			break
+		if json.Unmarshal([]byte(line), &obj) != nil {
+			continue
+		}
+		if level == "" {
+			return obj, true
+		}
+		if lvl, _ := obj["level"].(string); lvl == level {
+			return obj, true
 		}
 	}
-	if !parsedAny {
-		t.Errorf("expected at least one JSON line on stderr; got:\n%s", stderr.String())
-	}
+	return nil, false
 }
 
-// TC-CT-10: unknown flag yields a usage error. cobra surfaces a flag-parse
-// error that doesn't carry our *usageError type, so the exit code falls
-// through the (*runtimeError|fallback) branch to 2. We assert the stderr
-// message (the load-bearing observation) and accept exit codes 1 or 2 — both
-// satisfy the contract "this is a user-facing error, not silent success".
+// TC-CT-10: unknown flag yields a usage error.
+//
+// cobra surfaces a flag-parse error that doesn't carry our *usageError type,
+// so the exit code falls through the (*runtimeError|fallback) branch in
+// learnerr.exitCode to 2. We assert the stderr message (the load-bearing
+// observation: stderr must contain "unknown flag" or "unknown shorthand")
+// and accept exit codes 1 OR 2 — both satisfy the contract "this is a
+// user-facing error, not silent success". Same deviation as TC-CT-03's
+// block; same follow-up: wire root.SetFlagErrorFunc to wrap cobra flag
+// errors into *usageError → tightens TC-CT-03, TC-CT-10, and TC-CT-11 to
+// exit 1 across the board. Tracked in spec
+// `.specs/refactor-tools-learn-flat-layout.md` Notes / Review Results.
 func Test_TC_CT_10_unknown_flag(t *testing.T) {
 	t.Parallel()
 	var stdout, stderr bytes.Buffer
@@ -385,15 +463,20 @@ func Test_TC_CT_12_db_flag_parses(t *testing.T) {
 // walking up from the current working directory until it finds `go.mod`. We
 // rely on `go test`'s convention of running with the package dir as CWD, but
 // guard against test wrappers that nest CWD differently.
-func locatePkgDir() (string, error) {
+//
+// Fails LOUD via t.Fatalf if the walk exhausts without finding go.mod — a
+// silent CWD fallback would produce false-positive PASS in TC-CT-07 and
+// TC-CT-08 under unusual test runners that set CWD outside the module tree.
+func locatePkgDir(t *testing.T) string {
+	t.Helper()
 	wd, wdErr := os.Getwd()
 	if wdErr != nil {
-		return "", wdErr
+		t.Fatalf("locatePkgDir: os.Getwd: %v", wdErr)
 	}
 	dir := wd
 	for i := 0; i < 8; i++ {
 		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			return dir, nil
+			return dir
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
@@ -401,8 +484,8 @@ func locatePkgDir() (string, error) {
 		}
 		dir = parent
 	}
-	// Fallback: assume CWD is the package dir.
-	return wd, nil
+	t.Fatalf("locatePkgDir: could not find go.mod ascending from %q after 8 levels", wd)
+	return "" // unreachable; t.Fatalf does not return
 }
 
 // readPackageDecl reads the first `package <name>` line of a Go source file.

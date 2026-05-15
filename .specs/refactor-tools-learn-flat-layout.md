@@ -67,7 +67,10 @@ References:
         <flat .go files>        (single package learn at the root)
       ```
       No `internal/` subdirectories remain. The number of production
-      `.go` files at the root is exactly **31**: 5 foundation
+      `.go` files at the root is exactly **32** (31 from the original
+      ledger plus `doc.go`, added during the refactor to centralize
+      package-level documentation; see fix-spec
+      `.specs/fix-refactor-tools-learn-contract-test-rigor.md`): 5 foundation
       (`learnerr.go`, `logging.go`, `config.go`, `cli.go`, `pattern.go`)
       + 1 storage (`store.go`) + 1 audit (`audit.go`) + 1 sanitize
       (`sanitize.go`) + 2 similar/recall (`similar.go`, `recall.go`) +
@@ -306,7 +309,7 @@ tests cover.
 | TC-CT-04 | REQ-4 | infra | Subcommand triggering runtime error (`learn recall --db /nonexistent/dir/db.sqlite "x"`) exits with code 2 | exit code == 2; stderr contains a `level=ERROR` slog line whose message matches the `runtimeError.Error()` format `"runtime: <msg>"` (per the `learnerr` test fixtures); the error is JSON-decodable when `LOG_FORMAT=json` is set |
 | TC-CT-05 | REQ-3 | edge | `learn` with no args prints root help, exits 0 | exit 0; stdout contains "Usage:" |
 | TC-CT-06 | REQ-9 | happy | `init()` registration intact — collect `root.Commands()` names, subtract cobra's auto-injected names (`help`, `completion` if shell-completion is enabled), assert the remaining set equals the **canonical name set** `{apply-decision, audit-skills-prep, complete-task, extract, init, nudge-tick, recall, record-decision, refine-apply, reindex, rollback, similar, smoke, stats, track-use, validate-skill}` | set equality (not just length match) on the filtered command set |
-| TC-CT-07 | REQ-1 | edge | After TASK-7, `tools/learn/internal/` does not exist; `rg "tools/learn/internal" /Users/marcelojr/Development/Workspace/gopherplate/` returns 0 hits; root `.go` file count (excluding `_test.go`) is exactly 31 | rg exit 1 (no matches); production `.go` file count == 31 |
+| TC-CT-07 | REQ-1 | edge | After TASK-7, `tools/learn/internal/` does not exist; `rg "tools/learn/internal" /Users/marcelojr/Development/Workspace/gopherplate/` returns 0 hits; root `.go` file count (excluding `_test.go`) is exactly 32 (31 from the original ledger plus `doc.go`) | rg exit 1 (no matches); production `.go` file count == 32 |
 | TC-CT-08 | REQ-2 | edge | Every .go file at `tools/learn/` root declares `package learn` or `package learn_test`; `cmd/learn/main.go` declares `package main` | grep-verified across all root .go files |
 | TC-CT-09 | REQ-12 | edge | Structured log output from the new binary is valid JSON post-merge (slog handler wires correctly) | `learn stats 2>&1 \| jq .` succeeds when LOG_FORMAT=json |
 | TC-CT-10 | REQ-4 | validation | `learn recall --unknown-flag "x"` exits 1 with usage error | exit 1; stderr contains "unknown flag" |
@@ -437,10 +440,13 @@ tools/learn/
   testhelpers_test.go          (sole test-only file; see § Test-helper consolidation)
 ```
 
-**Production .go count: exactly 31** at the root (5 foundation + 1
+**Production .go count: exactly 32** at the root (5 foundation + 1
 storage + 1 audit + 1 sanitize + 2 similar/recall + 4 ingest + 1 cmd.go
-+ 16 cmd_*.go = 31). Plus `schema.sql` (embed asset) and
-`cmd/learn/main.go` (package main entry, lives under `cmd/learn/`).
++ 16 cmd_*.go + 1 doc.go = 32). The `doc.go` file was added during the
+refactor to centralize the package-level documentation that was
+previously scattered across the 4 leaf packages. Plus `schema.sql`
+(embed asset) and `cmd/learn/main.go` (package main entry, lives
+under `cmd/learn/`).
 
 **Test .go count: ~16-17 files** (one paired with each conceptual group
 where a test exists, plus the shared `testhelpers_test.go`). Total Go
@@ -751,7 +757,7 @@ the rule.
 
 ### Files to Create
 
-All flat root files (31 production + ~16 test + 1 shared test helper
+All flat root files (32 production + ~16 test + 1 shared test helper
 file) — each is the result of a merge from `internal/X/`. None is
 created from scratch; every production file is a **move + package-
 rename + identifier-rename** of an existing file. The list in
@@ -1025,7 +1031,7 @@ The module name remains `github.com/jrmarcello/gopherplate/tools/learn`.
     internal/..."` remains anywhere —
     `rg "tools/learn/internal" /Users/marcelojr/Development/Workspace/gopherplate/`
     returns no hits.
-  - Verify production .go file count at root == 31 (excluding `_test.go`).
+  - Verify production .go file count at root == 32 (excluding `_test.go`).
   - Re-run `gofmt`, `goimports`, `golangci-lint` over the flat tree.
   - VERIFY: full pipeline `make learn-build && make learn-lint &&
     make learn-test && make learn-smoke && make learn-setup` all
@@ -1158,7 +1164,7 @@ worktree with concurrent writers.**
 - [ ] `rg "tools/learn/internal" /Users/marcelojr/Development/Workspace/gopherplate/`
       returns no hits after TASK-10
 - [ ] Production `.go` file count at root of `tools/learn/`
-      (excluding `_test.go`) is exactly 31
+      (excluding `_test.go`) is exactly 32
 - [ ] All 4 hook test scripts under `.claude/hooks/` (TC-HI-01..04) pass
       against the new binary
 - [ ] All 6 skill bodies under `.claude/skills/learn-*/` exercise the
