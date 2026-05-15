@@ -20,6 +20,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/jrmarcello/gopherplate/tools/learn/internal/audit"
 	"github.com/jrmarcello/gopherplate/tools/learn/internal/learnerr"
 	"github.com/jrmarcello/gopherplate/tools/learn/internal/store"
 )
@@ -69,11 +70,15 @@ type applyDecisionOpts struct {
 }
 
 // applyDecisionRow is the projection of the `decisions` row needed for apply.
+// CandidateSignature and Rationale are carried so the audit.jsonl entry can
+// propagate them downstream (REQ-9a).
 type applyDecisionRow struct {
-	ID         int64
-	Action     string
-	TargetPath sql.NullString
-	Diff       sql.NullString
+	ID                 int64
+	Action             string
+	TargetPath         sql.NullString
+	Diff               sql.NullString
+	CandidateSignature string
+	Rationale          string
 }
 
 // runApplyDecision performs the file move and row update. Validation: the row
@@ -139,14 +144,35 @@ func runApplyDecision(ctx context.Context, o applyDecisionOpts) error {
 	); execErr != nil {
 		return learnerr.Runtimef("apply-decision: mark decision %d as applied (file already moved to %q): %w", o.ID, deprecatedPath, execErr)
 	}
+
+	// REQ-9a: every successful apply appends one Entry to audit.jsonl. The
+	// audit log is the user-facing trail under the auto-apply policy
+	// (/learn-refine no longer pauses for chat-level approval). Failures
+	// here are logged but do NOT fail the apply: the row is already
+	// `applied` and the file is already moved — losing the audit line is
+	// observability degradation, not correctness loss.
+	learningDir := audit.LearningDirFromDB(o.DBPath)
+	if auditErr := audit.Append(learningDir, audit.Entry{
+		Timestamp:          now.Format(time.RFC3339Nano),
+		DecisionID:         o.ID,
+		Action:             "applied",
+		SourcePath:         row.TargetPath.String,
+		DeprecatedPath:     deprecatedPath,
+		MergedInto:         mergedInto,
+		CandidateSignature: row.CandidateSignature,
+		Rationale:          row.Rationale,
+	}); auditErr != nil {
+		_, _ = fmt.Fprintf(o.Stdout, "warning: audit log append failed: %v\n", auditErr)
+	}
 	return nil
 }
 
-// loadDecisionRow fetches the minimal projection needed to act on a decision.
+// loadDecisionRow fetches the projection needed to act on a decision AND
+// produce its audit.jsonl entry (REQ-9a).
 func loadDecisionRow(ctx context.Context, db *sql.DB, id int64) (applyDecisionRow, error) {
-	const q = `SELECT id, action, target_path, diff FROM decisions WHERE id=?`
+	const q = `SELECT id, action, target_path, diff, candidate_signature, COALESCE(rationale, '') FROM decisions WHERE id=?`
 	var row applyDecisionRow
-	scanErr := db.QueryRowContext(ctx, q, id).Scan(&row.ID, &row.Action, &row.TargetPath, &row.Diff)
+	scanErr := db.QueryRowContext(ctx, q, id).Scan(&row.ID, &row.Action, &row.TargetPath, &row.Diff, &row.CandidateSignature, &row.Rationale)
 	if errors.Is(scanErr, sql.ErrNoRows) {
 		return applyDecisionRow{}, learnerr.Usagef("apply-decision: no decision row with id=%d", id)
 	}

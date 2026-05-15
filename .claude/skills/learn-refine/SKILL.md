@@ -1,14 +1,15 @@
 ---
 name: learn-refine
-description: Stage 4 of the Learning Loop — propose merges or deprecations for similar skills/memory. Records pending-approval decisions; applies only after explicit user approval. Anti-deletion.
+description: Stage 4 of the Learning Loop — propose merges or deprecations for similar skills/memory. Auto-applies each decision (REQ-9) + appends audit.jsonl (REQ-9a); reverse with /learn-rollback. Anti-deletion preserved.
 argument-hint: "[--skill <path>] [--dry-run]"
 user-invocable: true
 learning_provenance:
   - "spec:learning-loop-harness:REQ-8"
   - "spec:learning-loop-harness:REQ-9"
   - "spec:learning-loop-harness:REQ-10"
+  - "spec:learning-loop-harness:REQ-9a"
 created_at: 2026-05-14T20:00:00Z
-last_reviewed_at: 2026-05-14T20:00:00Z
+last_reviewed_at: 2026-05-14T22:30:00Z
 ---
 
 # /learn-refine [--skill <path>] [--dry-run]
@@ -122,12 +123,12 @@ For MERGE proposals only, write the unified content preserving:
 Save the merged body to `/tmp/learn-refine-<target-slug>.md`. Save the
 unified diff (target → merged) to `/tmp/learn-refine-<target-slug>.diff`.
 
-### Phase 4 — Present and record pending-approval
+### Phase 4 — Present + auto-apply (REQ-9: auto-apply + audit policy)
 
-For each MERGE / DEPRECATE proposal, print to the user:
+For each MERGE / DEPRECATE proposal, print to the user **before** applying:
 
 ```text
-Proposed action: MERGE
+Auto-applying MERGE:
   Target (keep, update):   <target-path>
   Candidate (deprecate):   <candidate-path>
   Similarity:              BM25=<score>, edit_distance=<d>
@@ -139,61 +140,65 @@ Proposed action: MERGE
   Rationale: <paragraph linking scores to MERGE decision>
 ```
 
-Record EACH proposal as pending-approval (REQ-9):
+Then immediately call `learn refine-apply` (REQ-9, auto-apply policy). It
+inserts the decision row, moves the candidate to `_deprecated/`, stamps the
+REQ-10 header, and appends one line to `.claude/learning/audit.jsonl`
+(REQ-9a):
 
 ```bash
-learn record-decision \
+learn refine-apply \
   --candidate-signature "merge:<target>+<candidate>" \
-  --action pending-approval \
-  --target-path "<target-path>" \
+  --target-path "<candidate-path>" \
+  --merged-into "<target-path>" \
   --diff-file "/tmp/learn-refine-<target-slug>.diff" \
-  --rationale "merge with <candidate-path>; foco=5 anti-gen=5 mod=5 refin=5" \
-  --db-path "..."
+  --rationale "merge with <target-path>; foco=5 anti-gen=5 mod=5 refin=5" \
+  --db-path "$CLAUDE_PROJECT_DIR/.claude/learning/db.sqlite"
 ```
 
-The binary returns the decision `id`. Echo all decision IDs to the user:
+For MERGE you must ALSO write the merged content over the target file
+(refine-apply only handles the candidate's move). Use `Write` for that step
+explicitly.
+
+After all proposals process, print the final summary:
 
 ```text
-Proposals recorded as pending-approval. Decision IDs: 42, 43, 44.
-Preview with: learn apply-decision --id <N> --dry-run
-Apply with:   learn apply-decision --id <N>
-Reject by leaving the row at pending-approval (or remove manually).
+Applied N decisions. Review trail with:
+  jq . .claude/learning/audit.jsonl
+
+To roll back any decision:
+  /learn-rollback <decision-id>
 ```
 
-### Phase 5 — Apply (only after explicit user approval)
+### Phase 5 — (Removed) — auto-apply makes the old "wait for approval" step obsolete
 
-When the user explicitly says "apply 42" or runs `/learn-refine` with an
-already-approved decision ID:
+The previous design (REQ-9 pre-change) required the user to type "apply 42"
+between Phase 4 and the actual move. Under the auto-apply policy this gate
+is replaced by the audit + rollback path:
 
-```bash
-# Preview first (REQ-9 dry-run support)
-learn apply-decision --id 42 --dry-run --db-path "..."
+- Every move is logged in `audit.jsonl` (REQ-9a).
+- Every move is reversible in one shot with `/learn-rollback <id>`.
+- Anti-deletion (REQ-10) guarantees the deprecated file still exists.
 
-# Then commit
-learn apply-decision --id 42 --db-path "..."
-```
-
-The binary:
-
-- Moves the candidate file to
-  `.claude/skills/_deprecated/<slug>-<YYYYMMDDTHHMMSSZ>.md` (REQ-10 UTC
-  timestamp).
-- Inserts header on line 1 (REQ-10 verbatim):
-  `> Deprecated <YYYY-MM-DD> by /learn-refine: merged into <target-path>`
-- Writes the merged content to the target file.
-- Updates the decision row to `action=applied`.
+The user reviews **after** the fact, not before. This is the explicit
+quality-vs-velocity trade-off documented in the spec's REQ-9 narrative.
 
 ## Rules
 
-- NEVER apply without explicit user approval. Pending-approval rows sit until
-  the user explicitly invokes `learn apply-decision` (REQ-9).
+- ALWAYS print the proposal block (with diff + rationale) BEFORE calling
+  refine-apply. The user must SEE what was applied; auto-apply does not
+  mean silent-apply.
+- ALWAYS call `learn refine-apply` (not the legacy `record-decision +
+  apply-decision` two-step) so the audit entry is guaranteed.
 - NEVER delete files. Deprecation = move to `_deprecated/` with the REQ-10
   header. The binary enforces this; the skill must not bypass it.
 - NEVER lose content. Every unique section from both files must appear in
   the merge — explicitly note redundant content in the rationale if dropped.
-- ALWAYS record decisions before presenting. The audit trail is sacred.
-- `--dry-run` is the SAFE default for first-time apply; explicit
-  no-`--dry-run` commits.
+- If the user wants a preview before the irreversible step, use
+  `--dry-run` on refine-apply explicitly — this prints the diff without
+  mutating, and the user can then re-invoke without `--dry-run`.
+- For high-risk merges (large files, much-used skills) consider proposing
+  `--dry-run` first as a courtesy — the policy permits auto-apply but
+  doesn't mandate it for every case.
 
 ## When NOT to use
 
@@ -205,6 +210,9 @@ The binary:
 
 ## Related skills
 
+- `/learn-rollback` — One-shot reversal of any decision applied by this skill.
+  Use this if a merge turns out wrong (auto-apply policy assumes you'll
+  catch bad merges post-hoc).
 - `/learn-extract` — Stage 3, produces inputs to refinement.
 - `/learn-nudge` — Stage 5, surfaces TTL-expired clusters; delegates merge
   proposals here.

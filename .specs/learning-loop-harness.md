@@ -178,22 +178,38 @@ Princípio diretor (qualidade > velocidade > custo) aplicado:
   (default 0.6) são candidatas a merge. Output determinístico (ordenação estável
   por `(-score, path)`).
 
-- [ ] **REQ-9**: GIVEN candidatas a merge identificadas, WHEN o usuário invoca
-  `/learn-refine`, THEN Claude apresenta cada par com diff e propõe ação. Pra
-  cada par a skill **insere imediatamente** uma row em `decisions` com
-  `action=pending-approval` + diff proposto, e **apresenta-o ao usuário**. A
-  ação só executa após **aprovação explícita do usuário no chat** —
-  presente-before-commit, idêntico ao `/ralph-loop`. Após aprovação, `learn
-  apply-decision <id>` atualiza a row pra `action=applied`. Suporta
-  `--dry-run` que para após o decisions write + present, sem nunca aplicar.
+- [x] **REQ-9** (REVISED — auto-apply policy): GIVEN candidatas a merge
+  identificadas, WHEN o usuário invoca `/learn-refine`, THEN Claude apresenta
+  cada par com diff + rationale **antes** da apply, e em seguida chama `learn
+  refine-apply` que (a) insere row em `decisions` com `action=pending-approval`,
+  (b) move o candidato pra `_deprecated/` com header REQ-10, (c) bump da row
+  pra `action=applied`, (d) append em `audit.jsonl` (REQ-9a) — tudo numa
+  única invocação atômica. **Não há mais gate de aprovação manual no chat**;
+  a rede de segurança vira o par (audit log + `/learn-rollback`). `--dry-run`
+  no `refine-apply` imprime diff sem mutar nada. Trade-off explícito: trocamos
+  approval-per-pair (rigor antes) por reversibilidade post-hoc (rigor depois);
+  custo de descobrir merge ruim sobe ligeiramente mas o gargalo de aprovação
+  per-pair desaparece, alinhando com o espírito autônomo do Hermes Agent.
 
-- [ ] **REQ-10**: GIVEN o agente nunca silenciosamente deleta skills/memory,
+- [x] **REQ-9a** (NOVO — audit trail da REQ-9 revisada): GIVEN cada
+  `learn apply-decision` ou `learn refine-apply` que mover um arquivo, AND
+  cada `learn rollback` bem-sucedido, THEN um JSON line é appendado a
+  `<learningDir>/audit.jsonl` com schema fixo:
+  `{timestamp (RFC3339Nano), decision_id (int64), action ('applied'|'rolled-back'),
+  source_path, deprecated_path, merged_into, candidate_signature, rationale}`.
+  Audit é best-effort (falha do append loga warning mas não desfaz a apply —
+  audit é observability, não source of truth). Schema documentado em
+  `tools/learn/internal/audit/audit.go` (`Entry` struct).
+
+- [x] **REQ-10**: GIVEN o agente nunca silenciosamente deleta skills/memory,
   WHEN um merge acontece, THEN a skill/memory descartada é **movida** para
   `.claude/skills/_deprecated/<name>-<timestamp>.md` (ou `memory/_deprecated/`),
   onde `<timestamp>` = `YYYYMMDDTHHMMSSZ` (UTC, evita colisão entre múltiplas
   deprecations no mesmo segundo). Arquivo movido recebe header inserido na
   primeira linha: `> Deprecated <YYYY-MM-DD> by /learn-refine: merged into
-  <target-path>`. Nunca deletado do filesystem. Permite rollback manual.
+  <target-path>`. Nunca deletado do filesystem. Reversão automatizada via
+  `/learn-rollback <decision-id>` (consome `audit.jsonl`, restaura o arquivo
+  no path canonical, append entry symmetric `action=rolled-back`).
 
 ### Periodic Nudge (etapa 5)
 

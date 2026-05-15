@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS candidates (
 CREATE TABLE IF NOT EXISTS decisions (
     id                   INTEGER PRIMARY KEY,
     candidate_signature  TEXT NOT NULL,
-    action               TEXT NOT NULL CHECK(action IN ('new-skill','new-memory','update','discard','pending-approval','applied')),
+    action               TEXT NOT NULL CHECK(action IN ('new-skill','new-memory','update','discard','pending-approval','applied','rolled-back')),
     target_path          TEXT,
     rationale            TEXT NOT NULL DEFAULT '',
     diff                 TEXT,
