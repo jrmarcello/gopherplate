@@ -44,6 +44,10 @@ Thumbs.db
 .claude/settings.local.json
 .claude/worktrees/
 .claude/agent-memory/
+# Catch nested .claude/agent-memory/ created by sub-agents inside any
+# nested module (e.g. tools/learn/.claude/agent-memory/) — the rule above
+# is anchored to the repo root, so we also need the recursive glob below.
+**/.claude/agent-memory/
 
 # Logs
 *.log
