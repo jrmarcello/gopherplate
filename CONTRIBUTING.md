@@ -138,12 +138,14 @@ Novas funcionalidades devem incluir:
 
 Para features nao-triviais, use o fluxo Specification-Driven Development:
 
-1. **Spec**: crie uma especificacao com `/spec "descricao"` — gera requisitos, test plan, tasks e analise de paralelismo em `.specs/`
+1. **Spec**: crie uma especificacao com `/spec "descricao"` — gera `.specs/<nome>.md` com requisitos, test plan, tasks e analise de paralelismo. Declare `## Slug: <UPPERCASE>` e use IDs `<SLUG>-REQ-N` / `<SLUG>-TC-<TYPE>-NN`. O `/spec` roda o linter `tools/validate-spec` deterministicamente antes dos agentes de review.
 2. **Review**: revise a spec, ajuste o que precisar, aprove (status APPROVED)
-3. **Execute**: rode `/ralph-loop .specs/<nome>.md` para execucao autonoma task-by-task com TDD
+3. **Execute**: rode `/ralph-loop .specs/<nome>.md` — valida a spec (incluindo `tools/validate-spec`) na startup, executa tasks autonomamente com TDD, e atualiza `docs/capabilities/*.md` do subsistema afetado + regenera `MANIFEST.md` no wrap-up.
 4. **Validate**: `/spec-review .specs/<nome>.md` para revisao formal contra os requisitos
 
-Detalhes em `docs/guides/sdd-ralph-loop.md` e `.claude/rules/sdd.md`.
+Specs sem `## Slug:` sao aceitas (grandfathered) — o linter pula as verificacoes de slug/prefix. Nao retrofitar specs pre-SDDX.
+
+Detalhes em `docs/guides/sdd-ralph-loop.md`, `docs/guides/spec-linter.md` e `.claude/rules/sdd.md`.
 
 ## Error Handling
 

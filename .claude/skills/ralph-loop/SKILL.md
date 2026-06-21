@@ -36,13 +36,19 @@ The only pause point is between Present and Commit (waiting for the user to appr
 
 ### Phase 1 — Validate inputs
 
-1. Read the spec file. Refuse if status ≠ `APPROVED` or `IN_PROGRESS`.
+1. Read the spec file. Refuse if status ≠ `APPROVED` or `IN_PROGRESS` (a terminal `DONE` /
+   `FAILED` / `SUPERSEDED` / `ARCHIVED` spec is not executable — see the state machine in
+   `.claude/rules/sdd.md`).
 2. Verify the **Parallel Batches** section exists. If missing, regenerate from
    `files:`/`depends:` and warn.
 3. Verify the **Test Plan** section is non-empty.
-4. Verify no other `.specs/*.active.md` exists (legacy state file from old Stop-hook
+4. **Deterministic gate:** run `go run ./tools/validate-spec <spec>` (or
+   `make validate-spec FILE=<spec>`). If it exits non-zero (a lint ERROR), STOP and refuse to
+   execute — report the findings and tell the user to fix the spec or re-run `/spec`. The linter
+   encodes the structural rules of `.claude/rules/sdd.md`.
+5. Verify no other `.specs/*.active.md` exists (legacy state file from old Stop-hook
    ralph-loop). If found, delete it — single-run mode doesn't use state files.
-5. Set spec status to `IN_PROGRESS` (if not already).
+6. Set spec status to `IN_PROGRESS` (if not already).
 
 If anything fails: stop, report what's missing, and tell the user to re-run `/spec`
 or fix the spec manually.
@@ -222,6 +228,10 @@ Before merging anything, count how many agents succeeded:
   - **Optional but recommended:** `make ci-local` — simulates a fresh-clone CI run
     in an isolated worktree and catches drift the local pipeline misses (proto-gen,
     swag drift, lint variation). Worth the 30–60s if the change is non-trivial.
+- **Wrap-up — capability docs (audited artifact, not an afterthought):** for each subsystem whose
+  behavior changed, update its `docs/capabilities/*.md` — the `## Guarantees (current truth)`
+  section plus a `## Changelog` `ADDED`/`MODIFIED`/`REMOVED` entry tagged with the spec slug — then
+  regenerate the index: `make capabilities-manifest`. The Phase-3 reviewers check this was done.
 - Capture the diff vs `main` (`git diff main...HEAD --stat`) for the self-review phase.
 
 ### Phase 3 — Self-review (BLOCKING — runs every time)
@@ -235,6 +245,8 @@ Agent(code-reviewer): Review the implementation of .specs/<name>.md against:
   - Clean Architecture layer rules: domain ← usecases ← infrastructure
   - apperror mapping (toAppError), span classification (WarnSpan / FailSpan)
   - DI pattern (manual wiring in cmd/api/server.go), httpgin response helpers
+  - the impacted docs/capabilities/*.md was updated (guarantees + Changelog) when behavior
+    changed, and the manifest regenerated (make capabilities-manifest)
   Flag MUST FIX / SHOULD FIX / NICE TO HAVE.
 
 Agent(test-reviewer): Audit the tests added by .specs/<name>.md:

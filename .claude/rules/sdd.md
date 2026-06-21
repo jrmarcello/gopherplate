@@ -36,7 +36,8 @@ Implicações concretas pra SDD:
 
 ```text
 /spec <description>
-   ├─ Author: write .specs/<name>.md from TEMPLATE
+   ├─ Author: write .specs/<name>.md from TEMPLATE (declare ## Slug:, slug-prefixed IDs, link impacted capability)
+   ├─ Lint: tools/validate-spec (deterministic gate) — block on ERROR, BEFORE the agents
    ├─ Self-review: 3 agents in parallel (spec-reviewer, test-reviewer, code-reviewer)
    ├─ Apply trivial fixes inline
    └─ Present + wait for user approval (status DRAFT)
@@ -44,9 +45,10 @@ Implicações concretas pra SDD:
    (user approves)
 
 /ralph-loop .specs/<name>.md
-   ├─ Validate: status APPROVED/IN_PROGRESS, batches present
+   ├─ Validate: status APPROVED/IN_PROGRESS, batches present, tools/validate-spec passes (gate)
    ├─ Execute: per-batch parallel via worktrees (one Agent call per task in a single message)
    ├─ Self-review: 3 agents in parallel (code-reviewer, test-reviewer, security-reviewer)
+   ├─ Wrap-up: update impacted docs/capabilities/*.md + make capabilities-manifest
    ├─ Apply trivial fixes inline + re-validate
    └─ Present + wait for user approval (status DONE pending commit)
 
@@ -64,7 +66,64 @@ commit.
 - Never modify the Requirements section during execution (only during DRAFT status)
 - Never remove tasks — mark them as `[x]` (done) or `BLOCKED`
 - Always append to Execution Log, never overwrite previous entries
-- Status transitions: DRAFT -> APPROVED -> IN_PROGRESS -> DONE | FAILED
+- Status transitions: `DRAFT -> APPROVED -> IN_PROGRESS -> DONE | FAILED`; a `DONE` spec may
+  further move to `SUPERSEDED` (replaced by another spec — add a `Superseded-by:` note) or
+  `ARCHIVED` (the work was retired). `SUPERSEDED`/`ARCHIVED` are terminal and immutable. The ad-hoc
+  `.specs/archive/<name>.md` move on rejection (see `spec/SKILL.md`) is the informal precursor of
+  `ARCHIVED` — prefer setting `## Status: ARCHIVED` and keeping the file in place.
+- **Status header format**: exactly one `## Status: <STATE>` line, a single canonical token (no
+  inline qualifier — move "(MVP; N blocked)"-style notes to the Execution Log). `tools/validate-spec`
+  enforces this.
+- **Amend-in-place over sibling specs**: to evolve an existing subsystem's guarantees, edit its
+  canonical capability doc (+ append its Changelog) and, when re-opening a spec, append to the
+  Execution Log — do NOT spawn `fix-<slug>` / `fase-N+1` sibling specs. Reserve a new spec for a
+  genuinely new subsystem, or a change large enough to warrant its own approval + TDD cycle (see
+  § Capability Docs).
+
+## Capability Docs
+
+`docs/capabilities/*.md` hold the **living, current-truth guarantees** of each subsystem (what it
+guarantees NOW, as verifiable invariants) — distinct from guides (how-to), ADRs (why, immutable),
+and specs (the plan for one change, which ages into history). See
+[docs/capabilities/README.md](../../docs/capabilities/README.md) and
+`docs/capabilities/TEMPLATE.md`.
+
+- A capability doc has `## Slug:`, `## Status: Active | Superseded | Archived`, `## Source`
+  (specs/ADRs), `## Guarantees (current truth)`, a slug-prefixed `## Guaranteed Requirements`
+  list, and a `## Changelog` (`ADDED`/`MODIFIED`/`REMOVED`).
+- **Amend-in-place**: evolve a capability by editing its doc + appending its Changelog — never
+  `caching-v2.md` / `caching-fase2.md`.
+- **Decision rule (amend vs. new spec)**: amend the capability doc when an *existing* subsystem's
+  behavior changes (no new module/endpoint); write a new spec when a *new* subsystem is introduced
+  or the change warrants its own approval + TDD cycle.
+- **Flow wiring**: `/spec` links the impacted capability doc in the spec's Design (§ Impacted
+  Capability); `/ralph-loop`'s wrap-up updates that doc (current-truth + Changelog) as a
+  first-class audited artifact and regenerates the manifest (`make capabilities-manifest`); the
+  `spec-reviewer`/`code-reviewer` check that the capability doc was updated when behavior changed.
+- `docs/capabilities/MANIFEST.md` is **generated** (`tools/validate-spec manifest --write`), never
+  hand-edited.
+
+## Deterministic Spec Linter (gate)
+
+`tools/validate-spec` (a main-module Go tool, run via `go run ./tools/validate-spec` or
+`make validate-spec`) is the **deterministic** encoding of the structural rules in this file. It
+runs as a gate BEFORE the inferential review agents: `/spec` runs it before the 3-agent
+self-review (block on ERROR); `/ralph-loop` runs it at startup (refuse to execute a failing spec).
+It is NOT a CI content gate (CI only builds + unit-tests the tool).
+
+It checks, deterministically: required sections present; `## Status:` is a single canonical token
+in the allowed set; `## Slug:` (when present) matches `^[A-Z][A-Z0-9]*$`; every REQ is covered by
+≥1 TC (unless `(no-test: <reason>)`-annotated); every task has `files:`; `depends:` is an acyclic
+DAG of existing tasks; each task is in exactly one batch; no batch shares a non-shared-additive
+file; batch order respects `depends:`; TC types are in the registered set; REQ/TC IDs carry the
+slug prefix (when a slug is declared) and are unique; every TC references a real REQ.
+Production-`.go` tasks without `tests:`, and slug-bearing specs with no capability link, emit
+WARNINGS.
+
+The linter handles the **mechanically-decidable** subset; the semantic rigor (boundary TCs per
+field, infra-failure per dependency, both-branch coverage, errors-outnumber-happy) stays with the
+review agents. Specs without `## Slug:` are **grandfathered** — slug/prefix/capability checks are
+skipped, so pre-SDDX specs remain valid.
 
 ## Discipline Checkpoints (non-negotiable)
 
@@ -124,12 +183,19 @@ checkpoint was skipped.**
 Every spec MUST include a `## Test Plan` section between Requirements and Design.
 The Test Plan contains tables grouped by layer:
 
-- **Domain Tests** (TC-D-NN): pure domain logic, value objects, entity invariants
-- **Use Case Tests** (TC-UC-NN): application logic, dependency interactions, error mapping
-- **E2E Tests** (TC-E2E-NN): full HTTP round-trip via TestContainers
-- **Smoke Tests** (TC-S-NN): k6-based validation of deployed behavior
+TC IDs are slug-prefixed and globally unique: `<SLUG>-TC-<TYPE>-NN` (two-digit `NN`). Canonical
+TYPE prefixes:
 
-Each TC row has: `| TC-ID | REQ | Category | Description | Expected |`
+- **Domain Tests** (`<SLUG>-TC-D-NN`): pure domain logic, value objects, entity invariants
+- **Use Case Tests** (`<SLUG>-TC-UC-NN`): application logic, dependency interactions, error mapping
+- **E2E Tests** (`<SLUG>-TC-E2E-NN`): full HTTP round-trip via TestContainers
+- **Smoke Tests** (`<SLUG>-TC-S-NN`): k6-based validation of deployed behavior
+
+Registered harness/tooling TYPE prefixes (only for harness/tooling specs, e.g. `learning-loop`,
+`tools/learn`): `<SLUG>-TC-SH-NN` (shell/hook tests), `<SLUG>-TC-CT-NN` (contract tests). Any other
+TYPE is a lint error — no ad-hoc prefixes. REQ IDs are `<SLUG>-REQ-N`.
+
+Each TC row has: `| TC | REQ | Category | Description | Expected |`
 
 Categories: `happy`, `validation`, `business`, `edge`, `infra`, `concurrency`,
 `idempotency`, `security`
@@ -141,7 +207,9 @@ justification.
 
 Every spec MUST satisfy all of the following:
 
-- Every REQ has >= 1 TC (at minimum the happy path)
+- Every REQ has >= 1 TC (at minimum the happy path), OR a `(no-test: <reason>)` annotation on its
+  declaration line (non-empty reason) for documentation-only REQs — `tools/validate-spec` enforces
+  this exemption
 - Every sentinel error in domain `errors.go` has >= 1 TC that triggers it
 - Every validated field has boundary TCs: valid min, valid max, invalid min-1,
   invalid max+1
@@ -351,3 +419,17 @@ when the user requests more changes after the present. This is intentional and
 - Wiring fragments:
   `.specs/wiring/<spec-slug>/<task-id>.<target-slug>.fragment.md`
   (e.g. `.specs/wiring/user-audit-log/task-3.cmd-api-server-go.fragment.md`)
+
+### Slug & ID naming (concept #3, introduced by spec `SDDX`)
+
+- Every new spec declares exactly one `## Slug:` — a short UPPERCASE id matching
+  `^[A-Z][A-Z0-9]*$` (e.g. `AUDIT`, `RBAC`, `SDDX`), decoupled from the (possibly long) filename
+  so IDs stay terse and globally unique.
+- REQ IDs are `<SLUG>-REQ-N`; TC IDs are `<SLUG>-TC-<TYPE>-NN` with a two-digit `NN`.
+- Registered TC `<TYPE>` set (anything else is a lint error): canonical `D` / `UC` / `E2E` / `S`;
+  harness/tooling `SH` (shell/hook) / `CT` (contract). To add a new TYPE, register it here AND in
+  `tools/validate-spec` in the same PR — never invent one ad hoc.
+- Documentation-only REQs carry a `(no-test: <reason>)` annotation on the declaration line
+  (non-empty reason) so `reqCovered` skips them.
+- Specs without a `## Slug:` are **grandfathered** (the linter skips slug/prefix/capability
+  checks). Do NOT retrofit the pre-`SDDX` specs.

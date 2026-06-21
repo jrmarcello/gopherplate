@@ -37,7 +37,7 @@ ENV_FILE := $(shell test -f .env && echo "--env-file .env" || echo "")
 .PHONY: help setup tools go-tools-check docker-check k6-check kind-check \
         dev run run-stop build build-cli install-cli clean lint security vulncheck swagger \
         proto proto-lint \
-        test test-unit test-e2e test-coverage mutation deadcode coverage-delta golden-update \
+        test test-unit test-e2e test-coverage validate-spec capabilities-manifest mutation deadcode coverage-delta golden-update \
         semgrep semgrep-test buf-breaking ci-local \
         load-smoke load-test load-stress load-spike load-kind load-clean \
         load-baseline load-regression \
@@ -105,7 +105,7 @@ help: ## Exibe esta mensagem de ajuda
 	@grep -Eh '^proto.*:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "\033[1;33m  Testing\033[0m"
-	@grep -Eh '^(test|test-unit|test-e2e|test-coverage|mutation|deadcode|coverage-delta|golden-update|semgrep|semgrep-test|buf-breaking|ci-local):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -Eh '^(test|test-unit|test-e2e|test-coverage|validate-spec|capabilities-manifest|mutation|deadcode|coverage-delta|golden-update|semgrep|semgrep-test|buf-breaking|ci-local):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "\033[1;33m  Docker\033[0m"
 	@grep -Eh '^docker-(up|down|build):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -268,17 +268,29 @@ test: ## Roda todos os testes
 	go test ./... -v
 
 test-unit: ## Roda apenas testes unitarios
-	go test ./pkg/... ./config/... ./internal/... -v
+	go test ./pkg/... ./config/... ./internal/... ./tools/... -v
 
 test-e2e: ## Roda testes e2e (requer Docker)
 	go test ./tests/e2e/... -v -count=1
 
 test-coverage: ## Gera relatorio de cobertura (exclui bootstrap/wiring)
 	@mkdir -p tests/coverage
-	go test $$(go list ./internal/... ./pkg/... ./config/... | grep -v -E '(web/handler$$|web/router$$|telemetry$$|db/postgres$$)') -coverprofile=tests/coverage/coverage.out
+	go test $$(go list ./internal/... ./pkg/... ./config/... ./tools/... | grep -v -E '(web/handler$$|web/router$$|telemetry$$|db/postgres$$)') -coverprofile=tests/coverage/coverage.out
 	@go tool cover -func=tests/coverage/coverage.out | tail -1
 	go tool cover -html=tests/coverage/coverage.out -o tests/coverage/coverage.html
 	@echo "Coverage report: tests/coverage/coverage.html"
+
+validate-spec: ## Valida a estrutura das specs SDD (.specs/*.md com '## Slug:', exceto TEMPLATE.md) — ou FILE=<path>
+	@if [ -n "$(FILE)" ]; then \
+		go run ./tools/validate-spec "$(FILE)"; \
+	else \
+		files=$$(grep -lE '^## Slug:' .specs/*.md 2>/dev/null | grep -v 'TEMPLATE.md'); \
+		if [ -z "$$files" ]; then echo "validate-spec: nenhuma spec com '## Slug:' para lintar"; exit 0; fi; \
+		go run ./tools/validate-spec $$files; \
+	fi
+
+capabilities-manifest: ## Regenera docs/capabilities/MANIFEST.md a partir dos capability docs
+	go run ./tools/validate-spec manifest --write
 
 mutation: ## Roda mutation testing (gremlins) sobre internal/usecases/... — ~minutos, use em CI noturno
 	@which gremlins >/dev/null 2>&1 || go install github.com/go-gremlins/gremlins/cmd/gremlins@latest

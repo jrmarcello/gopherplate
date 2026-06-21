@@ -45,23 +45,31 @@ complexidade da task exige.
 
 ## O fluxo em detalhe
 
-### Etapa 1 — `/spec`: três fases
+### Etapa 1 — `/spec`: quatro fases
 
 ```text
-Author → Self-review (3 agents em paralelo) → Present
+Author → Lint (determinístico) → Self-review (3 agents em paralelo) → Present
 ```
 
 1. **Author** — `/spec` redige a spec a partir do `.specs/TEMPLATE.md`: Context,
    Requirements, Test Plan, Design, Tasks, Parallel Batches, Validation Criteria.
+   Declara `## Slug: <UPPERCASE>` e usa IDs `<SLUG>-REQ-N` / `<SLUG>-TC-<TYPE>-NN`.
    Detecta arquivos shared-additive (e.g. `cmd/api/server.go`) e aplica o
-   accumulator pattern já no momento da escrita.
-2. **Self-review** — dispara três agents em paralelo numa única mensagem:
+   accumulator pattern já no momento da escrita. Linka o capability doc impactado
+   em `§ Impacted Capability` no Design.
+2. **Lint** — roda `tools/validate-spec` (`make validate-spec`) deterministicamente.
+   Bloqueia em ERROR (exit code 1) antes de chamar qualquer agente. Valida: seções
+   obrigatórias presentes, status token canônico, slug bem-formado, cobertura
+   REQ↔TC, DAG de `depends:` sem ciclo, overlap de arquivos em batches, IDs
+   únicos com slug-prefix, tipos de TC no conjunto registrado. Specs sem `## Slug:`
+   são grandfathered — os checks de slug/prefix/capability são pulados.
+3. **Self-review** — dispara três agents em paralelo numa única mensagem:
    - `spec-reviewer` — gaps, ambiguidade, DAG, accumulator pattern, layer rules
    - `test-reviewer` — coverage do Test Plan, boundary TCs, infra-failure TCs
    - `code-reviewer` — Design vs convenções (Clean Architecture, apperror, span
      classification, DI, idempotency)
    Trivial fixes são aplicados inline; pontos de julgamento viram "Pontos de atenção".
-3. **Present** — spec é apresentada com resumo, stats do Test Plan, Parallel
+4. **Present** — spec é apresentada com resumo, stats do Test Plan, Parallel
    Batches, fixes aplicados e pontos de atenção. Aguarda aprovação.
 
 Se você pedir mudanças após o present, **a self-review re-roda do zero** antes de
@@ -70,11 +78,12 @@ re-apresentar. Isso é intencional: protege contra regressões nas próprias cor
 ### Etapa 2 — `/ralph-loop`: cinco fases
 
 ```text
-Validate → Execute → Self-review → Present → Commit (após aprovação)
+Validate → Execute → Self-review → Wrap-up → Present → Commit (após aprovação)
 ```
 
 1. **Validate** — confere status da spec (`APPROVED`/`IN_PROGRESS`), presença de
-   Test Plan e Parallel Batches.
+   Test Plan e Parallel Batches. Roda `tools/validate-spec` (`make validate-spec`) —
+   recusa executar se a spec tiver lint ERROR.
 2. **Execute** — para cada batch sequencialmente:
    - **1 task no batch:** executa inline (TDD se houver `tests:`, merge se for
      `TASK-MERGE-*`).
@@ -86,10 +95,14 @@ Validate → Execute → Self-review → Present → Commit (após aprovação)
 3. **Self-review** — três agents em paralelo (`code-reviewer`, `test-reviewer`,
    `security-reviewer`) auditam o diff. Trivial fixes inline; CRITICAL/HIGH e
    pontos de julgamento sobem como "Pontos de atenção".
-4. **Present** — apresenta resumo da execução, diff stat, fixes aplicados, pontos
+4. **Wrap-up** — atualiza `docs/capabilities/*.md` do subsistema impactado (current
+   truth + entrada no Changelog) e roda `make capabilities-manifest` para regenerar
+   `docs/capabilities/MANIFEST.md`. Estes arquivos são staged juntos com o código
+   no commit final.
+5. **Present** — apresenta resumo da execução, diff stat, fixes aplicados, pontos
    de atenção, validação local. Aguarda aprovação.
-5. **Commit** — só após "ok"/"pode commitar". Stage apenas os arquivos listados nas
-   `files:` das tasks + a spec + os fragments mergeados.
+6. **Commit** — só após "ok"/"pode commitar". Stage apenas os arquivos listados nas
+   `files:` das tasks + a spec + os fragments mergeados + os capability docs atualizados.
 
 Se você pedir mudanças após o present, **a self-review re-roda do zero** antes de
 re-apresentar.
@@ -99,13 +112,17 @@ re-apresentar.
 As specs ficam em `.specs/` e seguem o template em `.specs/TEMPLATE.md`. Veja o
 template para a estrutura completa; o resumo:
 
-- **Status** state machine: `DRAFT` → `APPROVED` → `IN_PROGRESS` → `DONE` | `FAILED`
-- **Requirements** em GIVEN/WHEN/THEN
-- **Test Plan** agrupado por camada (TC-D-NN, TC-UC-NN, TC-E2E-NN, TC-S-NN)
+- **Slug** (`## Slug: <UPPERCASE>`) — identificador curto único, e.g. `AUDIT`, `RBAC`. Decoupled do nome do arquivo. Gera prefixo para todos os IDs da spec.
+- **Status** state machine: `DRAFT` → `APPROVED` → `IN_PROGRESS` → `DONE` | `FAILED` | `SUPERSEDED` | `ARCHIVED`
+- **Requirements** em GIVEN/WHEN/THEN — IDs `<SLUG>-REQ-N`; REQs só-documentação levam `(no-test: <reason>)`
+- **Test Plan** agrupado por camada: `<SLUG>-TC-D-NN`, `<SLUG>-TC-UC-NN`, `<SLUG>-TC-E2E-NN`, `<SLUG>-TC-S-NN`. Tipos de TC registrados: `D` / `UC` / `E2E` / `S` (canônicos) + `SH` / `CT` (harness/tooling).
 - **Tasks** com `files:`, `tests:`, `depends:` — formam o DAG que dirige o paralelismo
 - **Parallel Batches** auto-gerada por `/spec`
 - **Validation Criteria** concretos (comandos, estados observáveis)
+- **Impacted Capability** (no Design) — link para `docs/capabilities/*.md` do subsistema afetado
 - Items incertos marcados `[NEEDS CLARIFICATION]`
+
+Specs sem `## Slug:` são aceitas (grandfathered — `tools/validate-spec` pula os checks de slug/prefix/capability). Não retrofitar specs pré-SDDX.
 
 ## Paralelismo
 
@@ -184,6 +201,8 @@ Claude executando `/ralph-loop` numa spec diferente, em seu próprio worktree.
 
 - [Specification-Driven Development (Thoughtworks/Martin Fowler)](https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html)
 - [Ralph Wiggum Technique (Geoffrey Huntley)](https://ghuntley.com/loop/)
-- [`.claude/rules/sdd.md`](../../.claude/rules/sdd.md) — regras formais (TC-IDs, fragment format, anchors, auto-rollback)
+- [`.claude/rules/sdd.md`](../../.claude/rules/sdd.md) — regras formais (TC-IDs, slug naming, fragment format, anchors, auto-rollback, capability docs, linter gate)
 - [`.claude/skills/spec/SKILL.md`](../../.claude/skills/spec/SKILL.md) — definição do `/spec`
 - [`.claude/skills/ralph-loop/SKILL.md`](../../.claude/skills/ralph-loop/SKILL.md) — definição do `/ralph-loop`
+- [`docs/capabilities/README.md`](../capabilities/README.md) — capability docs: o que são, lifecycle, amend-in-place
+- [`docs/guides/spec-linter.md`](spec-linter.md) — guia do `tools/validate-spec` (validadores, exit codes, grandfathering)

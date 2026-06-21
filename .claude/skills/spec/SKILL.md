@@ -46,14 +46,23 @@ The skill runs three phases back-to-back in a single response:
      is the minimal multi-domain DI example)
    - `docs/guides/error-handling.md` and `docs/guides/observability.md` if the change
      adds error paths or instrumentation
+   - `docs/capabilities/README.md` + the capability doc(s) of the subsystem(s) this
+     change touches — identify the **impacted capability** to link in Design (or note
+     "new subsystem → a new capability doc will be created")
 3. **Pick a name.** Lowercase, hyphen-separated:
    `.specs/user-audit-log.md`, `.specs/role-permissions.md`, `.specs/fix-cache-stampede.md`.
 4. **Write `.specs/<name>.md`** from `.specs/TEMPLATE.md`. Fill in:
+   - **Slug** — a `## Slug:` line (UPPERCASE, `^[A-Z][A-Z0-9]*$`). All REQ/TC IDs are
+     slug-prefixed: `<SLUG>-REQ-N` and `<SLUG>-TC-<TYPE>-NN` (registered TYPEs:
+     `D`/`UC`/`E2E`/`S`, plus `SH`/`CT` for harness specs). Documentation-only REQs carry a
+     `(no-test: <reason>)` annotation on their declaration line.
    - **Context** — why the feature exists, link to relevant ADRs / guides.
    - **Requirements** in GIVEN/WHEN/THEN form. No vague "should kinda".
    - **Test Plan** (see *Test Plan rigor* below — this is the load-bearing section).
-   - **Design** — approach paragraph + affected files + dependencies. Mark unknown
-     items `[NEEDS CLARIFICATION]`.
+   - **Design** — approach paragraph + affected files + dependencies, plus an
+     **Impacted Capability** link to the relevant `docs/capabilities/*.md` (or
+     "new subsystem → a new capability doc will be created"). Mark unknown items
+     `[NEEDS CLARIFICATION]`.
    - **Tasks** — concrete, ordered, each with `files:`, `tests:` (TC-IDs),
      `depends:`. The accumulator pattern (see below) must be applied here, before
      batches are computed.
@@ -66,7 +75,15 @@ The skill runs three phases back-to-back in a single response:
 
 ### Phase 2 — Self-review (BLOCKING — runs every time)
 
-Spawn **three review agents in parallel** in a single message with three Agent calls:
+**Phase 2a — Deterministic linter gate (runs FIRST, before the agents).** Run
+`go run ./tools/validate-spec .specs/<name>.md` (or `make validate-spec FILE=.specs/<name>.md`).
+If it exits non-zero (a lint ERROR — missing required section, broken REQ↔TC coverage, cyclic
+`depends:`, batch file-overlap, bad slug/ID format, …), fix the reported issues (mechanically when
+trivial; surface as a judgment call otherwise) and re-run until it exits 0. The linter is the
+deterministic pre-filter — it encodes the structural rules of `.claude/rules/sdd.md`; only once it
+passes do you spawn the inferential agents, which focus on the semantic gaps it cannot see.
+
+**Phase 2b — Spawn three review agents in parallel** in a single message with three Agent calls:
 
 ```text
 Agent(spec-reviewer): Review .specs/<name>.md for gaps, ambiguity, missing tests, rule violations, and architectural mismatches.

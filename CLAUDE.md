@@ -55,6 +55,8 @@ make buf-breaking   # Detect breaking changes in proto/ vs main
 make golden-update  # Regenerate golden fixtures in tests/e2e/testdata/
 make load-baseline SCENARIO=load    # Regenerate k6 perf baseline
 make load-regression SCENARIO=load  # Fail if p95 degrades > 35% vs baseline
+make validate-spec                  # Run deterministic SDD linter on all slug-bearing specs
+make capabilities-manifest          # Regenerate docs/capabilities/MANIFEST.md
 ```
 
 Run a single test file or function:
@@ -170,6 +172,11 @@ Per-sensor deep-dive guides live in `docs/guides/`:
 - [semgrep-rules.md](docs/guides/semgrep-rules.md) — organizational-pattern rules
 - [error-handling.md](docs/guides/error-handling.md) — ADR-009 practical guide
 - [observability.md](docs/guides/observability.md) — span naming, event catalog, logs-vs-traces posture
+- [spec-linter.md](docs/guides/spec-linter.md) — `tools/validate-spec` deterministic SDD linter (validator list, exit codes, grandfathering, manifest subcommand)
+
+**Capability docs** (`docs/capabilities/`) são a **camada de verdade corrente** do projeto: cada arquivo documenta o que um subsistema garante AGORA como invariantes verificáveis. Distinct from guides (how-to) e ADRs (why, imutáveis). `MANIFEST.md` é gerado por `make capabilities-manifest`. Ver [docs/capabilities/README.md](docs/capabilities/README.md).
+
+**`tools/validate-spec`** é o linter SDD determinístico: valida estrutura das specs antes dos review agents. Rode via `make validate-spec` (gate em `/spec` antes da self-review e em `/ralph-loop` na startup) ou `go run ./tools/validate-spec`. Exit codes: 0 = ok/warn-only, 1 = ERROR lint, 2 = tool error. Vive no módulo principal (não módulo separado). Ver [docs/guides/spec-linter.md](docs/guides/spec-linter.md).
 
 ### Skills (slash commands)
 
@@ -244,8 +251,9 @@ Closed-loop knowledge system inspired by the Hermes Agent. Five stages:
 3. **The Review step is MANDATORY and AUTOMATIC** — after implementing, re-read the plan/spec and diff what was implemented vs what was specified (files, patterns, mappings, wrapping). Verify: all files listed in `files:` metadata were created/modified, all patterns from the Design section are followed, all error mappings and classifications are complete, no implementation gap vs the spec. Only then proceed to tests. This is NEVER skipped.
 4. **Post-implementation validation** — enforced automatically by the **Stop hook** (build + fmt + vet + swagger + lint + tests). The hook blocks completion until validation passes. For the full pipeline including E2E, Kind deploy, and smoke tests, run `/validate` explicitly.
 5. **SDD workflow** for complex features: `/spec` → approve → `/ralph-loop` → approve commit → `/spec-review` (optional). Specs live in `.specs/`. See `docs/guides/sdd-ralph-loop.md`.
-    - `/spec` runs three phases: **Author → Self-review (3 agents in parallel: spec-reviewer + test-reviewer + code-reviewer) → Present**. Trivial fixes applied inline; judgment calls surface as "Pontos de atenção". The skill never auto-runs `/ralph-loop`.
-    - `/ralph-loop` runs five phases: **Validate → Execute (parallel via worktrees, with auto-rollback on partial failure) → Self-review (3 agents in parallel: code-reviewer + test-reviewer + security-reviewer) → Present → Commit (only after explicit user approval)**. Never auto-commits; never silently merges a partially-failed batch.
+    - **Slug prefix convention**: every new spec declares `## Slug: <UPPERCASE>` and uses `<SLUG>-REQ-N` / `<SLUG>-TC-<TYPE>-NN` IDs. Specs without a slug are grandfathered (linter skips prefix/capability checks). See `.claude/rules/sdd.md` §Naming → Slug & ID naming.
+    - `/spec` runs four phases: **Author (declare slug, link impacted capability doc) → Lint (`tools/validate-spec` deterministic gate, blocks on ERROR) → Self-review (3 agents in parallel: spec-reviewer + test-reviewer + code-reviewer) → Present**. Trivial fixes applied inline; judgment calls surface as "Pontos de atenção". The skill never auto-runs `/ralph-loop`.
+    - `/ralph-loop` runs five phases: **Validate (status + `tools/validate-spec` gate) → Execute (parallel via worktrees, with auto-rollback on partial failure) → Self-review (3 agents in parallel: code-reviewer + test-reviewer + security-reviewer) → Wrap-up (update impacted `docs/capabilities/*.md` + `make capabilities-manifest`) → Present → Commit (only after explicit user approval)**. Never auto-commits; never silently merges a partially-failed batch.
     - **Re-review on user feedback is MANDATORY**: if the user requests changes after either skill's Present phase, the self-review re-runs **from scratch** before re-presenting. Skipping this silently erodes the safety net.
     - **The user should never have to ask "did you validate?" or "did you review the spec?"** — those questions mean a checkpoint was skipped. See `.claude/rules/sdd.md` §Discipline Checkpoints.
 6. **Parallelism** — Three types: (a) **Intra-spec**: `/spec` auto-generates Parallel Batches from task `files:` and `depends:` metadata; ralph-loop launches parallel agents with `isolation: "worktree"` for multi-task batches. (b) **Inter-spec**: independent specs run in separate worktrees. (c) Shared files classified as exclusive, shared-additive (accumulator pattern), or shared-mutative (must serialize).

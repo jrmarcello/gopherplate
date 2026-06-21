@@ -2,32 +2,52 @@
 
 ## Status: DRAFT
 
+<!-- Single canonical token, one of:
+     DRAFT | APPROVED | IN_PROGRESS | DONE | FAILED | SUPERSEDED | ARCHIVED
+     No inline qualifier on this line (move "(MVP; 5 blocked)"-style notes to the Execution Log).
+     The spec linter (`make validate-spec`) enforces this. -->
+
+## Slug: ABC
+
+<!-- Short uppercase id, ^[A-Z][A-Z0-9]*$ (e.g. AUDIT, RBAC, SDDX). `ABC` here is a PLACEHOLDER —
+     replace it (and every `ABC-` prefix below) with your slug. Prefixes every REQ/TC ID so they
+     are globally unique across specs. Required for new specs; specs without a `## Slug:` are
+     grandfathered (the linter skips slug/prefix/capability checks on them). -->
+
 ## Context
 
-<!-- Why does this feature exist? What business problem does it solve? -->
+<!-- Why does this feature exist? What business problem does it solve? Link relevant ADRs/guides. -->
 
 ## Requirements
 
-<!-- Use GIVEN/WHEN/THEN for unambiguous acceptance criteria -->
+<!-- Use GIVEN/WHEN/THEN for unambiguous acceptance criteria.
+     IDs are slug-prefixed: ABC-REQ-N (globally unique).
+     A documentation-only REQ (no testable code) carries a `(no-test: <reason>)` annotation on its
+     declaration line so the linter's reqCovered check skips it — the reason MUST be non-empty. -->
 
-- [ ] REQ-1: ...
-- [ ] REQ-2: ...
+- [ ] ABC-REQ-1: ...
+- [ ] ABC-REQ-2: ... (no-test: <why this REQ has no TC — e.g. documentation-only, verified by review>)
 
 ## Test Plan
 
 <!-- Derive test cases from Requirements and Design.
      Coverage Rules (every spec MUST satisfy):
-     - Every REQ has >= 1 TC
+     - Every REQ has >= 1 TC (or a `(no-test: <reason>)` annotation on its declaration line)
      - Every domain error has >= 1 TC
      - Every validated field has boundary TCs (valid, invalid, edge)
      - Every external dependency has >= 1 infra-failure TC
      - Every conditional branch has TCs for both paths
 
-     TC-ID convention:
-     - TC-D-NN   = Domain layer tests
-     - TC-UC-NN  = Use Case layer tests
-     - TC-E2E-NN = End-to-end tests
-     - TC-S-NN   = Smoke tests (k6)
+     TC-ID convention: slug-prefixed, two-digit NN — ABC-TC-<TYPE>-NN
+     Canonical TYPE prefixes:
+     - ABC-TC-D-NN   = Domain layer tests
+     - ABC-TC-UC-NN  = Use Case layer tests
+     - ABC-TC-E2E-NN = End-to-end tests
+     - ABC-TC-S-NN   = Smoke tests (k6)
+     Registered harness/tooling prefixes (only for harness/tooling specs):
+     - ABC-TC-SH-NN  = Shell/hook tests
+     - ABC-TC-CT-NN  = Contract tests
+     Any other TYPE is a lint error — no ad-hoc prefixes.
 
      Categories: happy, validation, business, edge, infra, concurrency, idempotency, security
 -->
@@ -36,19 +56,19 @@
 
 | TC | REQ | Category | Description | Expected |
 |----|-----|----------|-------------|----------|
-| TC-D-01 | REQ-1 | happy | ... | ... |
+| ABC-TC-D-01 | ABC-REQ-1 | happy | ... | ... |
 
 ### Use Case Tests
 
 | TC | REQ | Category | Description | Expected |
 |----|-----|----------|-------------|----------|
-| TC-UC-01 | REQ-1 | happy | ... | ... |
+| ABC-TC-UC-01 | ABC-REQ-1 | happy | ... | ... |
 
 ### E2E Tests
 
 | TC | REQ | Category | Description | Expected |
 |----|-----|----------|-------------|----------|
-| TC-E2E-01 | REQ-1 | happy | ... | ... |
+| ABC-TC-E2E-01 | ABC-REQ-1 | happy | ... | ... |
 
 ### Smoke Tests (k6)
 
@@ -58,7 +78,7 @@
 
 | TC | REQ | Category | Description | Expected |
 |----|-----|----------|-------------|----------|
-| TC-S-01 | REQ-1 | happy | ... | ... |
+| ABC-TC-S-01 | ABC-REQ-1 | happy | ... | ... |
 
 ## Design
 
@@ -66,6 +86,14 @@
 
 <!-- Approach, affected files, technical decisions -->
 <!-- Respects the project structure — may use separate layers or collapsed layers -->
+
+### Impacted Capability
+
+<!-- Link the docs/capabilities/*.md whose guarantees this change affects (or "none — new
+     subsystem; a new capability doc will be created"). /ralph-loop updates it on completion,
+     and the spec linter WARNs if a slug-bearing spec references no capability doc. -->
+
+- docs/capabilities/<name>.md
 
 ### Files to Create
 
@@ -90,11 +118,11 @@
 
 - [ ] TASK-1: ...
   - files: ...
-  - tests: TC-UC-01
+  - tests: ABC-TC-UC-01
 - [ ] TASK-2: ...
   - files: ...
   - depends: TASK-1
-  - tests: TC-UC-02, TC-UC-03
+  - tests: ABC-TC-UC-02, ABC-TC-UC-03
 - [ ] TASK-3: ...
   - files: ...
   - depends: TASK-1
@@ -105,7 +133,7 @@
   - Run `k6 run --env SCENARIO=smoke tests/load/main.js`
   - If app not running: log `SMOKE: DEFERRED`
   - files: (none — execution only)
-  - tests: TC-S-01, TC-S-02
+  - tests: ABC-TC-S-01, ABC-TC-S-02
   - depends: TASK-N
 
 ## Parallel Batches
@@ -122,6 +150,7 @@ Batch 3: [TASK-5]                    — integration (shared file: server.go)
 
 ## Validation Criteria
 
+- [ ] `make validate-spec FILE=.specs/<name>.md` exits 0 (spec structure is valid)
 - [ ] `make lint` passes
 - [ ] `make test` passes
 - [ ] ...
