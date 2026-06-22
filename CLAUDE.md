@@ -169,7 +169,7 @@ process of evolving the harness, see
 Per-sensor deep-dive guides live in `docs/guides/`:
 
 - [perf-regression.md](docs/guides/perf-regression.md) — k6 baseline + p95/p99 gate
-- [mutation-testing.md](docs/guides/mutation-testing.md) — gremlins nightly report
+- [mutation-testing.md](docs/guides/mutation-testing.md) — gremlins weekly report
 - [golden-fixtures.md](docs/guides/golden-fixtures.md) — approved-fixtures for responses
 - [semgrep-rules.md](docs/guides/semgrep-rules.md) — organizational-pattern rules
 - [error-handling.md](docs/guides/error-handling.md) — ADR-009 practical guide
@@ -210,7 +210,7 @@ Agent Teams enabled (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`). Team skills spawn 
 
 - `spec-reviewer`, `security-reviewer`, `code-reviewer`, `db-analyst`, `test-reviewer` — all with persistent memory (`memory: project`). Delegate with "use a subagent to..."
 - `spec-reviewer` audits SDD specs **before** implementation (gaps, ambiguity, missing TCs, layer violations, accumulator pattern). Used by `/spec` Phase 2 alongside `test-reviewer`, `code-reviewer`, and `security-reviewer` (4 lenses total).
-- `test-reviewer` specializes in test quality (mutation-survivor hints, error-path density, mocking discipline, test smells, TDD compliance). Use it whenever a change adds or modifies tests, or whenever you suspect under-tested behavior. Pairs with the mutation-nightly report artifact.
+- `test-reviewer` specializes in test quality (mutation-survivor hints, error-path density, mocking discipline, test smells, TDD compliance). Use it whenever a change adds or modifies tests, or whenever you suspect under-tested behavior. Pairs with the weekly mutation report artifact.
 
 ### Rules
 

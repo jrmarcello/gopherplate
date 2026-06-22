@@ -175,7 +175,7 @@ Config: [.golangci.yml](../.golangci.yml)
 | `ci.yml::coverage-delta` | sensor | C | maint | CI | `diff-cover` on PR — fails if < 70% coverage on changed lines |
 | `ci.yml::e2e-tests` | sensor | C | behavior | CI | `go test ./tests/e2e/... -count=1` via TestContainers |
 | `perf-regression.yml::regression` | sensor | C | arch-fitness | CI | k6 `load` + `perfcompare` vs. `tests/load/baselines/<scenario>.json` (p95 35%, p99 70%) |
-| `mutation-nightly.yml::mutation` | sensor | C | maint | post-integration | gremlins over `./internal/usecases/...`, daily 03:00 UTC, informational |
+| `mutation-nightly.yml::mutation` | sensor | C | maint | post-integration | gremlins over `./internal/usecases/...`, weekly (Mon) 03:00 UTC, informational |
 | `release.yml` | guide | C | meta | CI | release pipeline |
 
 Files: [.github/workflows/ci.yml](../.github/workflows/ci.yml),
