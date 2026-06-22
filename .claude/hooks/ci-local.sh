@@ -88,7 +88,7 @@ if [ -z "${CI_PARITY_SKIP_TOOL_INSTALL:-}" ]; then
   ensure_tool protoc-gen-go-grpc google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
   ensure_tool swag               github.com/swaggo/swag/cmd/swag@latest
   ensure_tool goose              github.com/pressly/goose/v3/cmd/goose@latest
-  ensure_tool golangci-lint      github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+  ensure_tool golangci-lint      github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4  # pinned to match ci.yml (v2.12.x flags gen/proto + drops //nolint)
   ensure_tool govulncheck        golang.org/x/vuln/cmd/govulncheck@v1.1.4  # pinned: v1.4.0 panics on generics
 fi
 
