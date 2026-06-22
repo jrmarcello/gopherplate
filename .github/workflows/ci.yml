@@ -227,8 +227,9 @@ jobs:
 
       - name: Convert Go coverage to Cobertura XML
         run: |
-          go install github.com/boumenot/gocover-cobertura@latest
-          gocover-cobertura < tests/coverage/coverage.out > tests/coverage/coverage.xml
+          # `go run` builds + runs in one step — no reliance on $GOPATH/bin being on PATH
+          # (the bare `gocover-cobertura` call failed with "command not found" under toolchain switching).
+          go run github.com/boumenot/gocover-cobertura@latest < tests/coverage/coverage.out > tests/coverage/coverage.xml
 
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
