@@ -443,3 +443,57 @@ The inferential 5-lens review Workflow hit transient API 529 overload twice; the
 - **TASK-1 `files:` omitted `tools/validate-spec/phase3_review_test.go`**, which the TASK-1 agent modified (`warnOnlySpec` updated for the new `tcReferenced` validator). The files-vs-diff dogfood caught it; added to TASK-1 `files:`.
 - Clean lenses: PII/secret grep of testdata + capability docs (synthetic only, REQ-7); `.golangci.yml` unchanged (gosec exemption not widened); doc-consistency (/spec = 4 lenses, /ralph-loop = 3, round-trip "multi-reference allowed").
 - Re-verified after fixes: `make spec-files-audit FILE=.specs/sdd-flow-hardening.md` → OK (0 undeclared); validate-spec gate 0/0; go test ./tools/... + golangci-lint green.
+
+## Review Results — 2026-06-21
+
+Independent post-merge audit (`/spec-review`) of commit `fc1c615`.
+
+### Requirements verification
+
+| Requirement | Status | Evidence |
+| --- | --- | --- |
+| SDDF-REQ-1: TC↔task round-trip enforced | PASS | `tools/validate-spec/validate.go:228` (testsRefValid), `:250` (tcReferenced) — slug-gated, ≥1 |
+| SDDF-REQ-2: declared-files set + execution-only first-class | PASS | `files.go:11` collectFiles, `:30` runFiles; `parser.go:310` execOnly sentinel |
+| SDDF-REQ-3: /ralph-loop files-vs-diff audit | PASS | `ralph-loop/SKILL.md:248`; `Makefile` spec-files-audit — proven by negative+positive test (working-tree+untracked+prefix) |
+| SDDF-REQ-4: security as 4th /spec lens | PASS | `spec/SKILL.md:86` (four agents), `:95` security-reviewer spec-review prompt |
+| SDDF-REQ-5: brownfield search-first + dup-lens | PASS | `ralph-loop/SKILL.md` SEARCH-FIRST; `code-reviewer.md` duplication lens |
+| SDDF-REQ-6: capability↔code drift detectable | PASS | `capabilities.go:100` runCapabilities (os.Stat dead=ERROR, no-Code WARN, isStale WARN, skip meta-docs) |
+| SDDF-REQ-7: `## Code` convention in docs | PASS | 5 docs (user/role/idempotency/caching/TEMPLATE) — every path os.Stat-verified by `make capabilities-check` (exit 0) |
+| SDDF-REQ-8: bootstrap-capability generator | PASS | `bootstrap.go:19` renderBootstrap, `:43` runBootstrap — dogfood emitted skeleton w/ ErrDuplicateEmail/ErrUserNotFound |
+| SDDF-REQ-9: Böckeler freeze trade-off + escape-hatch | PASS | `.claude/rules/sdd.md:258` §Mutability |
+| SDDF-REQ-10: harness/contributor docs synced | PASS | harness.md, spec-linter.md, CLAUDE.md, README.md, CONTRIBUTING.md, sdd-ralph-loop.md |
+| SDDF-REQ-11: named-task matcher | PASS | `parser.go:62` reTaskDecl (TASK-N / TASK-SMOKE / TASK-MERGE-*) |
+
+### Validation checks
+
+| Check | Result |
+| --- | --- |
+| `gofmt -l .` (excl gen/) | PASS (empty) |
+| `go vet ./...` | PASS |
+| `golangci-lint run` | PASS (0 issues) |
+| `go build ./...` | PASS |
+| `go test ./internal/... ./tools/...` | PASS (142 TCs in validate-spec) |
+| `validate-spec` gate (this spec) | PASS (0/0) |
+| `make validate-spec` (glob) | PASS |
+| `make capabilities-check` | PASS (exit 0) |
+| `make spec-files-audit` | PASS (0 undeclared) |
+| `files` mode (no sentinel token) | PASS |
+| `bootstrap-capability` (sentinels listed) | PASS |
+| `swag init` drift | N/A (no HTTP handlers touched) |
+| `make test-e2e` | N/A (no E2E TCs) |
+
+### Test Quality (inline audit — the independent test-reviewer agent was blocked by repeated API 529)
+
+- **Strong:** `validate_test.go` asserts message CONTENT (TC-01/02: `hasError(fs, "TASK-1")` / `"undeclared TC"` / `"referenced by no task")`; `parser_test.go` + `bootstrap_test.go` are content-rich. Round-trip, named-task-distinct, prose-no-spurious, multi-ref, execOnly, grandfathered-skip all covered. Error-path TCs outnumber happy. Injected fakes (no mock frameworks). No `time.Sleep`/unexplained `t.Skip`.
+- **[SHOULD FIX]** `capabilities_test.go` (TestRunCapabilities_DeadPath_Error and siblings) and `main_test.go` (TC-15 nonexistent-pkg) assert **only exit codes**, not the ERROR/stderr **message content** the Test Plan promises (TC-08 "names doc + path"; TC-15 "stderr contains pkg path"). Those strings are verified E2E by the dogfood but a message-format mutation would survive the unit suite. Suggested fix: capture stdout/stderr in those tests and assert the substrings (the parse-side content is already guarded by `TestParseCapabilityDoc_ExtractsPathFromDescribedBullet`).
+
+### Findings (other)
+
+- **Security (independent agent): CLEAN** — synthetic fixtures (REQ-7), `exec(git)` safe (fixed argv, `--`, no shell, stderr discarded), `.golangci.yml` gosec exemption not widened, `spec-files-audit`/`capabilities-check` no shell-injection, bootstrap read-only/stdout-only.
+- **Code (inline): correct** — named-task regex, execOnly sentinel, both round-trip validators (slug-gated, ≥1), parseCapabilityDoc path extraction (fixed during Phase 3), isStale (strictly-newer), injectable git lookup (all-failures→no-warn), bootstrap (top-level non-test, symlink skip, exit 2).
+- **[NICE TO HAVE]** `.claude/rules/sdd.md` §Merge Strategy fragment example references `github.com/marcelojr/gopherplate`; the real module is `github.com/jrmarcello/gopherplate`. Pre-SDDX doc prose, no functional impact.
+
+### Notes
+
+- The independent code + test review agents failed 4× with transient API 529 (overload); their lenses were covered by the inline Phase-3 + this audit's read of the validators/tests + 142 green TCs + the dogfood. Re-running `/full-review-team` when the API stabilizes would add extra independence.
+- **CI (PR):** the three red jobs (Vulnerability Scan, CI-Parity, Coverage Delta) were pre-existing/environmental, NOT SDDF code — fixed in commit `5011542` (go.mod 1.26.2→1.26.4 for a patched stdlib CVE; ci.yml gocover-cobertura via `go run`).
