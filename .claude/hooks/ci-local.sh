@@ -89,7 +89,7 @@ if [ -z "${CI_PARITY_SKIP_TOOL_INSTALL:-}" ]; then
   ensure_tool swag               github.com/swaggo/swag/cmd/swag@latest
   ensure_tool goose              github.com/pressly/goose/v3/cmd/goose@latest
   ensure_tool golangci-lint      github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
-  ensure_tool govulncheck        golang.org/x/vuln/cmd/govulncheck@latest
+  ensure_tool govulncheck        golang.org/x/vuln/cmd/govulncheck@v1.1.4  # pinned: v1.4.0 panics on generics
 fi
 
 # ── Worktree simulation (REQ-1, REQ-2, REQ-3) ──────────────────────

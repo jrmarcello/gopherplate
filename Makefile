@@ -163,7 +163,7 @@ tools: ## Instala ferramentas de desenvolvimento
 	@go install github.com/evilmartians/lefthook/v2@latest
 	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 	@go install github.com/swaggo/swag/cmd/swag@latest
-	@go install golang.org/x/vuln/cmd/govulncheck@latest
+	@go install golang.org/x/vuln/cmd/govulncheck@v1.1.4  # pinned: v1.4.0 panics on generics (x/tools ForEachElement *types.TypeParam)
 	@go install golang.org/x/tools/cmd/goimports@latest
 	@echo "Tools installed in $(GOBIN)"
 
