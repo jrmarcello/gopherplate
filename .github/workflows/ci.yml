@@ -214,6 +214,9 @@ jobs:
     # Only on PRs — needs a base to diff against.
     if: github.event_name == 'pull_request'
     needs: unit-tests
+    permissions:
+      contents: read
+      pull-requests: write   # let the sticky-comment step post the coverage report on the PR
     env:
       NEW_CODE_COVERAGE_THRESHOLD: "70"
     steps:
@@ -252,6 +255,7 @@ jobs:
 
       - name: Comment diff-cover report on PR
         if: always()
+        continue-on-error: true   # the PR comment is informational — never fail the coverage gate on it (fork PRs get a read-only token); diff-cover above is the actual gate
         uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # v2
         with:
           header: coverage-delta
