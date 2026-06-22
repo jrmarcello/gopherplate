@@ -37,7 +37,7 @@ ENV_FILE := $(shell test -f .env && echo "--env-file .env" || echo "")
 .PHONY: help setup tools go-tools-check docker-check k6-check kind-check \
         dev run run-stop build build-cli install-cli clean lint security vulncheck swagger \
         proto proto-lint \
-        test test-unit test-e2e test-coverage validate-spec capabilities-manifest mutation deadcode coverage-delta golden-update \
+        test test-unit test-e2e test-coverage validate-spec capabilities-manifest capabilities-check spec-files-audit mutation deadcode coverage-delta golden-update \
         semgrep semgrep-test buf-breaking ci-local \
         load-smoke load-test load-stress load-spike load-kind load-clean \
         load-baseline load-regression \
@@ -105,7 +105,7 @@ help: ## Exibe esta mensagem de ajuda
 	@grep -Eh '^proto.*:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "\033[1;33m  Testing\033[0m"
-	@grep -Eh '^(test|test-unit|test-e2e|test-coverage|validate-spec|capabilities-manifest|mutation|deadcode|coverage-delta|golden-update|semgrep|semgrep-test|buf-breaking|ci-local):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -Eh '^(test|test-unit|test-e2e|test-coverage|validate-spec|capabilities-manifest|capabilities-check|spec-files-audit|mutation|deadcode|coverage-delta|golden-update|semgrep|semgrep-test|buf-breaking|ci-local):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "\033[1;33m  Docker\033[0m"
 	@grep -Eh '^docker-(up|down|build):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -291,6 +291,34 @@ validate-spec: ## Valida a estrutura das specs SDD (.specs/*.md com '## Slug:', 
 
 capabilities-manifest: ## Regenera docs/capabilities/MANIFEST.md a partir dos capability docs
 	go run ./tools/validate-spec manifest --write
+
+capabilities-check: ## Valida cada capability doc em docs/capabilities/ — paths de código inexistentes são erro; staleness é warning
+	go run ./tools/validate-spec capabilities docs/capabilities
+
+spec-files-audit: ## Audita o working tree (staged+unstaged+untracked) vs files: declarados na spec FILE=<path>; declaração de diretório (path/) cobre tudo abaixo; exit 1 se houver arquivo sem dono
+	@if [ -z "$(FILE)" ]; then \
+		echo "spec-files-audit: FILE não definido. Use: make spec-files-audit FILE=.specs/minha-spec.md"; \
+		exit 1; \
+	fi
+	@df=$$(mktemp); cf=$$(mktemp); uf=$$(mktemp); \
+	go run ./tools/validate-spec files "$(FILE)" | sort -u > "$$df"; \
+	{ git diff --name-only; git diff --name-only --cached; git ls-files --others --exclude-standard; } 2>/dev/null | sort -u > "$$cf"; \
+	while IFS= read -r f; do \
+		[ -z "$$f" ] && continue; \
+		case "$$f" in $(FILE)|.specs/wiring/*|docs/capabilities/MANIFEST.md|gen/*) continue ;; esac; \
+		grep -qxF "$$f" "$$df" && continue; \
+		covered=0; \
+		while IFS= read -r d; do \
+			case "$$d" in */) case "$$f" in "$$d"*) covered=1; break ;; esac ;; esac; \
+		done < "$$df"; \
+		[ "$$covered" = 1 ] && continue; \
+		echo "$$f" >> "$$uf"; \
+	done < "$$cf"; \
+	if [ -s "$$uf" ]; then \
+		echo "spec-files-audit: arquivos alterados fora do conjunto declarado em $(FILE):"; cat "$$uf"; rm -f "$$df" "$$cf" "$$uf"; exit 1; \
+	else \
+		echo "OK — no undeclared files"; rm -f "$$df" "$$cf" "$$uf"; \
+	fi
 
 mutation: ## Roda mutation testing (gremlins) sobre internal/usecases/... — ~minutos, use em CI noturno
 	@which gremlins >/dev/null 2>&1 || go install github.com/go-gremlins/gremlins/cmd/gremlins@latest

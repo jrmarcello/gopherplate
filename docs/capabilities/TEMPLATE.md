@@ -16,6 +16,18 @@
 - Specs: <slug(s), e.g. SDDX — or "n/a — pre-SDD">
 - ADRs: <links to docs/adr/*.md, or "n/a">
 
+## Code
+
+<!-- Source paths/packages this capability describes. `validate-spec capabilities` os.Stat-checks each
+     (a dead path → ERROR). The `Last-verified` marker (date + short commit) is a staleness signal:
+     a listed path whose latest git commit is newer than this date → WARN. `bootstrap-capability`
+     auto-fills this section. -->
+
+- `<path/to/package/>` — what it holds
+- `<path/to/file.go>` — what it holds
+
+Last-verified: `<YYYY-MM-DD>` (`<short-commit>`)
+
 ## Guarantees (current truth)
 
 <!-- The invariants this subsystem upholds TODAY. Present tense. Each one verifiable against

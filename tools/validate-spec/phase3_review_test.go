@@ -11,6 +11,10 @@ import (
 
 // warnOnlySpec is a structurally-valid spec with exactly one WARN (a task touching a production
 // .go file with no tests:) and zero ERRORs — the fixture for the warn-only → exit 0 path.
+//
+// TASK-1 intentionally omits tests: to trigger the goProdTaskHasTests WARN.
+// TASK-2 references WO-TC-UC-01 via tests: so the TC is not orphan (validateTCReferenced passes).
+// TASK-2 has only a migration file (excluded from the goProdTaskHasTests check) so it adds no WARN.
 func warnOnlySpec() string {
 	return "## Slug: WO\n" +
 		"## Status: DRAFT\n\n" +
@@ -20,7 +24,8 @@ func warnOnlySpec() string {
 		"| --- | --- | --- | --- | --- |\n| WO-TC-UC-01 | WO-REQ-1 | happy | x | y |\n\n" +
 		"## Design\n\nd\n\n" +
 		"## Tasks\n\n- [ ] TASK-1: impl\n  - files: internal/domain/x/entity.go\n\n" +
-		"## Parallel Batches\n\nBatch 1: [TASK-1]\n\n" +
+		"- [ ] TASK-2: migrate\n  - files: internal/infrastructure/db/postgres/migration/20240101_x.sql\n  - tests: WO-TC-UC-01\n  - depends: TASK-1\n\n" +
+		"## Parallel Batches\n\nBatch 1: [TASK-1]\n\nBatch 2: [TASK-2]\n\n" +
 		"## Validation Criteria\n\nall pass\n\n" +
 		"## Execution Log\n\n"
 }

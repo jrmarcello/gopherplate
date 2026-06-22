@@ -361,22 +361,24 @@ Para features complexas, o template oferece um fluxo spec-driven com execução 
 ```text
 /spec "Add audit logging to user write operations"
   → Gera .specs/user-audit-log.md (requisitos, design, tasks; declara ## Slug:, IDs slug-prefixados)
-  → Roda tools/validate-spec (linter determinístico) antes dos agentes de review
+  → Roda tools/validate-spec (linter determinístico, incluindo round-trip testsRefValid + tcReferenced)
+  → Self-review com 4 agentes em paralelo: spec-reviewer + test-reviewer + code-reviewer + security-reviewer
   → Você revisa e aprova
 
 /ralph-loop .specs/user-audit-log.md
   → Valida spec (status + tools/validate-spec) na startup
-  → Executa tasks autonomamente (paralelo via worktrees, auto-rollback em falha parcial)
-  → Atualiza docs/capabilities/*.md do subsistema afetado + regenera MANIFEST.md
+  → Executa tasks autonomamente — brownfield search-first antes de novo código
+  → (paralelo via worktrees, auto-rollback em falha parcial)
+  → Wrap-up: files-vs-diff audit (make spec-files-audit) + atualiza docs/capabilities/*.md + regenera MANIFEST.md
   → Você revisa e aprova antes do commit
 
 /spec-review .specs/user-audit-log.md
   → Verifica implementação contra requisitos
 ```
 
-Cada nova spec declara um `## Slug:` (UPPERCASE) e usa IDs `<SLUG>-REQ-N` / `<SLUG>-TC-<TYPE>-NN`. O `tools/validate-spec` (rodado via `make validate-spec`) valida estrutura, cobertura REQ↔TC, DAG de `depends:` e mais, de forma determinística — antes dos agentes de review.
+Cada nova spec declara um `## Slug:` (UPPERCASE) e usa IDs `<SLUG>-REQ-N` / `<SLUG>-TC-<TYPE>-NN`. O `tools/validate-spec` (rodado via `make validate-spec`) valida estrutura, cobertura REQ↔TC, round-trip `tests:`↔TC, DAG de `depends:` e mais, de forma determinística — antes dos agentes de review.
 
-**Capability docs** em `docs/capabilities/` documentam o que cada subsistema garante AGORA (invariantes verificáveis), distintos de guias (como usar) e ADRs (por que, imutáveis). O `/ralph-loop` atualiza o capability doc relevante no wrap-up.
+**Capability docs** em `docs/capabilities/` documentam o que cada subsistema garante AGORA (invariantes verificáveis), distintos de guias (como usar) e ADRs (por que, imutáveis). Cada doc carrega uma seção `## Code` com os paths de implementação e um marcador `Last-verified`. O `/ralph-loop` atualiza o capability doc relevante no wrap-up; `make capabilities-check` detecta drift (path inexistente = ERROR, doc desatualizado vs. git-log = WARNING).
 
 O `/spec` analisa automaticamente dependências entre tasks e gera **Parallel Batches** — tasks sem arquivos compartilhados nem dependências podem rodar em paralelo. Arquivos compartilhados são classificados como exclusivos, aditivos (accumulator pattern) ou mutativos (serializados).
 

@@ -12,6 +12,16 @@
   - [docs/adr/008-api-response-format.md](../adr/008-api-response-format.md) — standardised HTTP response envelope
   - [docs/adr/009-error-handling.md](../adr/009-error-handling.md) — error classification in the use case layer
 
+## Code
+
+- internal/domain/role/ — entity, sentinel errors
+- internal/usecases/role/ — Create/List/Delete use cases, error mapping
+- internal/infrastructure/db/postgres/repository/role.go — sqlx repository (hard delete, read-only list tx)
+- internal/infrastructure/web/handler/role.go — HTTP handler
+- internal/infrastructure/web/router/role.go — route registration
+
+Last-verified: 2026-06-21 (472fbb9)
+
 ## Guarantees (current truth)
 
 - Every role ID is a UUID v7 (shared `vo.NewID()` from `internal/domain/user/vo`), time-ordered and globally unique. The ID value object is reused from the `user` domain — role has no separate `vo` package.

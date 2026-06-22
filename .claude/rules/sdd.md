@@ -38,7 +38,7 @@ Implicações concretas pra SDD:
 /spec <description>
    ├─ Author: write .specs/<name>.md from TEMPLATE (declare ## Slug:, slug-prefixed IDs, link impacted capability)
    ├─ Lint: tools/validate-spec (deterministic gate) — block on ERROR, BEFORE the agents
-   ├─ Self-review: 3 agents in parallel (spec-reviewer, test-reviewer, code-reviewer)
+   ├─ Self-review: 4 agents in parallel (spec-reviewer, test-reviewer, code-reviewer, security-reviewer)
    ├─ Apply trivial fixes inline
    └─ Present + wait for user approval (status DRAFT)
 
@@ -89,8 +89,14 @@ and specs (the plan for one change, which ages into history). See
 `docs/capabilities/TEMPLATE.md`.
 
 - A capability doc has `## Slug:`, `## Status: Active | Superseded | Archived`, `## Source`
-  (specs/ADRs), `## Guarantees (current truth)`, a slug-prefixed `## Guaranteed Requirements`
-  list, and a `## Changelog` (`ADDED`/`MODIFIED`/`REMOVED`).
+  (specs/ADRs), a `## Code` section (source paths + a `Last-verified: <date> (<commit>)` marker),
+  `## Guarantees (current truth)`, a slug-prefixed `## Guaranteed Requirements` list, and a
+  `## Changelog` (`ADDED`/`MODIFIED`/`REMOVED`).
+- **Drift check**: `tools/validate-spec capabilities docs/capabilities` (`make capabilities-check`)
+  `os.Stat`s every `## Code` path (a dead path is an ERROR) and WARNs when a path's latest git
+  commit is newer than `Last-verified` (an accidental-drift signal, not an adversarial guard).
+  `tools/validate-spec bootstrap-capability <pkg>` emits a skeleton (source paths + sentinel errors
+  auto-filled, the WHY left as TODO) to seed a new doc.
 - **Amend-in-place**: evolve a capability by editing its doc + appending its Changelog — never
   `caching-v2.md` / `caching-fase2.md`.
 - **Decision rule (amend vs. new spec)**: amend the capability doc when an *existing* subsystem's
@@ -107,7 +113,7 @@ and specs (the plan for one change, which ages into history). See
 
 `tools/validate-spec` (a main-module Go tool, run via `go run ./tools/validate-spec` or
 `make validate-spec`) is the **deterministic** encoding of the structural rules in this file. It
-runs as a gate BEFORE the inferential review agents: `/spec` runs it before the 3-agent
+runs as a gate BEFORE the inferential review agents: `/spec` runs it before the 4-lens
 self-review (block on ERROR); `/ralph-loop` runs it at startup (refuse to execute a failing spec).
 It is NOT a CI content gate (CI only builds + unit-tests the tool).
 
@@ -116,7 +122,10 @@ in the allowed set; `## Slug:` (when present) matches `^[A-Z][A-Z0-9]*$`; every 
 ≥1 TC (unless `(no-test: <reason>)`-annotated); every task has `files:`; `depends:` is an acyclic
 DAG of existing tasks; each task is in exactly one batch; no batch shares a non-shared-additive
 file; batch order respects `depends:`; TC types are in the registered set; REQ/TC IDs carry the
-slug prefix (when a slug is declared) and are unique; every TC references a real REQ.
+slug prefix (when a slug is declared) and are unique; every TC references a real REQ; **every
+`tests:` entry names a declared TC and every TC is referenced by ≥1 task (the TC↔task round-trip,
+slug-gated; multi-reference allowed)**. A task whose `files:` is the `(none — execution only)`
+sentinel is exempt from the files check and excluded from the declared-files union and batch-overlap.
 Production-`.go` tasks without `tests:`, and slug-bearing specs with no capability link, emit
 WARNINGS.
 
@@ -125,14 +134,20 @@ field, infra-failure per dependency, both-branch coverage, errors-outnumber-happ
 review agents. Specs without `## Slug:` are **grandfathered** — slug/prefix/capability checks are
 skipped, so pre-SDDX specs remain valid.
 
+Beyond the default `lint`, the tool offers: `manifest` (capability index), `files <spec>` (the
+deduplicated declared-files union, consumed by `/ralph-loop`'s files-vs-diff audit — any changed
+file with no owning task is a MUST FIX), `capabilities [dir]` (capability↔code drift, § Capability
+Docs), and `bootstrap-capability <pkg>` (skeleton generator). The task-declaration matcher
+recognizes named tasks (`TASK-SMOKE`, `TASK-MERGE-*`, `TASK-FINAL`), not only `TASK-N`.
+
 ## Discipline Checkpoints (non-negotiable)
 
 Two checkpoints exist alongside the normal flow. Skipping either is a process violation.
 
 ### After creating a spec — mandatory self-review
 
-The `/spec` skill MUST run Phase 2 before presenting: 3 review agents in parallel
-(`spec-reviewer`, `test-reviewer`, `code-reviewer`), trivial fixes applied inline,
+The `/spec` skill MUST run Phase 2 before presenting: 4 review agents in parallel
+(`spec-reviewer`, `test-reviewer`, `code-reviewer`, `security-reviewer`), trivial fixes applied inline,
 judgment-calls surfaced as "Pontos de atenção". See
 `.claude/skills/spec/SKILL.md` § Phase 2.
 
@@ -177,6 +192,12 @@ checkpoint was skipped.**
 - Tasks that share files in their `files:` lists cannot be in the same parallel batch
 - Tasks with testable code MUST have a `tests:` sub-item listing TC-IDs from the
   Test Plan (triggers TDD cycle in `/ralph-loop`)
+- Every `tests:` TC-ID must be a TC declared in the Test Plan, and every Test-Plan TC must be
+  referenced by ≥1 task's `tests:` (the TC↔task round-trip; multi-reference allowed) — the linter
+  enforces this on slug-bearing specs
+- An execution-only task (a dogfood/smoke task with no source files) declares
+  `- files: (none — execution only)`; the linter treats it as zero files (exempt from the files
+  check, excluded from the declared-files union and batch-overlap)
 
 ## Test Plan
 
@@ -234,6 +255,12 @@ Every spec MUST satisfy all of the following:
 - **Never modify Requirements and Test Plan in the same change.** REQ changes
   invalidate TC mappings; doing both at once erases the audit trail. Update REQ
   first, re-run self-review, then update TCs in a separate pass.
+- **Freeze trade-off + controlled amendment (Böckeler).** Freezing Requirements + Test Plan during
+  execution protects the audit trail, but heavy up-front design can lock the *wrong* REQ before a
+  genuinely-unclear feature is understood. So a REQ MAY be amended while status is `IN_PROGRESS`
+  **only if** (a) the full `/spec` self-review (all four lenses: spec / test / code / security)
+  re-runs from scratch, and (b) an Execution Log entry records the amendment + its rationale. This
+  makes amendment *auditable*, not forbidden — it is not a license to loosen rigor.
 
 ### Smoke Tests (k6)
 

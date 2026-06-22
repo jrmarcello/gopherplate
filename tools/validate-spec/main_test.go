@@ -70,6 +70,41 @@ func TestRun_ManifestNonexistentDir_ExitCode2(t *testing.T) {
 	assert.Equal(t, 2, code, "manifest with nonexistent dir should exit 2")
 }
 
+// files subcommand: nonexistent spec → exit 2
+func TestRun_Files_NonexistentSpec_ExitCode2(t *testing.T) {
+	t.Parallel()
+	code := run([]string{"validate-spec", "files", "testdata/nonexistent/spec.md"})
+	assert.Equal(t, 2, code)
+}
+
+// files subcommand: valid spec → exit 0
+func TestRun_Files_ValidSpec_ExitCode0(t *testing.T) {
+	t.Parallel()
+	code := run([]string{"validate-spec", "files", filepath.Join("testdata", "files-union", "spec.md")})
+	assert.Equal(t, 0, code)
+}
+
+// capabilities subcommand: nonexistent dir → exit 2
+func TestRun_Capabilities_NonexistentDir_ExitCode2(t *testing.T) {
+	t.Parallel()
+	code := run([]string{"validate-spec", "capabilities", "testdata/nonexistent-caps"})
+	assert.Equal(t, 2, code)
+}
+
+// bootstrap-capability subcommand: valid pkg → exit 0
+func TestRun_BootstrapCapability_ValidPkg_ExitCode0(t *testing.T) {
+	t.Parallel()
+	code := run([]string{"validate-spec", "bootstrap-capability", filepath.Join("testdata", "bootstrap", "witherrors")})
+	assert.Equal(t, 0, code)
+}
+
+// bootstrap-capability subcommand: missing arg → exit 2
+func TestRun_BootstrapCapability_MissingArg_ExitCode2(t *testing.T) {
+	t.Parallel()
+	code := run([]string{"validate-spec", "bootstrap-capability"})
+	assert.Equal(t, 2, code)
+}
+
 // help flag → exit 0
 func TestRun_Help_ExitCode0(t *testing.T) {
 	t.Parallel()

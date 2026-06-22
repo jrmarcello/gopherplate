@@ -35,6 +35,17 @@ go run ./tools/validate-spec FILE=.specs/user-audit-log.md
 
 # Or equivalently:
 go run ./tools/validate-spec .specs/user-audit-log.md
+
+# Print the union of all files: declared across tasks (used by /ralph-loop wrap-up)
+make spec-files-audit FILE=.specs/user-audit-log.md
+# Equivalent: go run ./tools/validate-spec files .specs/user-audit-log.md
+
+# Detect capability↔code drift (## Code os.Stat + git-log staleness)
+make capabilities-check
+# Equivalent: go run ./tools/validate-spec capabilities docs/capabilities/
+
+# Generate a skeleton capability doc for a package not yet documented
+go run ./tools/validate-spec bootstrap-capability <pkg>
 ```
 
 When invoked without a `FILE=` argument (or when run via `make validate-spec`), the tool globs
@@ -57,7 +68,7 @@ Each validator is tagged with a severity: **ERROR** (exit code 1) or **WARNING**
 | --- | --- | --- |
 | `requiredSections` | ERROR | `## Context`, `## Requirements`, `## Test Plan`, `## Design`, `## Tasks`, `## Parallel Batches`, `## Validation Criteria` all present |
 | `statusToken` | ERROR | Exactly one `## Status: <TOKEN>` line; `<TOKEN>` in `{DRAFT, APPROVED, IN_PROGRESS, DONE, FAILED, SUPERSEDED, ARCHIVED}` |
-| `taskFilesPresent` | ERROR | Every task block has at least one `- files:` sub-item |
+| `taskFilesPresent` | ERROR | Every task block has at least one `- files:` sub-item (or the sentinel `(none — execution only)` for tasks that produce no file artifacts, e.g. pure smoke-test execution tasks) |
 | `dependsDAG` | ERROR | `depends:` references form an acyclic directed graph of task IDs that exist in the same spec |
 | `batchCoverage` | ERROR | Every task appears in exactly one batch |
 | `batchFileOverlap` | ERROR | No two tasks in the same batch share a non-shared-additive file (would require serialization) |
@@ -76,6 +87,32 @@ Each validator is tagged with a severity: **ERROR** (exit code 1) or **WARNING**
 | `reqCoverage` | ERROR | Every REQ has at least one TC referencing it, OR carries a `(no-test: <reason>)` annotation (non-empty reason) |
 | `tcRefValid` | ERROR | Every TC's `REQ` column references a REQ ID that exists in `## Requirements` |
 | `capabilityLink` | WARNING | Slug-bearing spec has no `§ Impacted Capability` link in `## Design` (the `/ralph-loop` wrap-up needs it) |
+| `testsRefValid` | ERROR | Every TC ID listed in a task's `tests:` sub-item exists in `## Test Plan` |
+| `tcReferenced` | ERROR | Every TC declared in `## Test Plan` is referenced by at least one task's `tests:` sub-item |
+
+### Named-task matcher
+
+The linter recognises a set of special task names that are **execution-only** and are exempt from
+certain structural requirements (e.g. the `batchCoverage` check treats them as first-class tasks):
+
+- `TASK-SMOKE` — dedicated smoke-test execution task (runs k6; produces no source file)
+- `TASK-MERGE-*` — accumulator merge task (reads wiring fragments; the shared file it writes
+  is listed in its own `files:`, not in the parallel producers)
+- `TASK-FINAL` — wrap-up task (documentation updates, manifest regeneration, etc.)
+
+These names are matched literally; casing must be exact.
+
+### The `(none — execution only)` files sentinel
+
+A task that produces no file artifacts (e.g. `TASK-SMOKE` or a pure validation step) may
+declare:
+
+```text
+- files: (none — execution only)
+```
+
+`taskFilesPresent` accepts this sentinel and does not report a missing `files:` sub-item.
+The sentinel must be written verbatim — any other variation is treated as a file path.
 
 ### The `(no-test: <reason>)` exemption
 
@@ -150,6 +187,70 @@ capability guarantees changed.
 The `/ralph-loop` wrap-up runs this command automatically after updating the impacted capability
 doc.
 
+## The `files` subcommand
+
+```bash
+# Print the declared-files union for a spec (used by /ralph-loop wrap-up files-vs-diff audit)
+make spec-files-audit FILE=.specs/user-audit-log.md
+
+# Equivalent direct invocation:
+go run ./tools/validate-spec files .specs/user-audit-log.md
+```
+
+The `files` subcommand reads every task's `files:` sub-items and prints the deduplicated union.
+The `/ralph-loop` wrap-up runs this command after executing all tasks and diffs the output against
+the actual working-tree diff. Any file present in the diff but absent from the declared union is
+reported as **MUST FIX** — the task's `files:` metadata must be corrected before commit.
+
+## The `capabilities` subcommand
+
+```bash
+# Detect capability↔code drift across all capability docs
+make capabilities-check
+
+# Equivalent direct invocation:
+go run ./tools/validate-spec capabilities docs/capabilities/
+```
+
+The `capabilities` subcommand inspects every `docs/capabilities/*.md` file and:
+
+1. **`os.Stat` check** — for each path listed under `## Code`, verifies the path exists in the
+   working tree. A missing path is an ERROR (the capability doc references code that no longer exists).
+2. **Staleness check** — runs `git log --since` against the `Last-verified` marker in each doc.
+   If the referenced code has commits newer than `Last-verified`, emits a WARNING that the doc
+   may be stale and should be re-reviewed.
+
+### The `## Code` section and `Last-verified` marker
+
+Every capability doc must carry a `## Code` section listing the primary source paths that
+implement the described guarantees:
+
+```markdown
+## Code
+
+- `internal/usecases/user/` — use cases
+- `pkg/cache/` — cache interface and Redis implementation
+
+Last-verified: 2026-06-01
+```
+
+The `Last-verified` date is updated by the author whenever the doc is reviewed against the
+actual code. `make capabilities-check` uses this date for the staleness heuristic.
+
+## The `bootstrap-capability` subcommand
+
+```bash
+# Generate a skeleton capability doc for a package not yet in docs/capabilities/
+go run ./tools/validate-spec bootstrap-capability <pkg>
+# Example: go run ./tools/validate-spec bootstrap-capability pkg/idempotency
+```
+
+Generates a pre-filled `docs/capabilities/<pkg-name>.md` skeleton using the project's
+capability doc template (`docs/capabilities/TEMPLATE.md`). The skeleton includes the correct
+frontmatter, all required sections (`## Overview`, `## Guarantees`, `## Code`,
+`## Non-guarantees`, `## Changelog`), and a `Last-verified` marker set to today. Edit the
+skeleton to fill in the actual guarantees before committing.
+
 ## How `/spec` and `/ralph-loop` wire the gate
 
 ### In `/spec`
@@ -161,8 +262,10 @@ After the **Author** phase (spec written, slug declared, capability link added i
    until exit code 0. **Do not call the review agents with a failing spec.**
 3. If exit code 2 (tool error): surface as "linter environment issue" and stop — do not proceed
    to review.
-4. If exit code 0: proceed to the 3-agent self-review (`spec-reviewer`, `test-reviewer`,
-   `code-reviewer`).
+4. If exit code 0: proceed to the **4-agent self-review** (`spec-reviewer`, `test-reviewer`,
+   `code-reviewer`, `security-reviewer`). The fourth lens (`security-reviewer`) was added in
+   spec SDDF to catch threat-model gaps and insecure defaults at authoring time, before any code
+   is written.
 
 WARNINGs (exit 0) are printed and surfaced in the "Pontos de atenção" section of the Present
 output, alongside findings from the review agents.
@@ -177,8 +280,17 @@ At the start of the **Validate** phase (before executing any task):
 3. If exit code 0: proceed to Execute.
 
 The linter is not re-run between batches (the spec's Requirements and Test Plan sections are
-immutable during `IN_PROGRESS`). The wrap-up does not re-run it either — the manifest
-subcommand is a separate invocation.
+immutable during `IN_PROGRESS`).
+
+During the **Wrap-up** phase (after all tasks complete):
+
+1. Run `make spec-files-audit FILE=.specs/<name>.md` to get the declared-files union.
+2. Diff against the actual working-tree diff. Any file in the diff but absent from the union is
+   reported as **MUST FIX** — the corresponding task's `files:` must be updated before committing.
+   This is the files-vs-diff audit added in spec SDDF.
+3. Run `make capabilities-manifest` (regenerates `docs/capabilities/MANIFEST.md`).
+4. If the impacted capability doc's `## Code` paths have changed, update the doc's `Last-verified`
+   date so `make capabilities-check` does not immediately flag the updated doc as stale.
 
 ## Module placement
 

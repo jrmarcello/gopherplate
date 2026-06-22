@@ -22,11 +22,12 @@ type testCase struct {
 
 // task is a single task declaration from the Tasks section.
 type task struct {
-	id      string
-	files   []string
-	tests   []string
-	depends []string
-	line    int
+	id       string
+	files    []string
+	tests    []string
+	depends  []string
+	line     int
+	execOnly bool
 }
 
 // batch is a single parallel batch declaration.
@@ -58,7 +59,7 @@ var (
 	reReqDecl   = regexp.MustCompile(`^- \[[ x]\] ([A-Za-z0-9][A-Za-z0-9_-]*): `)
 	reNoTest    = regexp.MustCompile(`\(no-test:([^)]*)\)`)
 	reTCRow     = regexp.MustCompile(`^\| ([^\|]+) \| ([^\|]+) \|`)
-	reTaskDecl  = regexp.MustCompile(`^- \[[ x]\] (TASK-\d+): `)
+	reTaskDecl  = regexp.MustCompile(`^- \[[ x]\] (TASK-(?:\d+|[A-Z][A-Z0-9]*(?:-[A-Z][A-Z0-9]*)*)): `)
 	reBatchLine = regexp.MustCompile(`^Batch (\d+): \[([^\]]*)\]`)
 	reSharedAdd = regexp.MustCompile(`shared-additive:\s*(.+)`)
 	reReqID     = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_-]*-REQ-\d+$|^REQ-\d+$`)
@@ -305,6 +306,10 @@ func parseTaskSubItem(line string, t *task) {
 	trimmed := strings.TrimSpace(line)
 	if after, ok := strings.CutPrefix(trimmed, "- files:"); ok {
 		val := strings.TrimSpace(after)
+		if val == "(none — execution only)" || val == "(none)" {
+			t.execOnly = true
+			return
+		}
 		if val != "" {
 			t.files = append(t.files, parseFileList(val)...)
 		}

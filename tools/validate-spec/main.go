@@ -14,7 +14,7 @@ func main() {
 // run is the testable entry point. Returns exit code.
 func run(args []string) int {
 	if len(args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: validate-spec <spec.md> [spec.md ...] | manifest [caps-dir] [--write]")
+		fmt.Fprintln(os.Stderr, "usage: validate-spec <spec.md> [spec.md ...] | manifest [caps-dir] [--write] | files <spec.md> [spec.md ...] | capabilities [dir] | bootstrap-capability <pkg>")
 		return 2
 	}
 
@@ -23,8 +23,22 @@ func run(args []string) int {
 	switch subcommand {
 	case "manifest":
 		return runManifestCmd(args[2:])
+	case "files":
+		return runFiles(args[2:])
+	case "capabilities":
+		dir := "docs/capabilities"
+		if len(args) > 2 {
+			dir = args[2]
+		}
+		return runCapabilities(dir, nil)
+	case "bootstrap-capability":
+		if len(args) < 3 {
+			fmt.Fprintln(os.Stderr, "error: bootstrap-capability: missing <pkg> argument")
+			return 2
+		}
+		return runBootstrap(args[2])
 	case "--help", "-h", "help":
-		fmt.Fprintln(os.Stderr, "usage: validate-spec <spec.md> [spec.md ...] | manifest [caps-dir] [--write]")
+		fmt.Fprintln(os.Stderr, "usage: validate-spec <spec.md> [spec.md ...] | manifest [caps-dir] [--write] | files <spec.md> [spec.md ...] | capabilities [dir] | bootstrap-capability <pkg>")
 		return 0
 	default:
 		// Treat all args[1:] as spec file paths

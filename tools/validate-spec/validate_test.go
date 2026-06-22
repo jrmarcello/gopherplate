@@ -474,6 +474,100 @@ func buildSimpleSpecWithTC(tcID string) string {
 	return "## Slug: SDDX\n\n## Status: DRAFT\n\n## Context\n\nx\n\n## Requirements\n\n- [ ] SDDX-REQ-1: r\n\n## Test Plan\n\n| TC-ID | REQ | Category | Description | Expected |\n| --- | --- | --- | --- | --- |\n| " + tcID + " | SDDX-REQ-1 | happy | x | ok |\n\n## Design\n\nd\n\n## Tasks\n\n- [ ] TASK-1: t\n  - files: internal/domain/x/entity.go\n  - tests: " + tcID + "\n\n## Parallel Batches\n\nBatch 1: [TASK-1]\n\n## Validation Criteria\n\nAll pass.\n\n## Execution Log\n\n"
 }
 
+// TC-01: dangling tests: ref → ERROR naming TC + task
+func TestValidate_TestsRefValid_Dangling(t *testing.T) {
+	t.Parallel()
+	m := loadSpec(t, "tests-dangling", "spec.md")
+	fs := validate(m)
+	assert.True(t, hasError(fs, "TDGL-TC-UC-99"), "error must name the undeclared TC")
+	assert.True(t, hasError(fs, "TASK-1"), "error must name the task")
+	assert.True(t, hasError(fs, "undeclared TC"), "error must say 'undeclared TC'")
+}
+
+// TC-02: orphan TC → ERROR naming the TC
+func TestValidate_TCReferenced_Orphan(t *testing.T) {
+	t.Parallel()
+	m := loadSpec(t, "tc-orphan", "spec.md")
+	fs := validate(m)
+	assert.True(t, hasError(fs, "TORP-TC-UC-02"), "error must name the orphan TC")
+	assert.True(t, hasError(fs, "referenced by no task"), "error must say 'referenced by no task'")
+}
+
+// TC-03: golden → 0 round-trip findings
+func TestValidate_GoldenRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := loadSpec(t, "valid", "golden.md")
+	fs := validate(m)
+	assert.Equal(t, 0, errors(fs), "golden spec must have 0 errors")
+	assert.Equal(t, 0, warns(fs), "golden spec must have 0 warns")
+}
+
+// TC-04: grandfathered no-slug + orphan → skipped (no error from round-trip validators)
+func TestValidate_Grandfathered_RoundTripSkipped(t *testing.T) {
+	t.Parallel()
+	m := loadSpec(t, "grandfathered-orphan", "spec.md")
+	fs := validate(m)
+	assert.False(t, hasError(fs, "undeclared TC"), "no-slug spec must skip testsRefValid")
+	assert.False(t, hasError(fs, "referenced by no task"), "no-slug spec must skip tcReferenced")
+}
+
+// TC-05: smoke TC referenced only by TASK-SMOKE → not orphan
+func TestValidate_SmokeTCReferenced_ViaTaskSmoke(t *testing.T) {
+	t.Parallel()
+	m := loadSpec(t, "smoke-referenced", "spec.md")
+	fs := validate(m)
+	assert.False(t, hasError(fs, "SMKR-TC-S-01"), "SMKR-TC-S-01 referenced by TASK-SMOKE → not orphan")
+	assert.False(t, hasError(fs, "referenced by no task"), "no orphan error expected")
+}
+
+// TC-16: roundtrip-only fixture fails ONLY tcReferenced → exit 1; golden → exit 0
+func TestRun_RoundtripOnly_ExitCode1(t *testing.T) {
+	t.Parallel()
+	code := run([]string{"validate-spec", filepath.Join("testdata", "roundtrip-only", "spec.md")})
+	assert.Equal(t, 1, code, "roundtrip-only (one orphan TC) must exit 1")
+	// Golden must still exit 0
+	golden := filepath.Join("testdata", "valid", "golden.md")
+	assert.Equal(t, 0, run([]string{"validate-spec", golden}), "golden must exit 0")
+}
+
+// TC-17: spec with TASK-SMOKE → two distinct tasks, no metadata bleed
+func TestParseSpec_NamedTasks_Distinct(t *testing.T) {
+	t.Parallel()
+	m := loadSpec(t, "smoke-referenced", "spec.md")
+	require.Len(t, m.tasks, 2, "should have TASK-1 and TASK-SMOKE")
+	// TASK-1 must not have TASK-SMOKE's tests
+	assert.Equal(t, "TASK-1", m.tasks[0].id)
+	assert.Equal(t, "TASK-SMOKE", m.tasks[1].id)
+	assert.NotContains(t, m.tasks[0].tests, "SMKR-TC-S-01", "TASK-1 must not bleed TASK-SMOKE's tests")
+}
+
+// TC-19: numbered task mentioning TASK-SMOKE in prose → no spurious task
+func TestParseSpec_ProseTaskName_NoSpuriousTask(t *testing.T) {
+	t.Parallel()
+	m := loadSpec(t, "prose-task", "spec.md")
+	require.Len(t, m.tasks, 1, "only TASK-1 should be parsed; TASK-SMOKE in prose must NOT create a task")
+	assert.Equal(t, "TASK-1", m.tasks[0].id)
+}
+
+// TC-20: TC referenced by two tasks → not orphan, 0 round-trip findings
+func TestValidate_TCMultiRef_NotOrphan(t *testing.T) {
+	t.Parallel()
+	m := loadSpec(t, "tc-multiref", "spec.md")
+	fs := validate(m)
+	assert.False(t, hasError(fs, "TMRF-TC-UC-01"), "TC referenced by two tasks must not be orphan")
+	assert.Equal(t, 0, errors(fs), "tc-multiref must have 0 errors")
+}
+
+// TC-22: task with `- files: (none — execution only)` → no batchFileOverlap, no taskHasFiles error
+func TestValidate_ExecOnly_NoErrors(t *testing.T) {
+	t.Parallel()
+	m := loadSpec(t, "task-execonly", "spec.md")
+	fs := validate(m)
+	assert.False(t, hasError(fs, "TASK-SMOKE"), "execOnly task must not trigger taskHasFiles error")
+	assert.False(t, hasError(fs, "no files:"), "no 'no files:' error for execOnly task")
+	assert.Equal(t, 0, errors(fs), "task-execonly must have 0 errors")
+}
+
 func TestValidate_SeverityString(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, "warning", severityWarn.String())

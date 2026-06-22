@@ -9,6 +9,15 @@
 - Specs: n/a — pre-SDD
 - ADRs: [docs/adr/007-pkg-reusable-packages.md](../adr/007-pkg-reusable-packages.md)
 
+## Code
+
+- pkg/cache/ — Cache interface
+- pkg/cache/redisclient/ — nil-safe Redis implementation
+- pkg/cache/singleflight.go — singleflight anti-stampede wrapper
+- internal/usecases/user/get.go — read-through cache + singleflight wiring (.WithCache / .WithFlight)
+
+Last-verified: 2026-06-21 (472fbb9)
+
 ## Guarantees (current truth)
 
 - The `Cache` interface (`pkg/cache/cache.go`) defines driver-agnostic `Get`, `Set`, `Delete`, `Ping`, and `Close` operations; use cases depend only on this interface, never on a concrete driver.

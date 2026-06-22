@@ -208,6 +208,61 @@ No status here.
 	assert.Equal(t, "", m.status)
 }
 
+// TC-22 parser: task with `- files: (none — execution only)` → execOnly=true, no files
+func TestParseSpec_ExecOnly(t *testing.T) {
+	t.Parallel()
+	content := "## Tasks\n\n" +
+		"- [ ] TASK-SMOKE: run smoke\n" +
+		"  - files: (none — execution only)\n" +
+		"  - tests: TC-S-01\n"
+	m := mustParse(t, content)
+	require.Len(t, m.tasks, 1)
+	assert.True(t, m.tasks[0].execOnly, "execOnly must be true")
+	assert.Empty(t, m.tasks[0].files, "execOnly task must have no files")
+	assert.Equal(t, []string{"TC-S-01"}, m.tasks[0].tests)
+}
+
+// TC-22 parser: `- files: (none)` sentinel also sets execOnly
+func TestParseSpec_ExecOnly_ShortSentinel(t *testing.T) {
+	t.Parallel()
+	content := "## Tasks\n\n- [ ] TASK-1: impl\n  - files: (none)\n"
+	m := mustParse(t, content)
+	require.Len(t, m.tasks, 1)
+	assert.True(t, m.tasks[0].execOnly)
+	assert.Empty(t, m.tasks[0].files)
+}
+
+// Named task regex: TASK-SMOKE, TASK-MERGE-SERVER, TASK-FINAL, TASK-12
+func TestParseSpec_NamedTaskRegex(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		line    string
+		wantID  string
+		wantHit bool
+	}{
+		{"TASK-1", "- [ ] TASK-1: impl", "TASK-1", true},
+		{"TASK-12", "- [ ] TASK-12: impl", "TASK-12", true},
+		{"TASK-SMOKE", "- [ ] TASK-SMOKE: run smoke", "TASK-SMOKE", true},
+		{"TASK-MERGE-SERVER", "- [ ] TASK-MERGE-SERVER: merge", "TASK-MERGE-SERVER", true},
+		{"TASK-FINAL", "- [ ] TASK-FINAL: finalize", "TASK-FINAL", true},
+		{"prose mention", "This depends on TASK-SMOKE for the smoke run", "", false},
+		{"no colon-space", "- [ ] TASK-1 no colon", "", false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			m := reTaskDecl.FindStringSubmatch(tc.line)
+			if tc.wantHit {
+				require.NotNil(t, m, "should match: %q", tc.line)
+				assert.Equal(t, tc.wantID, m[1])
+			} else {
+				assert.Nil(t, m, "should NOT match: %q", tc.line)
+			}
+		})
+	}
+}
+
 func TestParseSpec_SectionsTracked(t *testing.T) {
 	t.Parallel()
 	content := `## Context

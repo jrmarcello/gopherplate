@@ -12,6 +12,18 @@
   - [docs/adr/008-api-response-format.md](../adr/008-api-response-format.md) — standardised HTTP response envelope
   - [docs/adr/009-error-handling.md](../adr/009-error-handling.md) — error classification in the use case layer
 
+## Code
+
+- internal/domain/user/ — entity, value objects, sentinel errors
+- internal/domain/user/vo/ — ID (UUID v7) + Email value objects
+- internal/usecases/user/ — CRUD use cases, interfaces, dto, error mapping
+- internal/infrastructure/db/postgres/repository/user.go — sqlx repository (soft delete, read-only list tx)
+- internal/infrastructure/web/handler/user.go — HTTP handler
+- internal/infrastructure/web/router/user.go — route registration
+- internal/infrastructure/web/middleware/idempotency.go — idempotent writes
+
+Last-verified: 2026-06-21 (472fbb9)
+
 ## Guarantees (current truth)
 
 - Every user ID is a UUID v7 (`vo.NewID()` via `github.com/google/uuid`), time-ordered and globally unique. IDs are validated on parse; any non-UUID string returns `vo.ErrInvalidID`.

@@ -92,4 +92,29 @@ If a finding hinges on a language-level idiom, cite the specific section (e.g. "
 - Patterns should be clear and easy to follow (see `user` and `role` as example domains)
 - No dead code, no TODO comments, no shortcuts
 
+### Brownfield Duplication Lens
+
+Before approving any new implementation, check whether the functionality already
+exists somewhere in `internal/` or `pkg/`:
+
+- **Near-duplicate use cases:** does the new code repeat logic already in an
+  existing use case (e.g. a second "get by ID" that reimplements the same
+  singleflight+cache pattern instead of extending the existing one)?
+- **Near-duplicate helpers:** does the new code re-implement a utility already
+  in `pkg/` (apperror construction, span helpers, cache interface, response
+  wrappers)?
+- **Near-duplicate value objects:** does the new domain introduce a value object
+  (e.g. `Email`, `ID`) already defined and validated in `internal/domain/user/`
+  or a shared location?
+
+If a near-duplicate is found, classify as:
+- **MUST FIX** when the re-implementation diverges in correctness (different
+  validation rules, missing error wrapping, different span classification) —
+  the duplicate will silently diverge further over time.
+- **SHOULD FIX** when the re-implementation is functionally equivalent but
+  increases maintenance surface — consolidation is the right move even if
+  no bug is present today.
+
+Always cite the existing symbol and file so the author knows what to reuse.
+
 Provide specific feedback with file:line references. Classify issues as: MUST FIX, SHOULD FIX, NICE TO HAVE.

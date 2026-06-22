@@ -48,7 +48,7 @@ complexidade da task exige.
 ### Etapa 1 — `/spec`: quatro fases
 
 ```text
-Author → Lint (determinístico) → Self-review (3 agents em paralelo) → Present
+Author → Lint (determinístico) → Self-review (4 agents em paralelo) → Present
 ```
 
 1. **Author** — `/spec` redige a spec a partir do `.specs/TEMPLATE.md`: Context,
@@ -60,14 +60,17 @@ Author → Lint (determinístico) → Self-review (3 agents em paralelo) → Pre
 2. **Lint** — roda `tools/validate-spec` (`make validate-spec`) deterministicamente.
    Bloqueia em ERROR (exit code 1) antes de chamar qualquer agente. Valida: seções
    obrigatórias presentes, status token canônico, slug bem-formado, cobertura
-   REQ↔TC, DAG de `depends:` sem ciclo, overlap de arquivos em batches, IDs
-   únicos com slug-prefix, tipos de TC no conjunto registrado. Specs sem `## Slug:`
-   são grandfathered — os checks de slug/prefix/capability são pulados.
-3. **Self-review** — dispara três agents em paralelo numa única mensagem:
+   REQ↔TC, round-trip `testsRefValid` (todo `tests:` aponta para TC declarado) +
+   `tcReferenced` (todo TC declarado é referenciado por ≥1 task), DAG de `depends:`
+   sem ciclo, overlap de arquivos em batches, IDs únicos com slug-prefix, tipos de TC
+   no conjunto registrado. Specs sem `## Slug:` são grandfathered — os checks de
+   slug/prefix/capability são pulados.
+3. **Self-review** — dispara **quatro** agents em paralelo numa única mensagem:
    - `spec-reviewer` — gaps, ambiguidade, DAG, accumulator pattern, layer rules
    - `test-reviewer` — coverage do Test Plan, boundary TCs, infra-failure TCs
    - `code-reviewer` — Design vs convenções (Clean Architecture, apperror, span
      classification, DI, idempotency)
+   - `security-reviewer` — threat model, insecure defaults, dados sensíveis, auth
    Trivial fixes são aplicados inline; pontos de julgamento viram "Pontos de atenção".
 4. **Present** — spec é apresentada com resumo, stats do Test Plan, Parallel
    Batches, fixes aplicados e pontos de atenção. Aguarda aprovação.
@@ -85,6 +88,9 @@ Validate → Execute → Self-review → Wrap-up → Present → Commit (após a
    Test Plan e Parallel Batches. Roda `tools/validate-spec` (`make validate-spec`) —
    recusa executar se a spec tiver lint ERROR.
 2. **Execute** — para cada batch sequencialmente:
+   - **Brownfield search-first**: antes de criar qualquer novo arquivo ou função,
+     buscar no codebase por patterns, helpers e abstrações existentes que possam ser
+     reusados. Código novo só quando a busca confirmar ausência.
    - **1 task no batch:** executa inline (TDD se houver `tests:`, merge se for
      `TASK-MERGE-*`).
    - **2+ tasks no batch:** dispara N `Agent(isolation: "worktree")` numa única
@@ -95,10 +101,14 @@ Validate → Execute → Self-review → Wrap-up → Present → Commit (após a
 3. **Self-review** — três agents em paralelo (`code-reviewer`, `test-reviewer`,
    `security-reviewer`) auditam o diff. Trivial fixes inline; CRITICAL/HIGH e
    pontos de julgamento sobem como "Pontos de atenção".
-4. **Wrap-up** — atualiza `docs/capabilities/*.md` do subsistema impactado (current
-   truth + entrada no Changelog) e roda `make capabilities-manifest` para regenerar
-   `docs/capabilities/MANIFEST.md`. Estes arquivos são staged juntos com o código
-   no commit final.
+4. **Wrap-up** — em ordem:
+   1. Roda `make spec-files-audit FILE=.specs/<nome>.md` e difere o resultado contra
+      o working-tree diff. Qualquer arquivo no diff mas ausente da union declarada é
+      **MUST FIX** — o `files:` da task correspondente deve ser corrigido antes do commit.
+   2. Atualiza `docs/capabilities/*.md` do subsistema impactado (current truth +
+      entrada no Changelog + atualiza `Last-verified` se os paths de `## Code` mudaram).
+   3. Roda `make capabilities-manifest` para regenerar `docs/capabilities/MANIFEST.md`.
+   Estes arquivos são staged juntos com o código no commit final.
 5. **Present** — apresenta resumo da execução, diff stat, fixes aplicados, pontos
    de atenção, validação local. Aguarda aprovação.
 6. **Commit** — só após "ok"/"pode commitar". Stage apenas os arquivos listados nas
@@ -106,6 +116,21 @@ Validate → Execute → Self-review → Wrap-up → Present → Commit (após a
 
 Se você pedir mudanças após o present, **a self-review re-roda do zero** antes de
 re-apresentar.
+
+### Emenda controlada de REQ durante IN_PROGRESS (Böckeler escape-hatch)
+
+Durante a execução (`IN_PROGRESS`), descobrir que um REQ precisa ser corrigido não é
+incomum — implementar revela pressupostos errados. A regra padrão proíbe alterar
+Requirements durante IN_PROGRESS. O escape-hatch permite a emenda sob condições estritas:
+
+1. **Justificativa documentada**: o Execution Log recebe uma entrada explicando o que
+   mudou, por que a emenda é necessária, e quais TCs foram afetados.
+2. **4-lens re-review obrigatório**: após a emenda, os quatro agentes (`spec-reviewer`,
+   `test-reviewer`, `code-reviewer`, `security-reviewer`) re-auditam a spec do zero.
+3. **Nunca silencioso**: uma emenda não documentada no Execution Log é uma violação de
+   processo — equivalente a reescrever histórico.
+4. **Escopo mínimo**: apenas o REQ diretamente impactado pela descoberta. Emendas de
+   conveniência (simplificar scope, remover cobertura inconveniente) são rejeitadas.
 
 ## Estrutura da Spec
 

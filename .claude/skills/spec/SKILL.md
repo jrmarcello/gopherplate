@@ -83,7 +83,7 @@ trivial; surface as a judgment call otherwise) and re-run until it exits 0. The 
 deterministic pre-filter — it encodes the structural rules of `.claude/rules/sdd.md`; only once it
 passes do you spawn the inferential agents, which focus on the semantic gaps it cannot see.
 
-**Phase 2b — Spawn three review agents in parallel** in a single message with three Agent calls:
+**Phase 2b — Spawn four review agents in parallel** in a single message with four Agent calls:
 
 ```text
 Agent(spec-reviewer): Review .specs/<name>.md for gaps, ambiguity, missing tests, rule violations, and architectural mismatches.
@@ -91,9 +91,18 @@ Agent(spec-reviewer): Review .specs/<name>.md for gaps, ambiguity, missing tests
 Agent(test-reviewer): Audit the Test Plan section of .specs/<name>.md for coverage gaps — every REQ has TC, every sentinel error has TC, every validated field has boundary TCs, every external dependency call has an infra-failure TC, every conditional branch has TCs for both paths. Apply the sdd.md rigor check (error TCs outnumber happy-path TCs).
 
 Agent(code-reviewer): Audit the Design section of .specs/<name>.md for project-rule adherence — Clean Architecture layer rules (domain ← usecases ← infrastructure), apperror mapping, span classification (WarnSpan vs FailSpan), DI pattern, response helpers (httpgin), idempotency on write paths, gRPC parity if applicable.
+
+Agent(security-reviewer): Audit .specs/<name>.md in spec-review mode (pre-code — no diff exists yet). Check:
+  1. Tenant/scope isolation — does the spec plan appropriate resource scoping so one tenant cannot read another's data?
+  2. PII in planned logs/fixtures — any REQ or Design element that would log, fixture, or expose email addresses, full names, phone numbers, or tokens? Flag per .claude/rules/security.md "never log PII". These are MUST FIX.
+  3. Service-key auth for every new endpoint — for each planned HTTP route and gRPC method, verify the spec names the service-key middleware (HTTP) or interceptor (gRPC). Reject "internal-only ⇒ no auth" reasoning outright (ADR-005; .claude/rules/security.md "service key authentication required on all API endpoints"). Missing auth on any new endpoint is MUST FIX.
+  4. Sentinel→status resource leak — do the planned error→HTTP-status mappings risk leaking a cross-context resource's existence? (e.g. returning 404 vs 403 in a way that reveals another tenant's ID)
+  5. Secrets in planned fixtures — any test fixture, golden file, or seed data that would contain real credentials, API keys, or tokens?
+  6. Dependencies section — for every new dependency listed in the spec's ## Dependencies, flag any that add network calls (HTTP clients, SDKs, message-bus libs) or replace stdlib (crypto, encoding, TLS). These require explicit justification in the spec. Flag as MUST FIX if justification is absent.
+  Rate findings: CRITICAL / HIGH / MEDIUM / LOW. CRITICAL and HIGH are never auto-fixed; always surface to user.
 ```
 
-Wait for all three. Aggregate findings:
+Wait for all four. Aggregate findings:
 
 1. **Apply trivially-correct fixes inline** to the spec file:
    - Missing TC-IDs for declared sentinel errors → add the entry to the Test Plan.
@@ -155,7 +164,7 @@ After presenting, three things can happen:
 - **Approval ("ok", "aprovado", "pode rodar /ralph-loop"):** flip the spec status from
   `DRAFT` to `APPROVED`. Stop. The user runs `/ralph-loop` themselves.
 - **Changes requested:** apply the requested changes to the spec file, **then re-run
-  Phase 2 self-review from scratch** (3 reviewers in parallel, fixes triviais
+  Phase 2 self-review from scratch** (4 reviewers in parallel, fixes triviais
   inline), **then re-present Phase 3**. The cycle continues until the user approves
   or rejects. Re-running the review on every iteration is intentional — a correction
   is itself spec text that can introduce regressions, and the runtime cost (seconds

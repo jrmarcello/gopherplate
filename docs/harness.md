@@ -229,6 +229,9 @@ Reference: [docs/guides/learning-loop.md](guides/learning-loop.md)
 | --- | --- | --- | --- | --- | --- |
 | `validate-spec lint` | sensor | C | meta | scaffold-time | [tools/validate-spec/](../tools/validate-spec/) — deterministic SDD linter; gates `/spec` (pre-review) and `/ralph-loop` (startup); see [guides/spec-linter.md](guides/spec-linter.md) |
 | `validate-spec manifest --write` | guide | C | meta | scaffold-time | [tools/validate-spec/](../tools/validate-spec/) — generates `docs/capabilities/MANIFEST.md`; run via `make capabilities-manifest` |
+| `validate-spec files <spec>` | sensor | C | meta | scaffold-time | [tools/validate-spec/](../tools/validate-spec/) — prints the union of all `files:` entries declared across tasks; used by `/ralph-loop` wrap-up files-vs-diff audit; run via `make spec-files-audit FILE=<spec>` |
+| `validate-spec capabilities [dir]` | sensor | C | meta | on-demand | [tools/validate-spec/](../tools/validate-spec/) — detects capability↔code drift: `## Code` `os.Stat` presence check + `git-log` staleness WARN; run via `make capabilities-check` |
+| `validate-spec bootstrap-capability <pkg>` | guide | C | meta | scaffold-time | [tools/validate-spec/](../tools/validate-spec/) — generates a skeleton capability doc for a package that does not yet have one in `docs/capabilities/` |
 
 ### OpenTelemetry / business metrics (continuous sensors)
 
@@ -251,6 +254,8 @@ reference with sensors above (each target invokes one or more):
 - `make proto` / `make proto-lint` — buf generate / lint
 - `make validate-spec` — run `tools/validate-spec` linter on all slug-bearing specs
 - `make capabilities-manifest` — regenerate `docs/capabilities/MANIFEST.md` via `tools/validate-spec manifest --write`
+- `make capabilities-check` — detect capability↔code drift via `validate-spec capabilities`
+- `make spec-files-audit FILE=<spec>` — print declared-files union for a spec via `validate-spec files`
 
 ## Known gaps
 
@@ -271,6 +276,11 @@ the sensor or guide. Links may be broken until the corresponding spec ships.
 | ~~No closed-loop learning system — harness improvements are 100% manual; patterns surfaced by transcripts/specs/git are never extracted, indexed, or surfaced back to the agent.~~ **Resolved by spec learning-loop-harness** (DONE) — see [tools/learn/](../tools/learn/), the 5 `/learn-*` skills, 3 hooks, rubric `.claude/rules/skill-quality.md`, and [docs/guides/learning-loop.md](guides/learning-loop.md). | meta | [.specs/learning-loop-harness.md](../.specs/learning-loop-harness.md) |
 | ~~No living, current-truth capability documentation — the only way to learn what a subsystem guarantees today was to reverse-engineer code + `DONE` specs.~~ **Resolved by spec SDDX** (DONE) — see [docs/capabilities/](../docs/capabilities/) (four seeded docs + `README.md` + `TEMPLATE.md`) and the capability-doc update step in `/ralph-loop` wrap-up. | behavior | [.specs/sdd-capabilities-and-validation.md](../.specs/sdd-capabilities-and-validation.md) |
 | ~~SDD structural rules were inferential-only — the 3-agent self-review was the first gate, leaving mechanical errors (missing sections, bad status token, REQ↔TC gaps, broken `depends:` DAG) discoverable only at review time.~~ **Resolved by spec SDDX** (DONE) — see [tools/validate-spec/](../tools/validate-spec/) deterministic linter + [docs/guides/spec-linter.md](guides/spec-linter.md). | meta | [.specs/sdd-capabilities-and-validation.md](../.specs/sdd-capabilities-and-validation.md) |
+| ~~No round-trip validation between `tests:` metadata and declared TC IDs — a task could reference a non-existent TC (or a TC could go untasked) without any deterministic catch.~~ **Resolved by spec SDDF** (DONE) — `validate-spec lint` now runs `testsRefValid` (every `tests:` entry is a declared TC) + `tcReferenced` (every TC is referenced by ≥1 task). | meta | [.specs/sddf.md](../.specs/sddf.md) |
+| ~~Capability docs could drift from code silently — no sensor checked whether the `## Code` paths still exist or the doc had become stale.~~ **Resolved by spec SDDF** (DONE) — `validate-spec capabilities` detects `## Code` `os.Stat` misses and `git-log` staleness; run via `make capabilities-check`. Capability docs now carry a `## Code` section and `Last-verified` marker. | behavior | [.specs/sddf.md](../.specs/sddf.md) |
+| ~~No search-first requirement before authoring a spec — implementations could duplicate existing patterns without checking existing code first.~~ **Resolved by spec SDDF** (DONE) — `/ralph-loop` wrap-up now requires a brownfield search-first step; undeclared files in the diff surface as MUST FIX via the `validate-spec files` audit. | meta | [.specs/sddf.md](../.specs/sddf.md) |
+| ~~Security lens was absent from spec authoring — the 3-agent self-review had no dedicated security perspective at the spec stage.~~ **Resolved by spec SDDF** (DONE) — `/spec` authoring now runs a 4th agent (`security-reviewer`) in parallel; see [guides/spec-linter.md](guides/spec-linter.md). | behavior | [.specs/sddf.md](../.specs/sddf.md) |
+| Fowler-audit "phantom refs" gap (#6) — Fowler's article flags phantom function references as a harness gap. **Already satisfied**: `/fix-issue` (`.claude/skills/fix-issue/SKILL.md`) uses the full understand→plan→implement→test workflow; `.specs/TEMPLATE.md` provides canonical spec scaffolding that prevents phantom task/REQ references. No dedicated sensor needed. | meta | (no spec — gap does not apply to this repo) |
 
 For the process of identifying new gaps and evolving the harness, see
 [harness-self-steering.md](guides/harness-self-steering.md).

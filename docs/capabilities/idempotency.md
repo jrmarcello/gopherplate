@@ -9,6 +9,13 @@
 - Specs: n/a — pre-SDD
 - ADRs: [docs/adr/008-api-response-format.md](../adr/008-api-response-format.md)
 
+## Code
+
+- pkg/idempotency/ — Store interface + Redis implementation (SHA-256 fingerprint, lock/unlock)
+- internal/infrastructure/web/middleware/idempotency.go — middleware (POST dedup, 409 on contention, 5xx-not-cached, fail-open)
+
+Last-verified: 2026-06-21 (472fbb9)
+
 ## Guarantees (current truth)
 
 - The `Idempotency-Key` header is the opt-in signal; if the header is absent, the request is processed normally with no deduplication.

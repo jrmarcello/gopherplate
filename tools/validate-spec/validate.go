@@ -91,6 +91,8 @@ func validate(m model) []finding {
 		validateIDFormat,
 		validateIDUnique,
 		validateTCRefValid,
+		validateTestsRefValid,
+		validateTCReferenced,
 		validateCapabilityLinked,
 	}
 
@@ -210,9 +212,56 @@ func validateReqCovered(m model) []finding {
 func validateTaskHasFiles(m model) []finding {
 	var fs []finding
 	for _, t := range m.tasks {
+		if t.execOnly {
+			continue
+		}
 		if len(t.files) == 0 {
 			fs = append(fs, finding{line: t.line, sev: severityError,
 				msg: fmt.Sprintf("task %s has no files: entry", t.id)})
+		}
+	}
+	return fs
+}
+
+// validateTestsRefValid checks that every TC ID referenced in a task's tests: entry
+// is actually declared in the Test Plan. Skipped when the spec has no slug (grandfathered).
+func validateTestsRefValid(m model) []finding {
+	if m.slug == "" {
+		return nil
+	}
+	tcSet := make(map[string]bool)
+	for _, tc := range m.tcs {
+		tcSet[tc.id] = true
+	}
+	var fs []finding
+	for _, t := range m.tasks {
+		for _, ref := range t.tests {
+			if !tcSet[ref] {
+				fs = append(fs, finding{line: t.line, sev: severityError,
+					msg: fmt.Sprintf("task %s tests: references undeclared TC %q", t.id, ref)})
+			}
+		}
+	}
+	return fs
+}
+
+// validateTCReferenced checks that every TC declared in the Test Plan is referenced
+// by at least one task's tests: entry. Skipped when the spec has no slug (grandfathered).
+func validateTCReferenced(m model) []finding {
+	if m.slug == "" {
+		return nil
+	}
+	referenced := make(map[string]bool)
+	for _, t := range m.tasks {
+		for _, ref := range t.tests {
+			referenced[ref] = true
+		}
+	}
+	var fs []finding
+	for _, tc := range m.tcs {
+		if !referenced[tc.id] {
+			fs = append(fs, finding{line: tc.line, sev: severityError,
+				msg: fmt.Sprintf("TC %s is declared but referenced by no task's tests:", tc.id)})
 		}
 	}
 	return fs
