@@ -86,7 +86,7 @@ func findEvent(spans []tracetest.SpanStub, name string) (sdktrace.Event, bool) {
 func eventAttr(ev sdktrace.Event, key string) string {
 	for _, attr := range ev.Attributes {
 		if string(attr.Key) == key {
-			return attr.Value.Emit()
+			return attr.Value.String()
 		}
 	}
 	return ""
