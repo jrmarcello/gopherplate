@@ -75,11 +75,22 @@ jobs:
 
       - name: Wait for Postgres
         if: env.BASELINE_MISSING != 'true'
+        # -h 127.0.0.1 forces a TCP probe: the temporary server postgres runs during
+        # initdb only listens on the unix socket, so a socket-based pg_isready reports
+        # ready *before* the restart into the final server — and a client connecting
+        # from the host in that window gets "connection reset by peer". Requiring 3
+        # consecutive TCP successes rides out the restart window entirely.
         run: |
+          consecutive=0
           for i in $(seq 1 60); do
-            if docker exec gopherplate-db pg_isready -U user -d gopherplate >/dev/null 2>&1; then
-              echo "Postgres ready after ${i}s"
-              exit 0
+            if docker exec gopherplate-db pg_isready -h 127.0.0.1 -U user -d gopherplate >/dev/null 2>&1; then
+              consecutive=$((consecutive + 1))
+              if [ "$consecutive" -ge 3 ]; then
+                echo "Postgres ready after ${i}s (3 consecutive TCP probes)"
+                exit 0
+              fi
+            else
+              consecutive=0
             fi
             sleep 1
           done
