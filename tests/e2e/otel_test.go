@@ -161,7 +161,7 @@ func TestE2E_OTel_GetUserNotFound_ClassifiedAsWarn(t *testing.T) {
 	for _, s := range spans {
 		for _, kv := range s.Attributes {
 			if string(kv.Key) == "app.result" {
-				seenAttrs = append(seenAttrs, s.Name+":"+kv.Value.Emit())
+				seenAttrs = append(seenAttrs, s.Name+":"+kv.Value.String())
 				if kv.Value.AsString() == "not_found" {
 					foundResultAttr = true
 				}
