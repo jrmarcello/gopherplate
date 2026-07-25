@@ -37,7 +37,7 @@ ENV_FILE := $(shell test -f .env && echo "--env-file .env" || echo "")
 .PHONY: help setup tools go-tools-check docker-check k6-check kind-check \
         dev run run-stop build build-cli install-cli clean lint security vulncheck swagger \
         proto proto-lint \
-        test test-unit test-e2e test-coverage mutation deadcode coverage-delta golden-update \
+        test test-unit test-e2e test-coverage validate-spec capabilities-manifest capabilities-check spec-files-audit mutation deadcode coverage-delta golden-update \
         semgrep semgrep-test buf-breaking ci-local \
         load-smoke load-test load-stress load-spike load-kind load-clean \
         load-baseline load-regression \
@@ -105,7 +105,7 @@ help: ## Exibe esta mensagem de ajuda
 	@grep -Eh '^proto.*:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "\033[1;33m  Testing\033[0m"
-	@grep -Eh '^(test|test-unit|test-e2e|test-coverage|mutation|deadcode|coverage-delta|golden-update|semgrep|semgrep-test|buf-breaking|ci-local):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -Eh '^(test|test-unit|test-e2e|test-coverage|validate-spec|capabilities-manifest|capabilities-check|spec-files-audit|mutation|deadcode|coverage-delta|golden-update|semgrep|semgrep-test|buf-breaking|ci-local):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "\033[1;33m  Docker\033[0m"
 	@grep -Eh '^docker-(up|down|build):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -161,9 +161,9 @@ tools: ## Instala ferramentas de desenvolvimento
 	@go install github.com/air-verse/air@latest
 	@go install github.com/pressly/goose/v3/cmd/goose@latest
 	@go install github.com/evilmartians/lefthook/v2@latest
-	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4  # pinned to match ci.yml golangci-lint-action version
 	@go install github.com/swaggo/swag/cmd/swag@latest
-	@go install golang.org/x/vuln/cmd/govulncheck@latest
+	@go install golang.org/x/vuln/cmd/govulncheck@v1.1.4  # pinned: v1.4.0 panics on generics (x/tools ForEachElement *types.TypeParam)
 	@go install golang.org/x/tools/cmd/goimports@latest
 	@echo "Tools installed in $(GOBIN)"
 
@@ -268,17 +268,57 @@ test: ## Roda todos os testes
 	go test ./... -v
 
 test-unit: ## Roda apenas testes unitarios
-	go test ./pkg/... ./config/... ./internal/... -v
+	go test ./pkg/... ./config/... ./internal/... ./tools/... -v
 
 test-e2e: ## Roda testes e2e (requer Docker)
 	go test ./tests/e2e/... -v -count=1
 
 test-coverage: ## Gera relatorio de cobertura (exclui bootstrap/wiring)
 	@mkdir -p tests/coverage
-	go test $$(go list ./internal/... ./pkg/... ./config/... | grep -v -E '(web/handler$$|web/router$$|telemetry$$|db/postgres$$)') -coverprofile=tests/coverage/coverage.out
+	go test $$(go list ./internal/... ./pkg/... ./config/... ./tools/... | grep -v -E '(web/handler$$|web/router$$|telemetry$$|db/postgres$$)') -coverprofile=tests/coverage/coverage.out
 	@go tool cover -func=tests/coverage/coverage.out | tail -1
 	go tool cover -html=tests/coverage/coverage.out -o tests/coverage/coverage.html
 	@echo "Coverage report: tests/coverage/coverage.html"
+
+validate-spec: ## Valida a estrutura das specs SDD (.specs/*.md com '## Slug:', exceto TEMPLATE.md) — ou FILE=<path>
+	@if [ -n "$(FILE)" ]; then \
+		go run ./tools/validate-spec "$(FILE)"; \
+	else \
+		files=$$(grep -lE '^## Slug:' .specs/*.md 2>/dev/null | grep -v 'TEMPLATE.md'); \
+		if [ -z "$$files" ]; then echo "validate-spec: nenhuma spec com '## Slug:' para lintar"; exit 0; fi; \
+		go run ./tools/validate-spec $$files; \
+	fi
+
+capabilities-manifest: ## Regenera docs/capabilities/MANIFEST.md a partir dos capability docs
+	go run ./tools/validate-spec manifest --write
+
+capabilities-check: ## Valida cada capability doc em docs/capabilities/ — paths de código inexistentes são erro; staleness é warning
+	go run ./tools/validate-spec capabilities docs/capabilities
+
+spec-files-audit: ## Audita o working tree (staged+unstaged+untracked) vs files: declarados na spec FILE=<path>; declaração de diretório (path/) cobre tudo abaixo; exit 1 se houver arquivo sem dono
+	@if [ -z "$(FILE)" ]; then \
+		echo "spec-files-audit: FILE não definido. Use: make spec-files-audit FILE=.specs/minha-spec.md"; \
+		exit 1; \
+	fi
+	@df=$$(mktemp); cf=$$(mktemp); uf=$$(mktemp); \
+	go run ./tools/validate-spec files "$(FILE)" | sort -u > "$$df"; \
+	{ git diff --name-only; git diff --name-only --cached; git ls-files --others --exclude-standard; } 2>/dev/null | sort -u > "$$cf"; \
+	while IFS= read -r f; do \
+		[ -z "$$f" ] && continue; \
+		case "$$f" in $(FILE)|.specs/wiring/*|docs/capabilities/MANIFEST.md|gen/*) continue ;; esac; \
+		grep -qxF "$$f" "$$df" && continue; \
+		covered=0; \
+		while IFS= read -r d; do \
+			case "$$d" in */) case "$$f" in "$$d"*) covered=1; break ;; esac ;; esac; \
+		done < "$$df"; \
+		[ "$$covered" = 1 ] && continue; \
+		echo "$$f" >> "$$uf"; \
+	done < "$$cf"; \
+	if [ -s "$$uf" ]; then \
+		echo "spec-files-audit: arquivos alterados fora do conjunto declarado em $(FILE):"; cat "$$uf"; rm -f "$$df" "$$cf" "$$uf"; exit 1; \
+	else \
+		echo "OK — no undeclared files"; rm -f "$$df" "$$cf" "$$uf"; \
+	fi
 
 mutation: ## Roda mutation testing (gremlins) sobre internal/usecases/... — ~minutos, use em CI noturno
 	@which gremlins >/dev/null 2>&1 || go install github.com/go-gremlins/gremlins/cmd/gremlins@latest

@@ -360,17 +360,25 @@ Para features complexas, o template oferece um fluxo spec-driven com execução 
 
 ```text
 /spec "Add audit logging to user write operations"
-  → Gera .specs/user-audit-log.md (requisitos, design, tasks)
+  → Gera .specs/user-audit-log.md (requisitos, design, tasks; declara ## Slug:, IDs slug-prefixados)
+  → Roda tools/validate-spec (linter determinístico, incluindo round-trip testsRefValid + tcReferenced)
+  → Self-review com 4 agentes em paralelo: spec-reviewer + test-reviewer + code-reviewer + security-reviewer
   → Você revisa e aprova
 
 /ralph-loop .specs/user-audit-log.md
-  → Executa task por task autonomamente
-  → Stop hook controla iteração (exit code 2)
-  → Validação completa roda no final
+  → Valida spec (status + tools/validate-spec) na startup
+  → Executa tasks autonomamente — brownfield search-first antes de novo código
+  → (paralelo via worktrees, auto-rollback em falha parcial)
+  → Wrap-up: files-vs-diff audit (make spec-files-audit) + atualiza docs/capabilities/*.md + regenera MANIFEST.md
+  → Você revisa e aprova antes do commit
 
 /spec-review .specs/user-audit-log.md
   → Verifica implementação contra requisitos
 ```
+
+Cada nova spec declara um `## Slug:` (UPPERCASE) e usa IDs `<SLUG>-REQ-N` / `<SLUG>-TC-<TYPE>-NN`. O `tools/validate-spec` (rodado via `make validate-spec`) valida estrutura, cobertura REQ↔TC, round-trip `tests:`↔TC, DAG de `depends:` e mais, de forma determinística — antes dos agentes de review.
+
+**Capability docs** em `docs/capabilities/` documentam o que cada subsistema garante AGORA (invariantes verificáveis), distintos de guias (como usar) e ADRs (por que, imutáveis). Cada doc carrega uma seção `## Code` com os paths de implementação e um marcador `Last-verified`. O `/ralph-loop` atualiza o capability doc relevante no wrap-up; `make capabilities-check` detecta drift (path inexistente = ERROR, doc desatualizado vs. git-log = WARNING).
 
 O `/spec` analisa automaticamente dependências entre tasks e gera **Parallel Batches** — tasks sem arquivos compartilhados nem dependências podem rodar em paralelo. Arquivos compartilhados são classificados como exclusivos, aditivos (accumulator pattern) ou mutativos (serializados).
 
@@ -456,8 +464,10 @@ O projeto inclui 9 ADRs (Architecture Decision Records) em `docs/adr/` explicand
 | [kubernetes.md](docs/guides/kubernetes.md) | Deploy, Kind e operação |
 | [multi-database.md](docs/guides/multi-database.md) | Estratégia para serviços com múltiplos bancos |
 | [sdd-ralph-loop.md](docs/guides/sdd-ralph-loop.md) | SDD + Ralph Loop — fluxo spec-driven com execução autônoma |
+| [spec-linter.md](docs/guides/spec-linter.md) | `tools/validate-spec` — linter determinístico de specs SDD (validadores, exit codes, grandfathering) |
 | [grpc.md](docs/guides/grpc.md) | gRPC como alternativa ao REST (buf, dual server, interceptors) |
 | [recommended-libraries.md](docs/guides/recommended-libraries.md) | Bibliotecas recomendadas (resiliência, crypto, event bus, notificações, sagas) |
+| [capabilities/](docs/capabilities/) | Capability docs — verdade corrente de cada subsistema (invariantes verificáveis, lifecycle Active→Superseded→Archived, `MANIFEST.md` gerado) |
 | [harness.md](docs/harness.md) | Mapa do harness do projeto (guides e sensors classificados) |
 | [harness-self-steering.md](docs/guides/harness-self-steering.md) | Processo de evolução do harness: quando abrir gap note, revisão mensal |
 | [perf-regression.md](docs/guides/perf-regression.md) | Gate de regressão de performance via k6 baseline |

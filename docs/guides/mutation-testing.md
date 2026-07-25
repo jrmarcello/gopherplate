@@ -20,7 +20,7 @@ this line were wrong?".
 testing finds these blind spots.
 
 Fowler lists mutation testing as a **post-integration maintainability sensor** (slow, expensive,
-runs after merge). The template is configured this way: nightly CI job, 30-day artifact, no PR
+runs after merge). The template is configured this way: weekly CI job, 30-day artifact, no PR
 gate. Efficacy is read as a trend over weeks, not as a commit-level check.
 
 ## Running it
@@ -40,7 +40,7 @@ minutes for gathering coverage, then ~5-30s per mutant depending on test runtime
 
 ### In CI
 
-[.github/workflows/mutation-nightly.yml](../../.github/workflows/mutation-nightly.yml) runs daily
+[.github/workflows/mutation-nightly.yml](../../.github/workflows/mutation-nightly.yml) runs weekly (Mondays)
 at 03:00 UTC and uploads the full report as a workflow artifact (`mutation-report-<run-id>`,
 30-day retention). Manual trigger via `workflow_dispatch` is available.
 

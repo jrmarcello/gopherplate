@@ -50,6 +50,12 @@ Triagem dos achados segue a máxima do projeto: **qualidade > velocidade > custo
 You receive a path to a spec file. Read it end-to-end first, then audit each section
 below.
 
+> **`tools/validate-spec` is the deterministic pre-filter.** Its structural checks (required
+> sections, REQ↔TC coverage, acyclic `depends:`, batch file-overlap, `## Status:` / `## Slug:` /
+> ID format + uniqueness, TC-prefix registry) have already passed before you run — do not
+> re-litigate them. Spend your effort on the **semantic** gaps the linter cannot see: ambiguous
+> REQs, missing boundary/infra-failure TCs, layer violations, weak design choices.
+
 ### 1. Requirements
 
 - Each REQ is unambiguous (GIVEN/WHEN/THEN form, no "should kinda")
@@ -57,6 +63,10 @@ below.
 - No `[NEEDS CLARIFICATION]` left unresolved
 - The Context section explains *why* the feature exists, not just *what*
 - REQs at the right altitude: business behavior, not implementation detail
+- The spec declares a `## Slug:` (UPPERCASE, `^[A-Z][A-Z0-9]*$`) and all REQ/TC IDs are
+  slug-prefixed (`<SLUG>-REQ-N`, `<SLUG>-TC-<TYPE>-NN`); documentation-only REQs carry a
+  `(no-test: <reason>)` annotation with a non-empty reason (the linter enforces format; you check
+  the reason is honest — not a dodge for a REQ that *does* have testable code)
 
 ### 2. Test Plan completeness (highest leverage)
 
@@ -124,6 +134,9 @@ below.
   - Manual DI in `cmd/api/server.go:buildDependencies()` — no DI framework
   - Optional dependencies via builder methods (`.WithCache()`)
 - Affected files list is complete (no "and stuff" hand-waves)
+- The Design links the **impacted capability** (`docs/capabilities/*.md`) whose guarantees this
+  change affects — or explicitly states "new subsystem → a new capability doc will be created". A
+  behavior change with no capability-doc link is a SHOULD FIX (the `/ralph-loop` wrap-up needs it)
 - Dependencies declared (new packages → `go.mod`, new env vars → `config/`, new
   migrations → Goose file in `internal/infrastructure/db/postgres/migration/`)
 - **Layer violations** flagged: domain importing usecases or infrastructure; usecases

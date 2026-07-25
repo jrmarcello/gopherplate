@@ -37,8 +37,9 @@ does as part of its Phase 3.
 
 ### 1. Load Spec
 
-- Read the spec file (status should be `DONE`).
-- Extract all `REQ-N` entries verbatim (so the report can quote them).
+- Read the spec file (status should be `DONE`, or `SUPERSEDED`/`ARCHIVED` for a retired spec).
+- Extract all `<SLUG>-REQ-N` entries verbatim — slug-prefixed; legacy specs without a `## Slug:`
+  use bare `REQ-N` — so the report can quote them.
 - Extract all Validation Criteria checkboxes.
 - Note the Design section for architectural intent — the implementation must
   match it, not just "do something close".

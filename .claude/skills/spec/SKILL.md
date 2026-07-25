@@ -46,14 +46,23 @@ The skill runs three phases back-to-back in a single response:
      is the minimal multi-domain DI example)
    - `docs/guides/error-handling.md` and `docs/guides/observability.md` if the change
      adds error paths or instrumentation
+   - `docs/capabilities/README.md` + the capability doc(s) of the subsystem(s) this
+     change touches — identify the **impacted capability** to link in Design (or note
+     "new subsystem → a new capability doc will be created")
 3. **Pick a name.** Lowercase, hyphen-separated:
    `.specs/user-audit-log.md`, `.specs/role-permissions.md`, `.specs/fix-cache-stampede.md`.
 4. **Write `.specs/<name>.md`** from `.specs/TEMPLATE.md`. Fill in:
+   - **Slug** — a `## Slug:` line (UPPERCASE, `^[A-Z][A-Z0-9]*$`). All REQ/TC IDs are
+     slug-prefixed: `<SLUG>-REQ-N` and `<SLUG>-TC-<TYPE>-NN` (registered TYPEs:
+     `D`/`UC`/`E2E`/`S`, plus `SH`/`CT` for harness specs). Documentation-only REQs carry a
+     `(no-test: <reason>)` annotation on their declaration line.
    - **Context** — why the feature exists, link to relevant ADRs / guides.
    - **Requirements** in GIVEN/WHEN/THEN form. No vague "should kinda".
    - **Test Plan** (see *Test Plan rigor* below — this is the load-bearing section).
-   - **Design** — approach paragraph + affected files + dependencies. Mark unknown
-     items `[NEEDS CLARIFICATION]`.
+   - **Design** — approach paragraph + affected files + dependencies, plus an
+     **Impacted Capability** link to the relevant `docs/capabilities/*.md` (or
+     "new subsystem → a new capability doc will be created"). Mark unknown items
+     `[NEEDS CLARIFICATION]`.
    - **Tasks** — concrete, ordered, each with `files:`, `tests:` (TC-IDs),
      `depends:`. The accumulator pattern (see below) must be applied here, before
      batches are computed.
@@ -66,7 +75,15 @@ The skill runs three phases back-to-back in a single response:
 
 ### Phase 2 — Self-review (BLOCKING — runs every time)
 
-Spawn **three review agents in parallel** in a single message with three Agent calls:
+**Phase 2a — Deterministic linter gate (runs FIRST, before the agents).** Run
+`go run ./tools/validate-spec .specs/<name>.md` (or `make validate-spec FILE=.specs/<name>.md`).
+If it exits non-zero (a lint ERROR — missing required section, broken REQ↔TC coverage, cyclic
+`depends:`, batch file-overlap, bad slug/ID format, …), fix the reported issues (mechanically when
+trivial; surface as a judgment call otherwise) and re-run until it exits 0. The linter is the
+deterministic pre-filter — it encodes the structural rules of `.claude/rules/sdd.md`; only once it
+passes do you spawn the inferential agents, which focus on the semantic gaps it cannot see.
+
+**Phase 2b — Spawn four review agents in parallel** in a single message with four Agent calls:
 
 ```text
 Agent(spec-reviewer): Review .specs/<name>.md for gaps, ambiguity, missing tests, rule violations, and architectural mismatches.
@@ -74,9 +91,18 @@ Agent(spec-reviewer): Review .specs/<name>.md for gaps, ambiguity, missing tests
 Agent(test-reviewer): Audit the Test Plan section of .specs/<name>.md for coverage gaps — every REQ has TC, every sentinel error has TC, every validated field has boundary TCs, every external dependency call has an infra-failure TC, every conditional branch has TCs for both paths. Apply the sdd.md rigor check (error TCs outnumber happy-path TCs).
 
 Agent(code-reviewer): Audit the Design section of .specs/<name>.md for project-rule adherence — Clean Architecture layer rules (domain ← usecases ← infrastructure), apperror mapping, span classification (WarnSpan vs FailSpan), DI pattern, response helpers (httpgin), idempotency on write paths, gRPC parity if applicable.
+
+Agent(security-reviewer): Audit .specs/<name>.md in spec-review mode (pre-code — no diff exists yet). Check:
+  1. Tenant/scope isolation — does the spec plan appropriate resource scoping so one tenant cannot read another's data?
+  2. PII in planned logs/fixtures — any REQ or Design element that would log, fixture, or expose email addresses, full names, phone numbers, or tokens? Flag per .claude/rules/security.md "never log PII". These are MUST FIX.
+  3. Service-key auth for every new endpoint — for each planned HTTP route and gRPC method, verify the spec names the service-key middleware (HTTP) or interceptor (gRPC). Reject "internal-only ⇒ no auth" reasoning outright (ADR-005; .claude/rules/security.md "service key authentication required on all API endpoints"). Missing auth on any new endpoint is MUST FIX.
+  4. Sentinel→status resource leak — do the planned error→HTTP-status mappings risk leaking a cross-context resource's existence? (e.g. returning 404 vs 403 in a way that reveals another tenant's ID)
+  5. Secrets in planned fixtures — any test fixture, golden file, or seed data that would contain real credentials, API keys, or tokens?
+  6. Dependencies section — for every new dependency listed in the spec's ## Dependencies, flag any that add network calls (HTTP clients, SDKs, message-bus libs) or replace stdlib (crypto, encoding, TLS). These require explicit justification in the spec. Flag as MUST FIX if justification is absent.
+  Rate findings: CRITICAL / HIGH / MEDIUM / LOW. CRITICAL and HIGH are never auto-fixed; always surface to user.
 ```
 
-Wait for all three. Aggregate findings:
+Wait for all four. Aggregate findings:
 
 1. **Apply trivially-correct fixes inline** to the spec file:
    - Missing TC-IDs for declared sentinel errors → add the entry to the Test Plan.
@@ -138,7 +164,7 @@ After presenting, three things can happen:
 - **Approval ("ok", "aprovado", "pode rodar /ralph-loop"):** flip the spec status from
   `DRAFT` to `APPROVED`. Stop. The user runs `/ralph-loop` themselves.
 - **Changes requested:** apply the requested changes to the spec file, **then re-run
-  Phase 2 self-review from scratch** (3 reviewers in parallel, fixes triviais
+  Phase 2 self-review from scratch** (4 reviewers in parallel, fixes triviais
   inline), **then re-present Phase 3**. The cycle continues until the user approves
   or rejects. Re-running the review on every iteration is intentional — a correction
   is itself spec text that can introduce regressions, and the runtime cost (seconds

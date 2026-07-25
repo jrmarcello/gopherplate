@@ -1,9 +1,9 @@
-name: Mutation Testing (nightly)
+name: Mutation Testing (weekly)
 
 on:
   schedule:
-    # 03:00 UTC daily — after most PRs have merged, before morning review.
-    - cron: '0 3 * * *'
+    # 03:00 UTC every Monday — weekly cadence (daily was overkill for a template).
+    - cron: '0 3 * * 1'
   workflow_dispatch:
 
 permissions:
@@ -31,7 +31,7 @@ jobs:
         run: go install github.com/go-gremlins/gremlins/cmd/gremlins@latest
 
       - name: Run mutation testing
-        # Informational — nightly report, not a PR gate. Don't fail the
+        # Informational — weekly report, not a PR gate. Don't fail the
         # workflow on low efficacy; thresholds in .gremlins.yaml are 0.
         id: mutation
         continue-on-error: true

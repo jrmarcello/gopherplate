@@ -36,13 +36,19 @@ The only pause point is between Present and Commit (waiting for the user to appr
 
 ### Phase 1 — Validate inputs
 
-1. Read the spec file. Refuse if status ≠ `APPROVED` or `IN_PROGRESS`.
+1. Read the spec file. Refuse if status ≠ `APPROVED` or `IN_PROGRESS` (a terminal `DONE` /
+   `FAILED` / `SUPERSEDED` / `ARCHIVED` spec is not executable — see the state machine in
+   `.claude/rules/sdd.md`).
 2. Verify the **Parallel Batches** section exists. If missing, regenerate from
    `files:`/`depends:` and warn.
 3. Verify the **Test Plan** section is non-empty.
-4. Verify no other `.specs/*.active.md` exists (legacy state file from old Stop-hook
+4. **Deterministic gate:** run `go run ./tools/validate-spec <spec>` (or
+   `make validate-spec FILE=<spec>`). If it exits non-zero (a lint ERROR), STOP and refuse to
+   execute — report the findings and tell the user to fix the spec or re-run `/spec`. The linter
+   encodes the structural rules of `.claude/rules/sdd.md`.
+5. Verify no other `.specs/*.active.md` exists (legacy state file from old Stop-hook
    ralph-loop). If found, delete it — single-run mode doesn't use state files.
-5. Set spec status to `IN_PROGRESS` (if not already).
+6. Set spec status to `IN_PROGRESS` (if not already).
 
 If anything fails: stop, report what's missing, and tell the user to re-run `/spec`
 or fix the spec manually.
@@ -72,6 +78,15 @@ Execute inline in the main working tree (no worktree overhead):
      content: STOP, report the conflict, leave the task `[ ]`.
    - On merge success, run `gofmt -w` on the target file, then `go build ./...`.
 3. **Else if `tests:` present (TDD cycle):**
+   - **SEARCH FIRST (brownfield discipline):** Before writing any new file or new
+     function, search `internal/` and `pkg/` for an existing implementation that
+     covers the same concern:
+     ```bash
+     grep -r "<keyword>" internal/ pkg/ --include="*.go" -l
+     ```
+     If a suitable existing helper, use case, value object, or repository method
+     is found, **reuse it** — do not re-implement. Document the reuse decision in
+     the Execution Log entry (`REUSED: <pkg>.<Symbol>`).
    - **RED:** Write the test file(s) first with all listed TCs as table-driven
      entries (test names: natural English, not TC-IDs). Run
      `go test ./<relevant-pkg>/...` to confirm RED state (compile fail OR test fail).
@@ -125,6 +140,10 @@ write that fragment instead of editing the shared target file directly.
 Format spec: `.claude/rules/sdd.md` §Merge Strategy (accumulator pattern).
 
 ## TDD Cycle
+0. SEARCH FIRST (brownfield discipline): before writing any new file or function,
+   grep `internal/` and `pkg/` for an existing implementation of the same concern
+   (`grep -r "<keyword>" internal/ pkg/ --include="*.go" -l`). Reuse what exists;
+   do not re-implement. Note reuse as `REUSED: <pkg>.<Symbol>` in your report.
 1. Write tests FIRST (*_test.go) for all TCs listed
 2. `go test ./<relevant-pkg>/...` to confirm RED
 3. Implement production code
@@ -222,6 +241,43 @@ Before merging anything, count how many agents succeeded:
   - **Optional but recommended:** `make ci-local` — simulates a fresh-clone CI run
     in an isolated worktree and catches drift the local pipeline misses (proto-gen,
     swag drift, lint variation). Worth the 30–60s if the change is non-trivial.
+- **Wrap-up — capability docs (audited artifact, not an afterthought):** for each subsystem whose
+  behavior changed, update its `docs/capabilities/*.md` — the `## Guarantees (current truth)`
+  section plus a `## Changelog` `ADDED`/`MODIFIED`/`REMOVED` entry tagged with the spec slug — then
+  regenerate the index: `make capabilities-manifest`. The Phase-3 reviewers check this was done.
+- **Wrap-up — files-vs-diff audit (undeclared file gate):** compute the union of every `files:`
+  entry across all spec tasks, then compare it against the full changed set:
+  ```bash
+  # declared files union (from spec tooling)
+  go run ./tools/validate-spec files <spec>           # prints one path per line
+
+  # changed set = the WORKING TREE at wrap-up: staged + unstaged + untracked.
+  # ralph-loop commits only in Phase 5 (AFTER this audit), so every change this spec
+  # made is still uncommitted here; `main...HEAD` would add only prior-spec noise on a
+  # stacked branch. `git ls-files --others` is REQUIRED — plain `git diff` does NOT list
+  # newly-created untracked files, which is exactly what this gate must catch.
+  { git diff --name-only; git diff --name-only --cached; git ls-files --others --exclude-standard; } | sort -u
+  ```
+  Subtract the declared set and the following allowlist (these are never considered
+  undeclared regardless of content):
+  - the spec file itself (`.specs/<name>.md`)
+  - wiring fragments (`.specs/wiring/<spec-slug>/**`)
+  - capabilities manifest (`docs/capabilities/MANIFEST.md`)
+  - generated stubs (`gen/**`)
+
+  A declared entry ending in `/` (a directory, e.g. `tools/validate-spec/testdata/`)
+  covers every changed file beneath it via **prefix match** — a task that declares a
+  directory owns all files under it. Exact paths match exactly.
+
+  Any file that remains after subtraction is an **UNDECLARED FILE**. This is a
+  **MUST FIX — stop immediately**, report the file(s), and ask the user whether to
+  add them to the spec's `files:` or revert them. Do not proceed to Phase 3 until
+  resolved. This mirrors the auto-rollback contract: never silently carry
+  out-of-scope changes into the commit.
+
+  > `make spec-files-audit FILE=<spec>` runs the same check as a standalone
+  > one-liner. The allowlist exempts files only from this declaration gate; it
+  > never exempts them from the Phase-3 content review lenses.
 - Capture the diff vs `main` (`git diff main...HEAD --stat`) for the self-review phase.
 
 ### Phase 3 — Self-review (BLOCKING — runs every time)
@@ -235,6 +291,8 @@ Agent(code-reviewer): Review the implementation of .specs/<name>.md against:
   - Clean Architecture layer rules: domain ← usecases ← infrastructure
   - apperror mapping (toAppError), span classification (WarnSpan / FailSpan)
   - DI pattern (manual wiring in cmd/api/server.go), httpgin response helpers
+  - the impacted docs/capabilities/*.md was updated (guarantees + Changelog) when behavior
+    changed, and the manifest regenerated (make capabilities-manifest)
   Flag MUST FIX / SHOULD FIX / NICE TO HAVE.
 
 Agent(test-reviewer): Audit the tests added by .specs/<name>.md:
@@ -363,6 +421,27 @@ After presenting, three things can happen:
   be marked `[x]`, the Execution Log appended to. Nothing else.
 - Does not skip phase 3 (self-review). Even for trivial specs, the review pass runs.
 - Does not push to remote. The user runs `git push` (or asks).
+
+### Mid-execution REQ amendment (Böckeler escape hatch)
+
+If a genuine blocker discovered during execution reveals that a REQ **must** be
+amended while the spec is `IN_PROGRESS`, the process is NOT to silently edit the
+Requirements section. Per `.claude/rules/sdd.md` §Mutability, the required steps
+are:
+
+1. **Stop the current batch.** Do not attempt further implementation of the
+   affected task.
+2. **Surface the conflict to the user** — describe the REQ, the blocker, and the
+   proposed amendment.
+3. **Only if the user approves the amendment:** update the Requirements section,
+   then **re-run the full 4-lens `/spec` self-review from scratch** (4 agents in
+   parallel: spec-reviewer, test-reviewer, code-reviewer, security-reviewer) before
+   resuming execution.
+4. **Append an Execution Log entry** describing the amendment and the re-review
+   result.
+
+Silently editing Requirements without this cycle breaks the audit trail and
+invalidates the TC↔REQ mapping that Phase 3 reviewers rely on.
 
 ## When to use vs. /spec
 

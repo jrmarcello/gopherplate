@@ -138,12 +138,16 @@ Novas funcionalidades devem incluir:
 
 Para features nao-triviais, use o fluxo Specification-Driven Development:
 
-1. **Spec**: crie uma especificacao com `/spec "descricao"` — gera requisitos, test plan, tasks e analise de paralelismo em `.specs/`
+1. **Spec**: crie uma especificacao com `/spec "descricao"` — gera `.specs/<nome>.md` com requisitos, test plan, tasks e analise de paralelismo. Declare `## Slug: <UPPERCASE>` e use IDs `<SLUG>-REQ-N` / `<SLUG>-TC-<TYPE>-NN`. O `/spec` roda o linter `tools/validate-spec` deterministicamente (incluindo os round-trip validators `testsRefValid` + `tcReferenced`) antes dos 4 agentes de review em paralelo: `spec-reviewer`, `test-reviewer`, `code-reviewer` e `security-reviewer`.
 2. **Review**: revise a spec, ajuste o que precisar, aprove (status APPROVED)
-3. **Execute**: rode `/ralph-loop .specs/<nome>.md` para execucao autonoma task-by-task com TDD
+3. **Execute**: rode `/ralph-loop .specs/<nome>.md` — valida a spec (incluindo `tools/validate-spec`) na startup, executa tasks autonomamente com TDD (brownfield search-first antes de novo codigo), faz o files-vs-diff audit no wrap-up (`make spec-files-audit`), e atualiza `docs/capabilities/*.md` do subsistema afetado (incluindo secao `## Code` e marcador `Last-verified`) + regenera `MANIFEST.md`.
 4. **Validate**: `/spec-review .specs/<nome>.md` para revisao formal contra os requisitos
 
-Detalhes em `docs/guides/sdd-ralph-loop.md` e `.claude/rules/sdd.md`.
+Specs sem `## Slug:` sao aceitas (grandfathered) — o linter pula as verificacoes de slug/prefix. Nao retrofitar specs pre-SDDX.
+
+**Capability docs** em `docs/capabilities/` carregam uma secao `## Code` com os paths de implementacao e um marcador `Last-verified`. `make capabilities-check` detecta drift deterministicamente. Para criar o skeleton de um novo capability doc, use `go run ./tools/validate-spec bootstrap-capability <pkg>`.
+
+Detalhes em `docs/guides/sdd-ralph-loop.md`, `docs/guides/spec-linter.md` e `.claude/rules/sdd.md`.
 
 ## Error Handling
 

@@ -149,7 +149,10 @@ jobs:
         run: buf generate
 
       - name: Install govulncheck
-        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+        # Pinned: govulncheck @latest (v1.4.0) panics on generics —
+        # "ForEachElement called on type containing *types.TypeParam" (x/tools v0.46.0 SSA bug).
+        # v1.1.4 analyzes this repo cleanly; the vuln DB is fetched live regardless of binary version.
+        run: go install golang.org/x/vuln/cmd/govulncheck@v1.1.4
 
       - name: Run govulncheck
         run: govulncheck -show verbose ./...
@@ -182,7 +185,9 @@ jobs:
           mkdir -p tests/coverage
           # Exclude packages that are exercised by E2E, not unit tests:
           # handlers, routers, telemetry bootstrap, and the postgres wiring package.
-          PACKAGES=$(go list ./internal/... ./pkg/... ./config/... \
+          # ./tools/... reaches only the main-module tools/validate-spec; the nested
+          # tools/learn module (own go.mod, no go.work) is excluded automatically.
+          PACKAGES=$(go list ./internal/... ./pkg/... ./config/... ./tools/... \
             | grep -v -E '(web/handler$|web/router$|telemetry$|db/postgres$)')
           go test $PACKAGES -race -coverprofile=tests/coverage/coverage.out
 
@@ -209,6 +214,9 @@ jobs:
     # Only on PRs — needs a base to diff against.
     if: github.event_name == 'pull_request'
     needs: unit-tests
+    permissions:
+      contents: read
+      pull-requests: write   # let the sticky-comment step post the coverage report on the PR
     env:
       NEW_CODE_COVERAGE_THRESHOLD: "70"
     steps:
@@ -225,8 +233,9 @@ jobs:
 
       - name: Convert Go coverage to Cobertura XML
         run: |
-          go install github.com/boumenot/gocover-cobertura@latest
-          gocover-cobertura < tests/coverage/coverage.out > tests/coverage/coverage.xml
+          # `go run` builds + runs in one step — no reliance on $GOPATH/bin being on PATH
+          # (the bare `gocover-cobertura` call failed with "command not found" under toolchain switching).
+          go run github.com/boumenot/gocover-cobertura@latest < tests/coverage/coverage.out > tests/coverage/coverage.xml
 
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -246,6 +255,7 @@ jobs:
 
       - name: Comment diff-cover report on PR
         if: always()
+        continue-on-error: true   # the PR comment is informational — never fail the coverage gate on it (fork PRs get a read-only token); diff-cover above is the actual gate
         uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # v2
         with:
           header: coverage-delta
